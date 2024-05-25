@@ -1,0 +1,10 @@
+#+title: Plan
+
+** Uses
+- Control/Monitor house
+  - Lights
+  - Locks
+  - Garden
+  - Computers (power on/off)
+  - Feeders
+  - Holiday decorations
