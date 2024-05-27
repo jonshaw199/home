@@ -3,8 +3,3 @@
 *.log
 tmp/
 
-.env
-
-*.pyc
-
-.dev_pgpass
