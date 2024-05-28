@@ -84,7 +84,7 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
 
         esp_mqtt5_client_set_user_property(&subscribe_property.user_property, user_property_arr, USE_PROPERTY_ARR_SIZE);
         esp_mqtt5_client_set_subscribe_property(client, &subscribe_property);
-        msg_id = esp_mqtt_client_subscribe(client, "/test/topic", 0);
+        msg_id = esp_mqtt_client_subscribe(client, "+/light/test_id", 0);
         esp_mqtt5_client_delete_user_property(subscribe_property.user_property);
         subscribe_property.user_property = NULL;
         ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);

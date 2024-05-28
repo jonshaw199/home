@@ -44,4 +44,4 @@ class ControllerConsumer(JsonWebsocketConsumer):
     # Receive message from group
     def group_message(self, content):
         # Send message to WebSocket
-        self.send_json(content)
+        self.send_json(content["message"])
