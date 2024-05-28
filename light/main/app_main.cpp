@@ -15,6 +15,8 @@
 #include "protocol_examples_common.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
+#include "Arduino.h"
+#include "FastLED.h"
 
 static const char *TAG = "app_main";
 
@@ -45,7 +47,7 @@ static void print_user_property(mqtt5_user_property_handle_t user_property)
     if (user_property) {
         uint8_t count = esp_mqtt5_client_get_user_property_count(user_property);
         if (count) {
-            esp_mqtt5_user_property_item_t *item = malloc(count * sizeof(esp_mqtt5_user_property_item_t));
+            esp_mqtt5_user_property_item_t *item = (esp_mqtt5_user_property_item_t*)malloc(count * sizeof(esp_mqtt5_user_property_item_t));
             if (esp_mqtt5_client_get_user_property(user_property, item, &count) == ESP_OK) {
                 for (int i = 0; i < count; i ++) {
                     esp_mqtt5_user_property_item_t *t = &item[i];
@@ -72,7 +74,7 @@ static void print_user_property(mqtt5_user_property_handle_t user_property)
 static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32, base, event_id);
-    esp_mqtt_event_handle_t event = event_data;
+    esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
 
@@ -130,33 +132,19 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
 
 static void mqtt5_app_start(void)
 {
-    esp_mqtt5_connection_property_config_t connect_property = {
-        .session_expiry_interval = 10,
-        .maximum_packet_size = 1024,
-        .receive_maximum = 65535,
-        .topic_alias_maximum = 2,
-        .request_resp_info = true,
-        .request_problem_info = true,
-        .will_delay_interval = 10,
-        .payload_format_indicator = true,
-        .message_expiry_interval = 10,
-        .response_topic = "/test/response",
-        .correlation_data = "123456",
-        .correlation_data_len = 6,
-    };
+    esp_mqtt5_connection_property_config_t connect_property = {};
+    connect_property.session_expiry_interval = 10;
+    connect_property.maximum_packet_size = 1024;
+    connect_property.receive_maximum = 65535;
+    connect_property.topic_alias_maximum = 2;
+    connect_property.request_resp_info = true;
+    connect_property.will_delay_interval = 10;
+    connect_property.payload_format_indicator = true;
+    connect_property.message_expiry_interval = 10;
 
-    esp_mqtt_client_config_t mqtt5_cfg = {
-        .broker.address.uri = CONFIG_BROKER_URL,
-        .session.protocol_ver = MQTT_PROTOCOL_V_5,
-        .network.disable_auto_reconnect = true,
-        .credentials.username = "123",
-        .credentials.authentication.password = "456",
-        .session.last_will.topic = "/topic/will",
-        .session.last_will.msg = "i will leave",
-        .session.last_will.msg_len = 12,
-        .session.last_will.qos = 1,
-        .session.last_will.retain = true,
-    };
+    esp_mqtt_client_config_t mqtt5_cfg = {};
+    mqtt5_cfg.broker.address.uri = CONFIG_BROKER_URL;
+    mqtt5_cfg.session.protocol_ver = MQTT_PROTOCOL_V_5;
 
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt5_cfg);
 
@@ -172,11 +160,11 @@ static void mqtt5_app_start(void)
     esp_mqtt5_client_delete_user_property(connect_property.will_user_property);
 
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt5_event_handler, NULL);
+    esp_mqtt_client_register_event(client, MQTT_EVENT_ANY, mqtt5_event_handler, NULL);
     esp_mqtt_client_start(client);
 }
 
-void app_main(void)
+extern "C" void app_main(void)
 {
 
     ESP_LOGI(TAG, "[APP] Startup..");
@@ -200,6 +188,8 @@ void app_main(void)
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
+
+    initArduino();
 
     mqtt5_app_start();
 }
