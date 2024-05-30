@@ -15,8 +15,9 @@
 #include "protocol_examples_common.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
-#include "Arduino.h"
 #include "FastLED.h"
+#include "Arduino.h"
+#include "light.hpp"
 
 static const char *TAG = "app_main";
 
@@ -40,6 +41,9 @@ static esp_mqtt5_subscribe_property_config_t subscribe_property = {
     .no_local_flag = false,
     .retain_as_published_flag = false,
     .retain_handle = 0,
+    .is_share_subscribe = false,
+    .share_name = "",
+    .user_property = NULL
 };
 
 static void print_user_property(mqtt5_user_property_handle_t user_property)
@@ -190,6 +194,10 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(example_connect());
 
     initArduino();
+
+    Light *test = new Light(3);
+    FastLED.addLeds<WS2811, 16, RGB>(&test->leds[0], test->leds.size());
+    LightHandler({{"test", test}}).init();
 
     mqtt5_app_start();
 }
