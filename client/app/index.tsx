@@ -1,20 +1,22 @@
 import React from "react";
 import { StyleSheet, View, Text } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import Login, { LoginProps } from "@/components/login/Login";
+import { getToken } from "@/services/auth";
 
-export default function Index() {
+export default function IndexScreen() {
   const [error, setError] = React.useState("");
 
-  const handleLogin: LoginProps["onLogin"] = async () => {
+  const handleLogin: LoginProps["onLogin"] = async ({ username, password }) => {
     try {
       setError("");
-      // todo
-      await new Promise((_, rej) => {
-        setTimeout(() => {
-          return rej("Error");
-        }, 1000);
-      });
+      const token = await getToken({ username, password });
+      const tokenKey = process.env.EXPO_PUBLIC_HOME_AUTH_TOKEN_KEY!;
+      await AsyncStorage.setItem(tokenKey, token);
+      router.replace("/home");
     } catch (e) {
+      console.error("Login failed;", e);
       setError("Login failed");
     }
   };
