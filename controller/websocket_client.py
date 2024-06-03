@@ -5,8 +5,9 @@ import websocket
 import rel
 from dotenv import load_dotenv
 
+from auth import Auth
+
 load_dotenv()
-TOKEN = os.getenv('TOKEN')
 HOME_HOST = os.getenv('HOME_HOST')
 HOME_PORT = os.getenv('HOME_PORT')
 
@@ -27,9 +28,10 @@ class WebsocketClient:
         print("Opened connection")
 
     def connect_ws(self):
+        token = Auth().get_token()
         websocket.enableTrace(True)
         ws = websocket.WebSocketApp(
-            f'ws://{HOME_HOST}:{HOME_PORT}/ws/controllers?token={TOKEN}',
+            f'ws://{HOME_HOST}:{HOME_PORT}/ws/controllers?token={token}',
             on_open=self.on_open,
             on_message=self.on_message,
             on_error=self.on_error,

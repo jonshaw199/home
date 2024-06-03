@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-h=3960u#(1&b)na1u#k92p1$xk2thq=kkaj4gul6&%9ep$6jq^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['home', 'localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -94,8 +94,8 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [
                 (
-                    os.environ.get('REDIS_HOST'),
-                    int(os.environ.get('REDIS_PORT'))
+                    os.environ.get('REDIS_HOST', 'localhost'),
+                    os.environ.get('REDIS_PORT', 6379)
                 )
             ]
         }

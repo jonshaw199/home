@@ -23,6 +23,8 @@ services:
         depends_on:
             - db
             - redis
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://home:8000/api/"]
 
     mqtt-broker:
         build: ./mqtt-broker
@@ -34,5 +36,7 @@ services:
         volumes:
             - ./controller:/code
         depends_on:
-            - home
-            - mqtt-broker
+            home:
+                condition: service_healthy
+            mqtt-broker:
+                condition: service_started
