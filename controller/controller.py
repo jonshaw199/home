@@ -3,7 +3,12 @@
 import subprocess
 import json
 import logging
+import os
+from dotenv import load_dotenv
 from websocket_client import WebsocketClient
+
+load_dotenv()
+MQTT_BROKER_HOST = os.getenv('MQTT_BROKER_HOST')
 
 def build_topic(message):
     json_msg = json.loads(message)
@@ -22,6 +27,8 @@ def message_handler(message):
     if topic:
         subprocess.run([
             'mosquitto_pub',
+            '-h',
+            MQTT_BROKER_HOST,
             '-t',
             topic,
             '-m',
