@@ -1,0 +1,38 @@
+services:
+    db:
+        image: "postgres"
+        ports:
+            - "5432:5432"
+        env_file:
+            - db.env
+
+    redis:
+        image: "redis:7"
+        ports:
+            - "6379:6379"
+
+    home:
+        build: ./services/home
+        volumes:
+            - ./services/home:/code
+        ports:
+            - "8000:8000"
+        env_file:
+            - db.env
+            - ./services/home/.env
+        depends_on:
+            - db
+            - redis
+
+    mqtt-broker:
+        build: ./mqtt-broker
+        ports:
+            - "1883:1883"
+
+    controller:
+        build: ./controller
+        volumes:
+            - ./controller:/code
+        depends_on:
+            - home
+            - mqtt-broker

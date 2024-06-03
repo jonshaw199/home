@@ -1,21 +1,10 @@
 ## Local Dev
 
-### Run server
+### Run web server, controller, and MQTT broker
 
-``` sh
-// TODO postgres
-docker run --rm -p 6379:6379 redis:7 
-./services/home/manage.py runserver
-```
+`docker compose up`
 
-### Run on-prem controller
-
-``` sh
-python controller/controller.py
-mosquitto -v -c controller/mosquitto.conf
-```
-
-### Run client
+### Run clients
 
 #### Android
 
@@ -25,3 +14,9 @@ npm run android
 adb -s <emulator-name> reverse tcp:8000 tcp:8000
 ```
 
+### Run lights
+
+``` sh
+cd light
+idf.py build flash monitor
+```
