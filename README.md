@@ -14,7 +14,9 @@ npm run android
 adb -s <emulator-name> reverse tcp:8000 tcp:8000
 ```
 
-### Run lights
+### Run IOT devices
+
+#### Lights
 
 ``` sh
 cd light

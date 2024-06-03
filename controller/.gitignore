@@ -8,4 +8,4 @@ tmp/
 build
 htmlcov
 
-.env
+.env.dev

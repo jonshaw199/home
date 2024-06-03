@@ -3,5 +3,3 @@
 *.log
 tmp/
 
-db.env
-.env
