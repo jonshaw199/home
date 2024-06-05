@@ -1,7 +1,10 @@
 idf_component_register(
     SRCS
         "app_main.cpp"
+        "light_handler.cpp"
         "light.cpp"
+        "effect.cpp"
+        "effect_config.cpp"
     INCLUDE_DIRS
         "."
 )

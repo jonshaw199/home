@@ -17,7 +17,7 @@
 #include "mqtt_client.h"
 #include "FastLED.h"
 #include "Arduino.h"
-#include "light.hpp"
+#include "light_handler.hpp"
 
 static const char *TAG = "app_main";
 
