@@ -19,6 +19,7 @@
 static const char *TAG = "mqtt_client";
 
 message_cb cb = NULL;
+topic_vector topics = {};
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -87,12 +88,14 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
         print_user_property(event->property->user_property);
 
-        esp_mqtt5_client_set_user_property(&subscribe_property.user_property, user_property_arr, USE_PROPERTY_ARR_SIZE);
-        esp_mqtt5_client_set_subscribe_property(client, &subscribe_property);
-        msg_id = esp_mqtt_client_subscribe(client, "light/test_id", 0);
-        esp_mqtt5_client_delete_user_property(subscribe_property.user_property);
-        subscribe_property.user_property = NULL;
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        for (const std::string& topic : topics) {
+            esp_mqtt5_client_set_user_property(&subscribe_property.user_property, user_property_arr, USE_PROPERTY_ARR_SIZE);
+            esp_mqtt5_client_set_subscribe_property(client, &subscribe_property);
+            msg_id = esp_mqtt_client_subscribe(client, topic.c_str(), 0);
+            esp_mqtt5_client_delete_user_property(subscribe_property.user_property);
+            subscribe_property.user_property = NULL;
+            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        }
         break;
     case MQTT_EVENT_SUBSCRIBED:
         ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
@@ -107,6 +110,7 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
         print_user_property(event->property->user_property);
         break;
     case MQTT_EVENT_DATA:
+    {
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
         print_user_property(event->property->user_property);
         ESP_LOGI(TAG, "payload_format_indicator is %d", event->property->payload_format_indicator);
@@ -115,8 +119,11 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
         ESP_LOGI(TAG, "content_type is %.*s", event->property->content_type_len, event->property->content_type);
         ESP_LOGI(TAG, "TOPIC=%.*s", event->topic_len, event->topic);
         ESP_LOGI(TAG, "DATA=%.*s", event->data_len, event->data);
-        cb(event->data);
+
+        cb(std::string(event->topic, event->topic_len), std::string(event->data, event->data_len));
+
         break;
+    }
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
         print_user_property(event->property->user_property);
@@ -134,8 +141,9 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
     }
 }
 
-void MQTTClient::init(message_cb c)
+void MQTTClient::init(topic_vector t, message_cb c)
 {
+    topics = t;
     cb = c;
 
     ESP_LOGI(TAG, "[APP] Startup..");

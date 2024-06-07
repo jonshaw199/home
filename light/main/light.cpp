@@ -5,18 +5,22 @@
 
 const char *TAG = "light";
 
-typedef void (*light_effect)(Light *light, Effect *effect);
+typedef void (*light_effect)(Light light, Effect effect);
 
-void turn_off(Light *light, Effect *effect) {
-  fill_solid(&light->leds[0], light->leds.size(), CRGB::Black);
+void turn_off(Light light, Effect effect) {
+  fill_solid(&light.leds[0], light.leds.size(), CRGB::Black);
 }
 
-void beatwave(Light *light, Effect *effect) {
-  uint8_t wave = beatsin8(effect->get_config().get_bpm());
+void beatwave(Light light, Effect effect) {
+  uint8_t wave = beatsin8(effect.get_bpm());
 
-  for (size_t i = 0, size = light->leds.size(); i != size; ++i) {
-    EffectConfig config = effect->get_config();
-    light->leds.at(i) = ColorFromPalette(config.get_palette(), i + wave, config.get_brightness(), config.get_blend_type());
+  for (size_t i = 0, size = light.leds.size(); i != size; ++i) {
+      light.leds.at(i) = ColorFromPalette(
+          effect.get_palette(),
+          i + wave,
+          effect.get_brightness(),
+          effect.get_blend_type()
+      );
   }
 }
 
@@ -30,23 +34,26 @@ Light::Light(int led_cnt) {
 }
 
 void Light::add_effect(Effect e) {
-  scheduled_effects.insert({e.get_config().get_start_time(), e});
+  ESP_LOGI(TAG, "Adding effect %d", e.get_type());
+  scheduled_effects.insert({e.get_start_time(), e});
 }
 
 void Light::do_effect(uint64_t time) {
   for (scheduled_effect_multimap::iterator it = scheduled_effects.begin(); it != scheduled_effects.end();) {
     if (it->first <= time) {
-      if (it->first + it->second.get_config().get_duration() < time) {
+      int64_t end_time = it->first + it->second.get_duration();
+      if (time < end_time) {
         auto entry = effect_map.find(it->second.get_type());
         if (entry == effect_map.end()) {
           // not found
           ESP_LOGE(TAG, "EffectType not found: %d", it->second.get_type());
         } else {
-          entry->second(this, &it->second);
+          entry->second(*this, it->second);
         }
         ++it;
       } else {
-        scheduled_effects.erase(it);
+        ESP_LOGI(TAG, "Stopping effect %d", it->second.get_type());
+        it = scheduled_effects.erase(it);
       }
     } else {
       break;
