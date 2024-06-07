@@ -8,7 +8,7 @@
 
 #include "light.hpp"
 
-typedef std::map<std::string, Light> light_map;
+typedef std::map<std::string, Light&> light_map;
 
 class LightHandler {
   private:

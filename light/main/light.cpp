@@ -5,13 +5,13 @@
 
 const char *TAG = "light";
 
-typedef void (*light_effect)(Light light, Effect effect);
+typedef void (*light_effect)(Light &light, Effect &effect);
 
-void turn_off(Light light, Effect effect) {
+void turn_off(Light &light, Effect &effect) {
   fill_solid(&light.leds[0], light.leds.size(), CRGB::Black);
 }
 
-void beatwave(Light light, Effect effect) {
+void beatwave(Light &light, Effect &effect) {
   uint8_t wave = beatsin8(effect.get_bpm());
 
   for (size_t i = 0, size = light.leds.size(); i != size; ++i) {
