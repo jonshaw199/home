@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <string>
+
+#include "esp_log.h"
 #include "FastLED.h"
 #include "Arduino.h"
 #include "light_handler.hpp"
@@ -11,14 +14,18 @@
 
 static const char *TAG = "app_main";
 
+Light *test_light = new Light(3);
+LightHandler *light_handler = new LightHandler({{"test_light", test_light}});
+
+void message_handler(std::string msg) {
+    ESP_LOGI(TAG, "Handle message: %s", msg.c_str());
+}
+
 extern "C" void app_main(void)
 {
     initArduino();
 
-    Light *test = new Light(3);
-    FastLED.addLeds<WS2811, 16, RGB>(&test->leds[0], test->leds.size());
-    LightHandler({{"test", test}}).init();
+    FastLED.addLeds<WS2811, 16, RGB>(&test_light->leds[0], test_light->leds.size());
 
-    MQTTClient mqtt_client = MQTTClient();
-    mqtt_client.init();
+    MQTTClient::init(message_handler);
 }
