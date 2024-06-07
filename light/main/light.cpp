@@ -3,6 +3,8 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 
+const char *TAG = "light";
+
 typedef void (*light_effect)(Light *light, Effect *effect);
 
 void turn_off(Light *light, Effect *effect) {
@@ -31,5 +33,24 @@ void Light::add_effect(Effect e) {
   scheduled_effects.insert({e.get_config().get_start_time(), e});
 }
 
-void Light::do_effect() {}
+void Light::do_effect(uint64_t time) {
+  for (scheduled_effect_multimap::iterator it = scheduled_effects.begin(); it != scheduled_effects.end();) {
+    if (it->first <= time) {
+      if (it->first + it->second.get_config().get_duration() < time) {
+        auto entry = effect_map.find(it->second.get_type());
+        if (entry == effect_map.end()) {
+          // not found
+          ESP_LOGE(TAG, "EffectType not found: %d", it->second.get_type());
+        } else {
+          entry->second(this, &it->second);
+        }
+        ++it;
+      } else {
+        scheduled_effects.erase(it);
+      }
+    } else {
+      break;
+    }
+  }
+}
 

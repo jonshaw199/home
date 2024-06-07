@@ -1,10 +1,12 @@
 #include "light_handler.hpp"
 
+#include "esp_timer.h"
+
 static void light_task(void* arg) {
   Light *light = static_cast<Light*>(arg);
 
   while (1) {
-    light->do_effect();
+    light->do_effect(esp_timer_get_time());
     vTaskDelay(1000);
   }
 }

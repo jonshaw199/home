@@ -5,6 +5,7 @@ idf_component_register(
         "light.cpp"
         "effect.cpp"
         "effect_config.cpp"
+        "mqtt_client.cpp"
     INCLUDE_DIRS
         "."
 )

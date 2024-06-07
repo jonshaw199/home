@@ -17,7 +17,7 @@ public:
   Light(int led_cnt);
   std::vector<CRGB> leds;
   void add_effect(Effect effect);
-  void do_effect();
+  void do_effect(uint64_t time);
 };
 
 
