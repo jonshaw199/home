@@ -1,6 +1,12 @@
 #include "effect.hpp"
 
-Effect::Effect(EffectType type) : type(type) {}
+std::string Effect::get_id() {
+    return id;
+}
+
+void Effect::set_id(std::string i) {
+   id = i;
+}
 
 EffectType Effect::get_type() {
     return type;

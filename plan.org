@@ -1,6 +1,6 @@
 #+title: Plan
 
-** Uses
+* Uses
 - Control/Monitor house
   - Lights
   - Locks
@@ -8,3 +8,34 @@
   - Computers (power on/off)
   - Feeders
   - Holiday decorations
+
+* MQTT Messages
+- Add Effects
+  {
+    "message": {
+      "action": 0,
+      "effects": [
+        {
+          "id": "some_id",
+          "type": 0,
+          "start_time": 12345,
+          "duration": 5000,
+          "light_id": "some_id",
+          ...TODO
+        }
+      ]
+    }
+  }
+
+- Delete Effects
+  {
+    "message": {
+      "action": 2,
+      "effects": [
+        {
+          "id": "some_id",
+          "light_id": "some_id"
+        }
+      ]
+    }
+  }

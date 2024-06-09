@@ -1,6 +1,7 @@
 #ifndef EFFECT_H_
 #define EFFECT_H_
 
+#include <string>
 #include "FastLED.h"
 
 enum EffectType {
@@ -10,6 +11,7 @@ enum EffectType {
 
 class Effect {
 private:
+    std::string id = "";
     EffectType type = TURN_OFF;
     CRGBPalette16 palette = CRGBPalette16(CRGB::Blue);
     accum88 bpm = 100;
@@ -19,7 +21,9 @@ private:
     int64_t duration = 999999999;
 
 public:
-    Effect(EffectType type);
+    std::string get_id();
+    void set_id(std::string id);
+    void set_type(std::string id);
     EffectType get_type();
     void set_type(EffectType type);
     const CRGBPalette16& get_palette();

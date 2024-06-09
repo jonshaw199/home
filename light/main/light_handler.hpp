@@ -17,7 +17,8 @@ class LightHandler {
   public:
     LightHandler(const light_map& lights);
     void init();
-    void add_effect(Effect effect);
+    void add_effect(Effect effect, std::string light_id = "");
+    void delete_effect(std::string id = "", std::string light_id = "");
 };
 
 #endif // LIGHT_HANDLER_H_

@@ -34,11 +34,29 @@ Light::Light(int led_cnt) {
 }
 
 void Light::add_effect(Effect e) {
+  const std::lock_guard<std::mutex> lock(scheduled_effects_mutex);
   ESP_LOGI(TAG, "Adding effect %d", e.get_type());
   scheduled_effects.insert({e.get_start_time(), e});
 }
 
+void Light::delete_effect(std::string id) {
+  const std::lock_guard<std::mutex> lock(scheduled_effects_mutex);
+  if (id.empty()) {
+    ESP_LOGI(TAG, "Deleting all effects");
+    scheduled_effects.clear();
+  } else {
+    for (scheduled_effect_multimap::iterator it = scheduled_effects.begin(); it != scheduled_effects.end(); ++it) {
+      if (it->second.get_id() == id) {
+        ESP_LOGI(TAG, "Deleting effect %s", it->second.get_id().c_str());
+        scheduled_effects.erase(it);
+        break;
+      }
+    }
+  }
+}
+
 void Light::do_effect(uint64_t time) {
+  const std::lock_guard<std::mutex> lock(scheduled_effects_mutex);
   for (scheduled_effect_multimap::iterator it = scheduled_effects.begin(); it != scheduled_effects.end();) {
     if (it->first <= time) {
       int64_t end_time = it->first + it->second.get_duration();
@@ -59,5 +77,8 @@ void Light::do_effect(uint64_t time) {
       break;
     }
   }
-}
 
+  if (scheduled_effects.empty()) {
+    fill_solid(&leds[0], leds.size(), CRGB::Black);
+  }
+}
