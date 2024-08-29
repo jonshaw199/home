@@ -35,6 +35,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
     # Receive message from WebSocket
     def receive_json(self, content):
         # Send message to group (temp; for testing)
+        print(content)
         content["type"] = "group.message"
         async_to_sync(self.channel_layer.group_send)(
             self.group_name,
@@ -43,5 +44,8 @@ class ControllerConsumer(JsonWebsocketConsumer):
 
     # Receive message from group
     def group_message(self, content):
-        # Send message to WebSocket
-        self.send_json(content["message"])
+        if "message" in content:
+            # Send message to WebSocket
+            self.send_json(content["message"])
+        else:
+            self.send_json({"error": "Invalid message; missing 'message' key"})
