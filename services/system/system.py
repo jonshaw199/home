@@ -3,6 +3,8 @@ import psutil
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
 import os
+import json
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,11 +32,13 @@ def publish_system_metrics():
             "network_received": psutil.net_io_counters().bytes_recv,
         }
 
-        client.publish(mqtt_topic, str(metrics))
-        print(f"Published: {metrics}")
+        # Serialize the metrics to a JSON string
+        metrics_json = json.dumps(metrics)
+        client.publish(mqtt_topic, metrics_json)
+        logging.debug(f"Published: {metrics_json}")
 
         # Wait for 60 seconds before sending the next update
-        time.sleep(interval)
+        time.sleep(int(interval))
 
 if __name__ == "__main__":
     publish_system_metrics()
