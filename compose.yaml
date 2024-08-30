@@ -1,43 +1,54 @@
+version: '3.8'
+
 services:
-    db:
-        image: "postgres"
-        ports:
-            - "5432:5432"
-        env_file:
-            - ./services/db/.env
+  db:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./services/db/.env
 
-    redis:
-        image: "redis:7"
-        ports:
-            - "6379:6379"
+  redis:
+    image: "redis:7"
+    ports:
+      - "6379:6379"
 
-    home:
-        build: ./services/home
-        volumes:
-            - ./services/home:/code
-        ports:
-            - "8000:8000"
-        env_file:
-            - ./services/home/.env
-        depends_on:
-            - db
-            - redis
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://home:8000/api/"]
-            interval: 5s
-            timeout: 5s
+  home:
+    build: ./services/home
+    volumes:
+      - ./services/home:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./services/home/.env
+    depends_on:
+      - db
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://home:8000/api/"]
+      interval: 5s
+      timeout: 5s
 
-    mqtt-broker:
-        build: ./services/mqtt-broker
-        ports:
-            - "1883:1883"
+  mqtt-broker:
+    build: ./services/mqtt-broker
+    ports:
+      - "1883:1883"
 
-    controller:
-        build: ./services/controller
-        volumes:
-            - ./services/controller:/code
-        depends_on:
-            home:
-                condition: service_healthy
-            mqtt-broker:
-                condition: service_started
+  controller:
+    build: ./services/controller
+    volumes:
+      - ./services/controller:/code
+    depends_on:
+      home:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_started
+
+  system:
+    build: ./services/system
+    volumes:
+      - ./services/system:/app
+    env_file:
+      - ./services/system/.env
+    restart: unless-stopped
+
