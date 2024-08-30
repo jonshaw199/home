@@ -14,7 +14,14 @@ logging.basicConfig(
     ]
 )
 
-REQUIRED_KEYS = {"location", "device_type", "device_id"}
+# Topics: 
+#   - location_id/domain_id/device_id
+#   - location_id/domain_id
+#   - location_id
+#   - <root topic>
+#   - location_id/domain_id/device_id/something/else...   <--- Can do something like this in future if necessary
+RESERVED_MSG_KEYS = ["location_id", "domain_id", "device_id"]
+ROOT_TOPIC = "ROOT_TOPIC"
 
 class Controller:
     def __init__(self):
@@ -42,15 +49,17 @@ class Controller:
 
     def build_topic(self, message):
         json_msg = json.loads(message)
-        
-        is_valid = REQUIRED_KEYS <= json_msg.keys()
-        if not is_valid:
-            logging.error(f"Cannot build topic; message is missing keys; required keys: {REQUIRED_KEYS}")
-            return
-        location = json_msg["location"]
-        device_type = json_msg["device_type"]
-        device_id = json_msg["device_id"]
-        return f"{location}/{device_type}/{device_id}"
+        # {location_id: 1, domain_id: 2, device_id: 3} -> [1, 2, 3]
+        # {location_id: 1, domain_id: 2} -> [1, 2]
+        # {location_id: 1, device_id: 3} -> [1]
+        # {device_id: 2} -> []
+        arr = []
+        for k in RESERVED_MSG_KEYS:
+          if k in message and message[k]:
+            arr.append(message[k])
+          else:
+            break
+        return '/'.join(arr) if arr else ROOT_TOPIC
 
     def start(self):
         mqtt_thread = Thread(target=self.mqtt_client.start)
