@@ -22,12 +22,14 @@ from rest_framework.authtoken import views
 from auth.views import UserViewSet, GroupViewSet
 from locations.views import LocationViewSet
 from lights.views import LightViewSet
+from systems.views import SystemViewSet
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
 router.register(r'locations', LocationViewSet)
 router.register(r'lights', LightViewSet)
+router.register(r'systems', SystemViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),
