@@ -32,6 +32,16 @@ class ControllerConsumer(JsonWebsocketConsumer):
                 self.channel_name
             )
 
+    def receive(self, text_data=None, bytes_data=None):
+        print(text_data)
+        try:
+            content = json.loads(text_data)
+            self.receive_json(content)
+        except json.JSONDecodeError:
+            print("Invalid JSON; closing connection")
+            self.send_json({"error": "Invalid JSON; closing connection..."})
+            self.close()
+
     # Receive message from WebSocket
     def receive_json(self, content):
         # Send message to group (temp; for testing)

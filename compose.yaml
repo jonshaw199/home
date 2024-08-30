@@ -24,6 +24,8 @@ services:
             - redis
         healthcheck:
             test: ["CMD", "curl", "-f", "http://home:8000/api/"]
+            interval: 5s
+            timeout: 5s
 
     mqtt-broker:
         build: ./services/mqtt-broker
