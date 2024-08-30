@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 
 import json
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(threadName)s] [%(filename)s:%(lineno)d] %(levelname)s: %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 
 class ControllerConsumer(JsonWebsocketConsumer):
     def __init__(self):
@@ -22,7 +30,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
             )
             self.accept()
         else:
-            print("user unknown")
+            logging.warn("User unknown; closing connection")
             self.close()
 
     def disconnect(self, close_code):
@@ -33,24 +41,18 @@ class ControllerConsumer(JsonWebsocketConsumer):
             )
 
     def receive(self, text_data=None, bytes_data=None):
-        print(text_data)
+        logging.info(f"Received message: {text_data}")
         try:
             content = json.loads(text_data)
             self.receive_json(content)
         except json.JSONDecodeError:
-            print("Invalid JSON; closing connection")
+            logging.warn("Invalid JSON; closing connection")
             self.send_json({"error": "Invalid JSON; closing connection..."})
             self.close()
 
     # Receive message from WebSocket
     def receive_json(self, content):
-        # Send message to group (temp; for testing)
-        print(content)
-        content["type"] = "group.message"
-        async_to_sync(self.channel_layer.group_send)(
-            self.group_name,
-            content
-        )
+        logging.info(f"Received message: {content}")
 
     # Receive message from group
     def group_message(self, content):
