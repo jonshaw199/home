@@ -4,7 +4,7 @@
     "pk": 1,
     "fields": {
       "username": "controller",
-      "password": "pbkdf2_sha256$720000$RicTESH0vtTpIft5JEEfow$2iIj7WsEmHdspCqXae+ApQh0OCq8IhcOvdUixJm1oxs=",
+      "password": "pbkdf2_sha256$720000$XK4rSLPakk9zl1gqwn9ft8$hw96eJiCRL1FveUnVreNGoOxjvf6OipFoVzpZyuYtZ8=",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -15,7 +15,7 @@
     "pk": 2,
     "fields": {
       "username": "adminuser",
-      "password": "pbkdf2_sha256$720000$RicTESH0vtTpIft5JEEfow$2iIj7WsEmHdspCqXae+ApQh0OCq8IhcOvdUixJm1oxs=",
+      "password": "pbkdf2_sha256$720000$9SC6offPTLMNrCYruS1szH$pqobAhejcIq5j+AcEC0OyRM5vc2VsaMZRnH26R9oYE4=",
       "is_superuser": true,
       "is_staff": true,
       "is_active": true
