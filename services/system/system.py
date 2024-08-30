@@ -15,6 +15,15 @@ mqtt_broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
 mqtt_topic = os.getenv("MQTT_TOPIC", "system/status")
 interval = os.getenv("PUB_INTERVAL_SEC", 60)
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(threadName)s] [%(filename)s:%(lineno)d] %(levelname)s: %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+
+
 # MQTT client setup
 client = mqtt.Client()
 
