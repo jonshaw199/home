@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from locations.models import Location
+from core.models import Location, Organization
 
 # Register your models here.
 
+admin.site.register(Organization)
 admin.site.register(Location)

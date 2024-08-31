@@ -1,42 +1,35 @@
-#!/usr/bin/env python3
-
-import json
-import logging
-
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(threadName)s] [%(filename)s:%(lineno)d] %(levelname)s: %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
+import logging
+import json
 
 class ControllerConsumer(JsonWebsocketConsumer):
     def __init__(self):
-        self.group_name = ''
+        self.group_names = []  # List to store multiple group names
         super().__init__()
 
     def connect(self):
         user = self.scope['user']
 
         if user.is_authenticated:
-            self.group_name = f'group_{user.id}'
-            async_to_sync(self.channel_layer.group_add)(
-                self.group_name,
-                self.channel_name
-            )
+            accessible_locations = self.get_accessible_locations(user)
+            for location_id in accessible_locations:
+                group_name = f'location_{location_id}_group'
+                if group_name not in self.group_names:
+                    self.group_names.append(group_name)
+                    async_to_sync(self.channel_layer.group_add)(
+                        group_name,
+                        self.channel_name
+                    )
             self.accept()
         else:
             logging.warn("User unknown; closing connection")
             self.close()
 
     def disconnect(self, close_code):
-        if self.group_name:
+        for group_name in self.group_names:
             async_to_sync(self.channel_layer.group_discard)(
-                self.group_name,
+                group_name,
                 self.channel_name
             )
 
@@ -50,14 +43,38 @@ class ControllerConsumer(JsonWebsocketConsumer):
             self.send_json({"error": "Invalid JSON; closing connection..."})
             self.close()
 
-    # Receive message from WebSocket
     def receive_json(self, content):
-        logging.info(f"Received message: {content}")
+        logging.info(f"Received JSON message: {content}")
 
-    # Receive message from group
-    def group_message(self, content):
-        if "message" in content:
-            # Send message to WebSocket
-            self.send_json(content["message"])
-        else:
-            self.send_json({"error": "Invalid message; missing 'message' key"})
+        # Example: Perform a database operation (stubbed here)
+        self.perform_database_operation(content)
+
+        # Extract location ID from the content
+        location_id = content.get('location_id')
+        if location_id:
+            group_name = f'location_{location_id}_group'
+            if group_name in self.group_names:
+                async_to_sync(self.channel_layer.group_send)(
+                    group_name,
+                    {
+                        'type': 'group_message',
+                        'message': content
+                    }
+                )
+            else:
+                logging.warn(f"User not part of group for location {location_id}")
+
+    def group_message(self, event):
+        # Send message to WebSocket
+        self.send_json(event['message'])
+
+    def get_accessible_locations(self, user):
+        # Placeholder method to get accessible locations
+        # Replace with actual logic to retrieve user's accessible locations
+        return [1, 2, 3]  # Example
+
+    def perform_database_operation(self, content):
+        # Placeholder for database operation
+        # Implement the actual DB operation you need
+        logging.info("Performing a database operation with the content")
+

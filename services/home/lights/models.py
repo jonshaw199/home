@@ -1,6 +1,6 @@
 from django.db import models
 
-from locations.models import Location
+from core.models import Location
 
 # Create your models here.
 

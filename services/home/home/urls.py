@@ -14,29 +14,28 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 from rest_framework.authtoken import views
 
-from auth.views import UserViewSet, GroupViewSet
-from locations.views import LocationViewSet
+from core.views import UserViewSet, GroupViewSet, LocationViewSet, OrganizationViewSet
 from lights.views import LightViewSet
 from systems.views import SystemViewSet
 
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'groups', GroupViewSet)
-router.register(r'locations', LocationViewSet)
-router.register(r'lights', LightViewSet)
-router.register(r'systems', SystemViewSet)
+router.register(r"users", UserViewSet)
+router.register(r"groups", GroupViewSet)
+router.register(r"organizations", OrganizationViewSet)
+router.register(r"locations", LocationViewSet)
+router.register(r"lights", LightViewSet)
+router.register(r"systems", SystemViewSet)
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-    path('api-auth/', include(
-        'rest_framework.urls', namespace='rest-framework'
-    )),
-    path('api-token-auth/', views.obtain_auth_token),
-    path('admin/', admin.site.urls),
-    path('chat/', include('chat.urls'))
+    path("api/", include(router.urls)),
+    path("api-auth/", include("rest_framework.urls", namespace="rest-framework")),
+    path("api-token-auth/", views.obtain_auth_token),
+    path("admin/", admin.site.urls),
+    path("chat/", include("chat.urls")),
 ]
