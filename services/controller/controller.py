@@ -15,12 +15,11 @@ logging.basicConfig(
 )
 
 # Topics: 
-#   - location_id/domain_id/device_id
-#   - location_id/domain_id
-#   - location_id
+#   - domain_id/device_id
+#   - domain_id
 #   - <root topic>
-#   - location_id/domain_id/device_id/something/else...   <--- Can do something like this in future if necessary
-RESERVED_MSG_KEYS = ["location_id", "domain_id", "device_id"]
+#   - domain_id/device_id/something/else...   <--- Can do something like this in future if necessary
+RESERVED_MSG_KEYS = ["domain_id", "device_id"]
 ROOT_TOPIC = "ROOT_TOPIC"
 
 class Controller:
@@ -49,10 +48,6 @@ class Controller:
 
     def build_topic(self, message):
         json_msg = json.loads(message)
-        # {location_id: 1, domain_id: 2, device_id: 3} -> [1, 2, 3]
-        # {location_id: 1, domain_id: 2} -> [1, 2]
-        # {location_id: 1, device_id: 3} -> [1]
-        # {device_id: 2} -> []
         arr = []
         for k in RESERVED_MSG_KEYS:
           if k in message and message[k]:
