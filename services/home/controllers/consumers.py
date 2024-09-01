@@ -3,23 +3,23 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 
+
 class ControllerConsumer(JsonWebsocketConsumer):
     def __init__(self):
         self.group_names = []  # List to store multiple group names
         super().__init__()
 
     def connect(self):
-        user = self.scope['user']
+        user = self.scope["user"]
 
         if user.is_authenticated:
             accessible_locations = self.get_accessible_locations(user)
             for location_id in accessible_locations:
-                group_name = f'location_{location_id}_group'
+                group_name = f"location_{location_id}_group"
                 if group_name not in self.group_names:
                     self.group_names.append(group_name)
                     async_to_sync(self.channel_layer.group_add)(
-                        group_name,
-                        self.channel_name
+                        group_name, self.channel_name
                     )
             self.accept()
         else:
@@ -29,8 +29,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
     def disconnect(self, close_code):
         for group_name in self.group_names:
             async_to_sync(self.channel_layer.group_discard)(
-                group_name,
-                self.channel_name
+                group_name, self.channel_name
             )
 
     def receive(self, text_data=None, bytes_data=None):
@@ -49,26 +48,26 @@ class ControllerConsumer(JsonWebsocketConsumer):
         # Example: Perform a database operation (stubbed here)
         self.perform_database_operation(content)
 
-        device_id = content.get('device_id')
-        if device_id:
-          location_id = None # TODO
-          group_name = f'location_{location_id}_group'
-          if group_name in self.group_names:
-              async_to_sync(self.channel_layer.group_send)(
-                  group_name,
-                  {
-                      'type': 'group_message',
-                      'message': content
-                  }
-              )
-          else:
-              logging.warn(f"User not part of group for location {location_id}")
+        location_id = content.get("location_id")
+        if not location_id:
+            device_id = content.get("device_id")
+            if device_id:
+                print("TODO")
+            # TODO: Get location_id for device
+        if location_id:
+            group_name = f"location_{location_id}_group"
+            if group_name in self.group_names:
+                async_to_sync(self.channel_layer.group_send)(
+                    group_name, {"type": "group_message", "message": content}
+                )
+            else:
+                logging.warn(f"User not part of group for location {location_id}")
         else:
-          logging.warn('Device ID not provided; cannot process message')
+            logging.warn("Device/location ID not provided; cannot broadcast message")
 
     def group_message(self, event):
         # Send message to WebSocket
-        self.send_json(event['message'])
+        self.send_json(event["message"])
 
     def get_accessible_locations(self, user):
         # Placeholder method to get accessible locations
@@ -79,4 +78,3 @@ class ControllerConsumer(JsonWebsocketConsumer):
         # Placeholder for database operation
         # Implement the actual DB operation you need
         logging.info("Performing a database operation with the content")
-

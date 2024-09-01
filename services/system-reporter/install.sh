@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-SERVICE_NAME="js-home-system.service"
+SERVICE_NAME="js-home-system-reporter.service"
 SERVICE_FILE_PATH="/etc/systemd/system/$SERVICE_NAME"
 SCRIPT_PATH="/path/to/your/system.py"
 ENV_FILE_PATH="/path/to/your/.env"
@@ -11,7 +11,7 @@ echo "Creating systemd service file at $SERVICE_FILE_PATH"
 
 cat <<EOF | sudo tee $SERVICE_FILE_PATH > /dev/null
 [Unit]
-Description=System Service
+Description=System Reporter Service
 After=network.target
 
 [Service]

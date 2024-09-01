@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     "chat",
     "controllers",
     "lights",
-    "systems",
+    "devices",
 ]
 
 REST_FRAMEWORK = {

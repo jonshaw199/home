@@ -13,9 +13,9 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application files into the container
-COPY system.py /app/
+COPY systemreporter.py /app/
 COPY .env /app/
 
 # Command to run the script
-CMD ["python", "system.py"]
+CMD ["python", "systemreporter.py"]
 

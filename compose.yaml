@@ -42,11 +42,10 @@ services:
       mqtt-broker:
         condition: service_started
 
-  system:
-    build: ./services/system
+  system-reporter:
+    build: ./services/system-reporter
     volumes:
-      - ./services/system:/app
+      - ./services/system-reporter:/app
     env_file:
-      - ./services/system/.env
+      - ./services/system-reporter/.env
     restart: unless-stopped
-
