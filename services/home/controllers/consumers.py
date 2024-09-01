@@ -49,20 +49,22 @@ class ControllerConsumer(JsonWebsocketConsumer):
         # Example: Perform a database operation (stubbed here)
         self.perform_database_operation(content)
 
-        # Extract location ID from the content
-        location_id = content.get('location_id')
-        if location_id:
-            group_name = f'location_{location_id}_group'
-            if group_name in self.group_names:
-                async_to_sync(self.channel_layer.group_send)(
-                    group_name,
-                    {
-                        'type': 'group_message',
-                        'message': content
-                    }
-                )
-            else:
-                logging.warn(f"User not part of group for location {location_id}")
+        device_id = content.get('device_id')
+        if device_id:
+          location_id = None # TODO
+          group_name = f'location_{location_id}_group'
+          if group_name in self.group_names:
+              async_to_sync(self.channel_layer.group_send)(
+                  group_name,
+                  {
+                      'type': 'group_message',
+                      'message': content
+                  }
+              )
+          else:
+              logging.warn(f"User not part of group for location {location_id}")
+        else:
+          logging.warn('Device ID not provided; cannot process message')
 
     def group_message(self, event):
         # Send message to WebSocket
