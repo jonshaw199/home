@@ -48,7 +48,7 @@ class WebsocketClient:
         logging.info(f"Sending websocket message: {message}")
         try:
             self.ws.send(message)
-        except (websocket.WebSocketConnectionClosedException, BrokenPipeError) as e:
+        except Exception as e:
             logging.error(f"Send failed: {e}")
             self.message_queue.append(message)  # Queue the message for retry
             self.ws.close()
