@@ -10,16 +10,6 @@ class DeviceType(models.Model):
         return self.name
 
 class Device(models.Model):
-    COMPUTER = "computer"
-    PHONE = "phone"
-    TV = "tv"
-
-    DEVICE_TYPES = [
-        (COMPUTER, "Computer"),
-        (PHONE, "Phone"),
-        (TV, "TV"),
-    ]
-
     name = models.CharField(max_length=100)
     device_type = models.ForeignKey(
         DeviceType, related_name="devices", on_delete=models.CASCADE
