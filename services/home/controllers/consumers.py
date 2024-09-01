@@ -20,12 +20,35 @@ class BaseMessageHandler:
         raise NotImplementedError("Handle method not implemented.")
 
 
-@BaseMessageHandler.register('type_a')
-class TypeAMessageHandler(BaseMessageHandler):
+@BaseMessageHandler.register('device_status')
+class DeviceStatusMessageHandler(BaseMessageHandler):
+    @staticmethod
+    def update_device(data):
+        device_id = data.get('device_id')
+        if device_id is None:
+            raise ValueError("Device ID is required")
+
+        # Retrieve the device instance
+        try:
+            device = Device.objects.get(pk=device_id)
+        except Device.DoesNotExist:
+            raise ValueError(f"Device with ID {device_id} does not exist")
+
+        # Update fields with data from JSON object
+        device.cpu_usage = data.get('cpu_usage', device.cpu_usage)
+        device.cpu_temp = data.get('cpu_temperature', device.cpu_temp)
+        device.mem_usage = data.get('memory_usage', device.mem_usage)
+        device.disk_usage = data.get('disk_usage', device.disk_usage)
+        device.network_sent = data.get('network_sent', device.network_sent)
+        device.network_received = data.get('network_received', device.network_received)
+        device.status_updated_at = timezone.now()  # Update the status_updated_at field
+
+        # Save the updated device instance
+        device.save()
+
     def handle(self, content):
-        # Business logic for handling 'type_a'
-        logging.info(f"Handling type A: {content}")
-        # Perform database operations or other logic here
+        logging.info(f"Handling device status message: {content}")
+        update_device(content) 
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
