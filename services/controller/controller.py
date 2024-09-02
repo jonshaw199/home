@@ -17,7 +17,7 @@ logging.basicConfig(
 #   - domain_id
 #   - <root topic>
 #   - domain_id/device_id/something/else...
-RESERVED_MSG_KEYS = ["domain", "device_id", "msg_type"]
+RESERVED_MSG_KEYS = ["msg_domain", "device_id", "msg_type"]
 ROOT_TOPIC = "ROOT_TOPIC"
 
 
@@ -51,7 +51,7 @@ class Controller:
 
     def build_topic(self, message):
         json_msg = json.loads(message)
-        vals = [json_msg[key] for key in RESERVED_MSG_KEYS if key in json_msg]
+        vals = [str(json_msg[key]) for key in RESERVED_MSG_KEYS if key in json_msg]
         return "/".join(vals) if vals else ROOT_TOPIC
 
     def start(self):
