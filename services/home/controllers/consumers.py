@@ -3,7 +3,7 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
-from datetime import timezone
+from datetime import datetime
 
 
 class BaseMessageHandler:
@@ -42,7 +42,7 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
         device.disk_usage = data.get("disk_usage", device.disk_usage)
         device.network_sent = data.get("network_sent", device.network_sent)
         device.network_received = data.get("network_received", device.network_received)
-        device.status_updated_at = timezone.now()  # Update the status_updated_at field
+        device.status_updated_at = datetime.now()  # Update the status_updated_at field
 
         # Save the updated device instance
         device.save()
