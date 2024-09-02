@@ -5,5 +5,12 @@
     "fields": {
       "name": "M5 Dial"
     }
+  },
+  {
+    "model": "devices.devicetype",
+    "pk": 2,
+    "fields": {
+      "name": "PC"
+    }
   }
 ]

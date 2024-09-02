@@ -7,5 +7,14 @@
       "location_id": 1,
       "device_type": 1
     }
+  },
+  {
+    "model": "devices.device",
+    "pk": 2,
+    "fields": {
+      "name": "Jon's ThinkPad",
+      "location": 1,
+      "device_type": 2
+    }
   }
 ]
