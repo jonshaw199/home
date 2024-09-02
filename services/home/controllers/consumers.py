@@ -3,7 +3,7 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
-from core.models import Location
+from datetime import timezone
 
 
 class BaseMessageHandler:
@@ -14,17 +14,18 @@ class BaseMessageHandler:
         def decorator(handler_cls):
             cls.handlers[message_type] = handler_cls()
             return handler_cls
+
         return decorator
 
     def handle(self, content):
         raise NotImplementedError("Handle method not implemented.")
 
 
-@BaseMessageHandler.register('device_status')
+@BaseMessageHandler.register("devices__device_status")
 class DeviceStatusMessageHandler(BaseMessageHandler):
     @staticmethod
     def update_device(data):
-        device_id = data.get('device_id')
+        device_id = data.get("device_id")
         if device_id is None:
             raise ValueError("Device ID is required")
 
@@ -35,12 +36,12 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
             raise ValueError(f"Device with ID {device_id} does not exist")
 
         # Update fields with data from JSON object
-        device.cpu_usage = data.get('cpu_usage', device.cpu_usage)
-        device.cpu_temp = data.get('cpu_temperature', device.cpu_temp)
-        device.mem_usage = data.get('memory_usage', device.mem_usage)
-        device.disk_usage = data.get('disk_usage', device.disk_usage)
-        device.network_sent = data.get('network_sent', device.network_sent)
-        device.network_received = data.get('network_received', device.network_received)
+        device.cpu_usage = data.get("cpu_usage", device.cpu_usage)
+        device.cpu_temp = data.get("cpu_temperature", device.cpu_temp)
+        device.mem_usage = data.get("memory_usage", device.mem_usage)
+        device.disk_usage = data.get("disk_usage", device.disk_usage)
+        device.network_sent = data.get("network_sent", device.network_sent)
+        device.network_received = data.get("network_received", device.network_received)
         device.status_updated_at = timezone.now()  # Update the status_updated_at field
 
         # Save the updated device instance
@@ -48,7 +49,7 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
 
     def handle(self, content):
         logging.info(f"Handling device status message: {content}")
-        update_device(content) 
+        DeviceStatusMessageHandler.update_device(content)
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
@@ -92,11 +93,14 @@ class ControllerConsumer(JsonWebsocketConsumer):
     def receive_json(self, content):
         logging.info(f"Received JSON message: {content}")
         self.handle_json(content)
-        self.broadcast_to_location_group(content) 
+        self.broadcast_to_location_group(content)
 
     def group_message(self, event):
-        # Send message to WebSocket
-        self.send_json(event["message"])
+        message = event["message"]
+
+        # Skip sending the message to the sender
+        if message.get("sender") != self.channel_name:
+            self.send_json(message)
 
     def get_accessible_location_ids(self, user):
         # TODO
@@ -104,13 +108,14 @@ class ControllerConsumer(JsonWebsocketConsumer):
         return [1]
 
     def handle_json(self, content):
-        message_type = content.get('type')
-        handler = BaseMessageHandler.handlers.get(message_type)
-
+        domain = content.get("msg_domain")
+        type = content.get("msg_type")
+        handler_id = "__".join([x for x in [domain, type] if x is not None])
+        handler = BaseMessageHandler.handlers.get(handler_id)
         if handler:
             handler.handle(content)
         else:
-            logging.warning(f"No handler found for message type: {message_type}")
+            logging.warning(f"No handler found for ID: {handler_id}")
 
     def broadcast_to_location_group(self, content):
         # Get location_id from content, otherwise query for location_id using given device_id
@@ -119,18 +124,26 @@ class ControllerConsumer(JsonWebsocketConsumer):
         if not location_id:
             device_id = content.get("device_id")
             if device_id:
-                data = Device.objects.filter(pk=device_id).values('location__id').first()
-                if 'location__id' in data:
-                    location_id = data['location__id']
+                data = (
+                    Device.objects.filter(pk=device_id).values("location__id").first()
+                )
+                if "location__id" in data:
+                    location_id = data["location__id"]
                 else:
-                    logging.warn(f'Location ID not found for device ID: {device_id}')
+                    logging.warn(f"Location ID not found for device ID: {device_id}")
         if location_id:
             group_name = f"location_{location_id}_group"
             if group_name in self.group_names:
+                logging.info(
+                    f"Broadcasting message to group; message: {content}; group: {group_name}"
+                )
+                content["sender"] = self.channel_name
                 async_to_sync(self.channel_layer.group_send)(
                     group_name, {"type": "group_message", "message": content}
                 )
             else:
                 logging.warn(f"User not part of group for location {location_id}")
         else:
-            logging.error("Location ID not provided or cannot be determined; unable to broadcast message")
+            logging.error(
+                "Location ID not provided or cannot be determined; unable to broadcast message"
+            )
