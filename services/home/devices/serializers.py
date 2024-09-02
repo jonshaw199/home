@@ -6,7 +6,7 @@ from .models import Device, DeviceType
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        fields = ["id", "name", "device_type"]
+        fields = ["device_type", "id", "location", "name"]
 
 class DeviceTypeSerializer(serializers.ModelSerializer):
     class Meta:
