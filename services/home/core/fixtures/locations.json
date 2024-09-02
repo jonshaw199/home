@@ -1,0 +1,10 @@
+[
+  {
+    "model": "core.location",
+    "pk": 1,
+    "fields": {
+      "name": "Jon's House",
+      "organization": 1
+    }
+  }
+]

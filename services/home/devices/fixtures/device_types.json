@@ -1,0 +1,9 @@
+[
+  {
+    "model": "devices.devicetype",
+    "pk": 1,
+    "fields": {
+      "name": "M5 Dial"
+    }
+  }
+]
