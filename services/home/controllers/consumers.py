@@ -119,9 +119,9 @@ class ControllerConsumer(JsonWebsocketConsumer):
         if not location_id:
             device_id = content.get("device_id")
             if device_id:
-                data = Device.objects.filter(pk=1).values('location__id').first()
-                if 'location_id' in data:
-                    location_id = data['location_id']
+                data = Device.objects.filter(pk=device_id).values('location__id').first()
+                if 'location__id' in data:
+                    location_id = data['location__id']
                 else:
                     logging.warn(f'Location ID not found for device ID: {device_id}')
         if location_id:
