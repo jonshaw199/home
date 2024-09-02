@@ -1,10 +1,11 @@
-import time
-import psutil
 import paho.mqtt.client as mqtt
+import psutil
+import json
+import time
+import logging
 from dotenv import load_dotenv
 import os
 import json
-import logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,12 +24,29 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 
-
 # MQTT client setup
 client = mqtt.Client()
 
-# Connect to MQTT broker
+
+# Define the on_disconnect callback
+def on_disconnect(client, userdata, rc):
+    logging.warning(f"Disconnected with result code {rc}. Attempting to reconnect.")
+    while True:
+        try:
+            client.reconnect()
+            logging.info("Reconnected successfully.")
+            break
+        except Exception as e:
+            logging.error(f"Reconnection failed: {e}")
+            time.sleep(5)  # Wait before retrying
+
+
+# Set the callback function
+client.on_disconnect = on_disconnect
+
+# Connect to MQTT broker and start the network loop
 client.connect(mqtt_broker_host, mqtt_broker_port, 60)
+client.loop_start()  # Start the loop in a separate thread
 
 
 def publish_system_metrics():
