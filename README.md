@@ -1,24 +1,34 @@
-## Local Dev
+## Local dev
 
-### Run web server, controller, and MQTT broker
+### Web server, controller, MQTT broker, and system reporter
 
-`docker compose up`
+`docker compose up -d`
 
-### Run clients
+### Web/mobile clients
 
 #### Android
 
 ``` sh
 cd client
-npm run android
+npm i
+npm run <android | ios | web>
 adb -s <emulator-name> reverse tcp:8000 tcp:8000
 ```
 
-### Run IOT devices
+### Devices
+
+Requires ESP-IDF v5.1.4
+
+#### Dial
+
+```sh
+cd esp/dial
+idf.py build flash monitor
+```
 
 #### Lights
 
 ``` sh
-cd light
+cd esp/lights
 idf.py build flash monitor
 ```
