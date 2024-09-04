@@ -10,3 +10,6 @@ sdkconfig
 sdkconfig.old
 
 managed_components
+components/arduino
+components/fastled
+
