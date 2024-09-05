@@ -1,6 +1,9 @@
 #include "mqtt_client.hpp"
 #include <esp_log.h>
 #include <algorithm>
+#include <vector>
+#include <string>
+#include <cstring> // For strtok
 
 static const char* TAG = "MqttClient";
 
@@ -95,7 +98,7 @@ void MqttClient::mqtt_event_handler(void* handler_args, esp_event_base_t base, i
                     if (self->topic_matches(topic, wildcard_topic)) {
                         self->topic_callbacks[wildcard_topic](data);
                     } else {
-                        ESP_LOGW(TAG, "No callback exists to handle MQTT_EVENT_DATA");
+                        ESP_LOGW(TAG, "No callback exists to handle MQTT_EVENT_DATA for topic: %s", topic.c_str());
                     }
                 }
             }
@@ -110,26 +113,47 @@ void MqttClient::mqtt_event_handler(void* handler_args, esp_event_base_t base, i
     }
 }
 
+// Helper function to split a string by a delimiter
+std::vector<std::string> split(const std::string &str, char delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = str.find(delimiter);
+    
+    while (end != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + 1;
+        end = str.find(delimiter, start);
+    }
+    
+    tokens.push_back(str.substr(start));
+    return tokens;
+}
+
 // Helper function to check if a topic matches a wildcard pattern
 bool MqttClient::topic_matches(const std::string& topic, const std::string& pattern) {
-    // Implement topic matching logic
-    // For simplicity, this example only handles basic wildcards: # and +
-    // More sophisticated matching can be added as needed
+    std::vector<std::string> topic_levels = split(topic, '/');
+    std::vector<std::string> pattern_levels = split(pattern, '/');
 
-    if (pattern == "#") return true; // Matches everything
-    size_t pos = pattern.find('#');
-    if (pos != std::string::npos) {
-        // '#' matches everything after the position
-        return topic.rfind(pattern.substr(0, pos), 0) == 0;
+    // If levels don't match in size and there's no wildcard '#', it's not a match
+    if (pattern_levels.size() != topic_levels.size() && pattern_levels.back() != "#") {
+        return false;
     }
-    pos = pattern.find('+');
-    if (pos != std::string::npos) {
-        // '+' matches exactly one level
-        size_t next_pos = pattern.find('/', pos);
-        if (next_pos != std::string::npos) {
-            return topic.compare(0, next_pos, pattern, 0, next_pos) == 0 &&
-                   topic.compare(next_pos + 1, std::string::npos, pattern, next_pos + 1, std::string::npos) == 0;
+
+    // Compare each level
+    for (size_t i = 0; i < pattern_levels.size(); i++) {
+        const std::string& pattern_level = pattern_levels[i];
+        const std::string& topic_level = topic_levels[i];
+
+        if (pattern_level == "#") {
+            return true; // Matches anything after this point
+        } else if (pattern_level == "+") {
+            continue; // Matches exactly one level, so skip to next
+        } else if (pattern_level != topic_level) {
+            return false; // No match
         }
     }
-    return false; // No match
+
+    // If all levels matched, return true
+    return true;
 }
+
