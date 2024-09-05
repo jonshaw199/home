@@ -4,3 +4,15 @@
 [submodule "light/components/arduino"]
 	path = light/components/arduino
 	url = https://github.com/espressif/arduino-esp32.git
+[submodule "esp/common_components/M5GFX"]
+	path = esp/common_components/M5GFX
+	url = https://github.com/m5stack/M5GFX.git
+[submodule "esp/common_components/M5Unified"]
+	path = esp/common_components/M5Unified
+	url = https://github.com/m5stack/M5Unified.git
+[submodule "esp/common_components/NTPClient"]
+	path = esp/common_components/NTPClient
+	url = https://github.com/jonshaw199/NTPClient.git
+[submodule "esp/common_components/M5Dial"]
+	path = esp/common_components/M5Dial
+	url = https://github.com/jonshaw199/M5Dial.git
