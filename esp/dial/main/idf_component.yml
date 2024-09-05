@@ -1,5 +1,6 @@
 ## IDF Component Manager Manifest File
 dependencies:
+  espressif/arduino-esp32: "^3.0.0-rc1"
   ## Required IDF version
   idf:
     version: ">=4.1.0"

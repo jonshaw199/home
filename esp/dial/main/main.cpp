@@ -7,6 +7,7 @@
 #include "mqtt_client.hpp"
 #include "nvs_manager.h"
 #include "config_manager.h"
+#include "M5Dial.h"
 
 static const char *TAG = "main";
 
@@ -72,6 +73,31 @@ void wifi_task(void *pvParameter) {
     }
 }
 
+void draw_function(LovyanGFX* gfx) {
+    int x      = rand() % gfx->width();
+    int y      = rand() % gfx->height();
+    int r      = (gfx->width() >> 4) + 2;
+    uint16_t c = rand();
+    gfx->fillRect(x - r, y - r, r * 2, r * 2, c);
+}
+
+// Function to update display
+void display_task(void *pvParameter) {
+    ESP_LOGI(TAG, "Display task started");
+
+    while (1) {
+        // Draw
+        int x      = rand() % M5Dial.Display.width();
+        int y      = rand() % M5Dial.Display.height();
+        int r      = (M5Dial.Display.width() >> 4) + 2;
+        uint16_t c = rand();
+        M5Dial.Display.fillCircle(x, y, r, c);
+        draw_function(&M5Dial.Display);
+        // Sleep?
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
 void init_config() {
     // Get Wi-Fi credentials from ConfigManager
     std::string ssid = config_manager.get("WIFI_SSID");
@@ -100,6 +126,8 @@ void init_config() {
 
 extern "C" void app_main(void) {
     init_config();
+  
+    M5Dial.begin();
 
     // Create a queue to communicate Wi-Fi connection status
     wifi_connected_queue = xQueueCreate(1, sizeof(bool));
@@ -112,6 +140,7 @@ extern "C" void app_main(void) {
     // Create Wi-Fi and MQTT tasks
     xTaskCreate(wifi_task, "wifi_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(mqtt_task, "mqtt_task", 4096, nullptr, 5, &mqtt_task_handle);
+    xTaskCreate(display_task, "display_task", 4096, nullptr, 5, nullptr);
 
     // Ensure the MQTT task is created successfully
     if (mqtt_task_handle == nullptr) {

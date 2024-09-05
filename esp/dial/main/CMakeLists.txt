@@ -8,5 +8,6 @@ idf_component_register(
     INCLUDE_DIRS
         "."
         "${CMAKE_SOURCE_DIR}/../common/include"
-    REQUIRES mqtt esp_wifi nvs_flash esp_event
+    REQUIRES mqtt esp_wifi nvs_flash esp_event M5Dial
 )
+
