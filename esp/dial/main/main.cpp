@@ -140,7 +140,8 @@ extern "C" void app_main(void) {
     // Create Wi-Fi and MQTT tasks
     xTaskCreate(wifi_task, "wifi_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(mqtt_task, "mqtt_task", 4096, nullptr, 5, &mqtt_task_handle);
-    xTaskCreate(display_task, "display_task", 4096, nullptr, 5, nullptr);
+    // TODO
+    //xTaskCreate(display_task, "display_task", 4096, nullptr, 5, nullptr);
 
     // Ensure the MQTT task is created successfully
     if (mqtt_task_handle == nullptr) {

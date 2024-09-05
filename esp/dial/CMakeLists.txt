@@ -5,10 +5,6 @@ cmake_minimum_required(VERSION 3.5)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 # Add this at the beginning or in the appropriate section
-set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/../common)
 set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/../common_components)
-
-# Include the common code directory
-include_directories(${CMAKE_SOURCE_DIR}/../common/include)
 
 project(dial)
