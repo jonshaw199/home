@@ -6,7 +6,7 @@
 	url = https://github.com/espressif/arduino-esp32.git
 [submodule "esp/common_components/M5GFX"]
 	path = esp/common_components/M5GFX
-	url = https://github.com/m5stack/M5GFX.git
+	url = https://github.com/jonshaw199/M5GFX.git
 [submodule "esp/common_components/M5Unified"]
 	path = esp/common_components/M5Unified
 	url = https://github.com/m5stack/M5Unified.git
