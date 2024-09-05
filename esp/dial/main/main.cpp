@@ -8,6 +8,9 @@
 #include "nvs_manager.h"
 #include "config_manager.h"
 #include "M5Dial.h"
+#include <map>
+#include "cJSON.h"
+#include <mutex>
 
 static const char *TAG = "main";
 
@@ -19,6 +22,98 @@ QueueHandle_t wifi_connected_queue;
 
 // Initialize ConfigManager
 ConfigManager config_manager;
+
+struct DeviceStatusMessage {
+    std::string msg_domain = "";
+    int device_id = -1;  // -1 represents null
+    std::string msg_type = "";
+    float cpu_usage = -1.0;  
+    float cpu_temperature = -1.0;  
+    float memory_usage = -1.0;  
+    float disk_usage = -1.0;  
+    int network_sent = -1;  
+    int network_received = -1;  
+};
+
+// Map device ID to last status message
+std::map<int, DeviceStatusMessage> status_message_map;
+
+std::mutex status_message_map_mutex; // Protects status_message_map
+
+void handle_device_status_message(const DeviceStatusMessage msg) {
+    const std::lock_guard<std::mutex> lock(status_message_map_mutex);
+    status_message_map[msg.device_id] = msg;
+}
+
+DeviceStatusMessage parse_device_status_message(const std::string& json_str) {
+    DeviceStatusMessage msg;
+
+    // Parse the JSON string
+    cJSON* root = cJSON_Parse(json_str.c_str());
+    if (root == nullptr) {
+        // Handle JSON parse error
+        return msg;  // Return default-initialized message with 'null' values
+    }
+
+    // Parse msg_domain (string)
+    cJSON* msg_domain = cJSON_GetObjectItem(root, "msg_domain");
+    if (cJSON_IsString(msg_domain)) {
+        msg.msg_domain = msg_domain->valuestring;
+    }
+
+    // Parse device_id (int)
+    cJSON* device_id = cJSON_GetObjectItem(root, "device_id");
+    if (cJSON_IsNumber(device_id)) {
+        msg.device_id = device_id->valueint;
+    }
+
+    // Parse msg_type (string)
+    cJSON* msg_type = cJSON_GetObjectItem(root, "msg_type");
+    if (cJSON_IsString(msg_type)) {
+        msg.msg_type = msg_type->valuestring;
+    }
+
+    // Parse cpu_usage (float)
+    cJSON* cpu_usage = cJSON_GetObjectItem(root, "cpu_usage");
+    if (cJSON_IsNumber(cpu_usage)) {
+        msg.cpu_usage = static_cast<float>(cpu_usage->valuedouble);
+    }
+
+    // Parse cpu_temperature (float)
+    cJSON* cpu_temperature = cJSON_GetObjectItem(root, "cpu_temperature");
+    if (cJSON_IsNumber(cpu_temperature)) {
+        msg.cpu_temperature = static_cast<float>(cpu_temperature->valuedouble);
+    }
+
+    // Parse memory_usage (float)
+    cJSON* memory_usage = cJSON_GetObjectItem(root, "memory_usage");
+    if (cJSON_IsNumber(memory_usage)) {
+        msg.memory_usage = static_cast<float>(memory_usage->valuedouble);
+    }
+
+    // Parse disk_usage (float)
+    cJSON* disk_usage = cJSON_GetObjectItem(root, "disk_usage");
+    if (cJSON_IsNumber(disk_usage)) {
+        msg.disk_usage = static_cast<float>(disk_usage->valuedouble);
+    }
+
+    // Parse network_sent (int)
+    cJSON* network_sent = cJSON_GetObjectItem(root, "network_sent");
+    if (cJSON_IsNumber(network_sent)) {
+        msg.network_sent = network_sent->valueint;
+    }
+
+    // Parse network_received (int)
+    cJSON* network_received = cJSON_GetObjectItem(root, "network_received");
+    if (cJSON_IsNumber(network_received)) {
+        msg.network_received = network_received->valueint;
+    }
+
+    // Clean up the cJSON object
+    cJSON_Delete(root);
+
+    return msg;
+}
 
 // Function to initialize MQTT
 void mqtt_task(void *pvParameter) {
@@ -32,8 +127,10 @@ void mqtt_task(void *pvParameter) {
 
             std::string broker_host = config_manager.get("MQTT_BROKER");
             MqttClient mqtt_client(broker_host);
-            mqtt_client.subscribe("#", [](const std::string& data) {
-                ESP_LOGI(TAG, "Received data on topic #: %s", data.c_str());
+            mqtt_client.subscribe("devices/+/device_status", [](const std::string& data) {
+                ESP_LOGI(TAG, "Received data on topic devices/+/device_status: %s", data.c_str());
+                DeviceStatusMessage msg = parse_device_status_message(data);
+                handle_device_status_message(msg);
             });
 
             // Keep the MQTT task alive

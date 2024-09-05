@@ -8,5 +8,6 @@ idf_component_register(
         NvsManager
         ConfigManager
         esp_event
+        json
 )
 
