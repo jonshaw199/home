@@ -7,6 +7,9 @@
 #include "mqtt_client.hpp"
 #include "nvs_manager.h"
 #include "config_manager.h"
+// Must come before M5Dial.h
+#include "SPIFFS.h" // Needed for drawing images using M5GFX
+// Must come after SPIFFS.h
 #include "M5Dial.h"
 #include <map>
 #include "cJSON.h"
@@ -184,7 +187,15 @@ DeviceStatusMessage get_value_at_index(const std::map<int, DeviceStatusMessage> 
 
 void draw_home(M5Canvas &canvas)
 {
-    canvas.drawString("Home", 100, 100);
+    const char *png_file = "/fallout boy.png";
+    if (SPIFFS.exists(png_file))
+    {
+        canvas.drawPngFile(SPIFFS, png_file, 50, 50);
+    }
+    else
+    {
+        ESP_LOGE("PNG", "PNG file not found");
+    }
 }
 
 std::string float_to_str(float num, std::string postfix = "")
@@ -245,15 +256,18 @@ void draw_status(M5Canvas &canvas, DeviceStatusMessage &msg)
 
 void draw(M5Canvas &canvas)
 {
-    const std::lock_guard<std::mutex> page_idx_mutex_lock(page_idx_mutex);
-    const std::lock_guard<std::mutex> status_message_map_mutex_lock(status_message_map_mutex);
+    page_idx_mutex.lock();
     if (page_idx)
     {
+        status_message_map_mutex.lock();
         DeviceStatusMessage msg = get_value_at_index(status_message_map, page_idx - 1);
+        page_idx_mutex.unlock();
+        status_message_map_mutex.unlock();
         draw_status(canvas, msg);
     }
     else
     {
+        page_idx_mutex.unlock();
         draw_home(canvas);
     }
 }
@@ -364,9 +378,24 @@ void init_config()
     }
 }
 
+// Need to use arduino-esp32 SPIFFS since M5GFX is tightly coupled to it
+void init_spiffs()
+{
+    if (!SPIFFS.begin(false, "/storage"))
+    { // 'true' to format SPIFFS if mount fails
+        ESP_LOGE("SPIFFS", "Failed to mount SPIFFS");
+        return;
+    }
+
+    // Log memory information
+    ESP_LOGI("SPIFFS", "Total bytes: %u, Used bytes: %u", SPIFFS.totalBytes(), SPIFFS.usedBytes());
+}
+
 extern "C" void app_main(void)
 {
     init_config();
+
+    init_spiffs();
 
     auto m5_cfg = M5.config();
     M5Dial.begin(m5_cfg, true, false);
