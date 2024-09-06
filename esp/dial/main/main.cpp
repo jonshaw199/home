@@ -11,6 +11,9 @@
 #include <map>
 #include "cJSON.h"
 #include <mutex>
+#include <vector>
+#include <algorithm>
+#include "esp_timer.h"
 
 static const char *TAG = "main";
 
@@ -32,86 +35,56 @@ struct DeviceStatusMessage {
     float memory_usage = -1.0;  
     float disk_usage = -1.0;  
     int network_sent = -1;  
-    int network_received = -1;  
+    int network_received = -1;
+    int64_t first_received_at = -1;
 };
 
 // Map device ID to last status message
 std::map<int, DeviceStatusMessage> status_message_map;
-
 std::mutex status_message_map_mutex; // Protects status_message_map
 
-void handle_device_status_message(const DeviceStatusMessage msg) {
+int page_idx = 0;
+std::mutex page_idx_mutex; 
+
+void handle_device_status_message(DeviceStatusMessage msg) {
     const std::lock_guard<std::mutex> lock(status_message_map_mutex);
+    if (!status_message_map.contains(msg.device_id)) {
+        msg.first_received_at = esp_timer_get_time();
+    }
     status_message_map[msg.device_id] = msg;
 }
 
 DeviceStatusMessage parse_device_status_message(const std::string& json_str) {
     DeviceStatusMessage msg;
-
-    // Parse the JSON string
     cJSON* root = cJSON_Parse(json_str.c_str());
-    if (root == nullptr) {
-        // Handle JSON parse error
-        return msg;  // Return default-initialized message with 'null' values
-    }
+    if (!root) return msg;  // Return default if parsing fails
 
-    // Parse msg_domain (string)
-    cJSON* msg_domain = cJSON_GetObjectItem(root, "msg_domain");
-    if (cJSON_IsString(msg_domain)) {
-        msg.msg_domain = msg_domain->valuestring;
-    }
+    auto get_string = [&](const char* key) -> std::string {
+        cJSON* item = cJSON_GetObjectItem(root, key);
+        return (item && cJSON_IsString(item)) ? item->valuestring : "";
+    };
 
-    // Parse device_id (int)
-    cJSON* device_id = cJSON_GetObjectItem(root, "device_id");
-    if (cJSON_IsNumber(device_id)) {
-        msg.device_id = device_id->valueint;
-    }
+    auto get_float = [&](const char* key) -> float {
+        cJSON* item = cJSON_GetObjectItem(root, key);
+        return (item && cJSON_IsNumber(item)) ? static_cast<float>(item->valuedouble) : -1.0;
+    };
 
-    // Parse msg_type (string)
-    cJSON* msg_type = cJSON_GetObjectItem(root, "msg_type");
-    if (cJSON_IsString(msg_type)) {
-        msg.msg_type = msg_type->valuestring;
-    }
+    auto get_int = [&](const char* key) -> int {
+        cJSON* item = cJSON_GetObjectItem(root, key);
+        return (item && cJSON_IsNumber(item)) ? item->valueint : -1;
+    };
 
-    // Parse cpu_usage (float)
-    cJSON* cpu_usage = cJSON_GetObjectItem(root, "cpu_usage");
-    if (cJSON_IsNumber(cpu_usage)) {
-        msg.cpu_usage = static_cast<float>(cpu_usage->valuedouble);
-    }
+    msg.msg_domain = get_string("msg_domain");
+    msg.device_id = get_int("device_id");
+    msg.msg_type = get_string("msg_type");
+    msg.cpu_usage = get_float("cpu_usage");
+    msg.cpu_temperature = get_float("cpu_temperature");
+    msg.memory_usage = get_float("memory_usage");
+    msg.disk_usage = get_float("disk_usage");
+    msg.network_sent = get_int("network_sent");
+    msg.network_received = get_int("network_received");
 
-    // Parse cpu_temperature (float)
-    cJSON* cpu_temperature = cJSON_GetObjectItem(root, "cpu_temperature");
-    if (cJSON_IsNumber(cpu_temperature)) {
-        msg.cpu_temperature = static_cast<float>(cpu_temperature->valuedouble);
-    }
-
-    // Parse memory_usage (float)
-    cJSON* memory_usage = cJSON_GetObjectItem(root, "memory_usage");
-    if (cJSON_IsNumber(memory_usage)) {
-        msg.memory_usage = static_cast<float>(memory_usage->valuedouble);
-    }
-
-    // Parse disk_usage (float)
-    cJSON* disk_usage = cJSON_GetObjectItem(root, "disk_usage");
-    if (cJSON_IsNumber(disk_usage)) {
-        msg.disk_usage = static_cast<float>(disk_usage->valuedouble);
-    }
-
-    // Parse network_sent (int)
-    cJSON* network_sent = cJSON_GetObjectItem(root, "network_sent");
-    if (cJSON_IsNumber(network_sent)) {
-        msg.network_sent = network_sent->valueint;
-    }
-
-    // Parse network_received (int)
-    cJSON* network_received = cJSON_GetObjectItem(root, "network_received");
-    if (cJSON_IsNumber(network_received)) {
-        msg.network_received = network_received->valueint;
-    }
-
-    // Clean up the cJSON object
     cJSON_Delete(root);
-
     return msg;
 }
 
@@ -136,9 +109,9 @@ void mqtt_task(void *pvParameter) {
             // Keep the MQTT task alive
             while (1) {
                 vTaskDelay(pdMS_TO_TICKS(100));
-            }
+            }            ESP_LOGE(TAG, "Failed to connect to Wi-Fi. MQTT initialization aborted.");
+
         } else {
-            ESP_LOGE(TAG, "Failed to connect to Wi-Fi. MQTT initialization aborted.");
             vTaskDelete(nullptr);
         }
     }
@@ -170,28 +143,114 @@ void wifi_task(void *pvParameter) {
     }
 }
 
-void draw_function(LovyanGFX* gfx) {
-    int x      = rand() % gfx->width();
-    int y      = rand() % gfx->height();
-    int r      = (gfx->width() >> 4) + 2;
-    uint16_t c = rand();
-    gfx->fillRect(x - r, y - r, r * 2, r * 2, c);
+// Function to get value at a specific index by sorting
+DeviceStatusMessage get_value_at_index(const std::map<int, DeviceStatusMessage>& m, int i) {
+    // Step 1: Use a multimap to sort by `first_received_at`
+    std::multimap<long, DeviceStatusMessage> sorted_map;
+    for (const auto& pair : m) {
+        sorted_map.emplace(pair.second.first_received_at, pair.second);
+    }
+
+    // Step 2: Iterate over the sorted map and get the value at index `i`
+    auto it = sorted_map.begin();
+    std::advance(it, i);  // Move the iterator to the `i`-th element
+    
+    if (it != sorted_map.end()) {
+        return it->second;  // Return a copy of the value
+    }
+    
+    return DeviceStatusMessage();  // Return default if index is out of bounds
+}
+
+void draw_home(M5Canvas& canvas) {
+    canvas.drawString("Home", 100, 100);
+}
+
+void draw_searching(M5Canvas& canvas) {
+    canvas.drawString("Searching", 100, 100);
+}
+
+void draw_status(M5Canvas& canvas, DeviceStatusMessage& msg) {
+    canvas.drawString("Status", 100, 100);
+}
+
+void draw(M5Canvas& canvas) {
+    const std::lock_guard<std::mutex> page_idx_mutex_lock(page_idx_mutex);
+    const std::lock_guard<std::mutex> status_message_map_mutex_lock(status_message_map_mutex);
+    if (status_message_map.size()) {
+        if (!page_idx) {
+            draw_home(canvas);
+        } else if (page_idx <= status_message_map.size()) {
+            DeviceStatusMessage msg = get_value_at_index(status_message_map, page_idx - 1);
+            draw_status(canvas, msg);
+        } else {
+            draw_searching(canvas);
+        }
+    } else {
+        draw_searching(canvas);
+    }
 }
 
 // Function to update display
 void display_task(void *pvParameter) {
     ESP_LOGI(TAG, "Display task started");
 
+    M5Dial.Display.fillScreen(TFT_BLACK);
+    M5Canvas canvas(&M5Dial.Display);
+    canvas.setTextFont(&fonts::Orbitron_Light_32);
+    canvas.setTextColor(GREEN);
+
     while (1) {
-        // Draw
-        int x      = rand() % M5Dial.Display.width();
-        int y      = rand() % M5Dial.Display.height();
-        int r      = (M5Dial.Display.width() >> 4) + 2;
-        uint16_t c = rand();
-        M5Dial.Display.fillCircle(x, y, r, c);
-        draw_function(&M5Dial.Display);
-        // Sleep?
+        canvas.createSprite(M5Dial.Display.width(), M5Dial.Display.height());
+        draw(canvas);
+
+        M5Dial.Display.startWrite();
+        canvas.pushSprite(&M5Dial.Display, 0, 0);
+        M5Dial.Display.endWrite();
+
         vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void update_page_idx(int delta) {
+    const std::lock_guard<std::mutex> page_idx_mutex_lock(page_idx_mutex);
+    const std::lock_guard<std::mutex> status_message_map_mutex_lock(status_message_map_mutex);
+    if (delta > 0) {
+        int num_devices = status_message_map.size();
+        int max_idx = num_devices ? num_devices + 1 : 0;
+        page_idx = min(page_idx + delta, max_idx);
+    } else if (delta < 0) {
+        page_idx = max(page_idx + delta, 0);
+    }
+}
+
+void m5dial_task(void *pvParameter) {
+    ESP_LOGI(TAG, "M5Dial task started");
+
+    long oldPosition = 0;
+
+    while (1) {
+        M5Dial.update();
+
+        // Handle encoder
+        long newPosition = M5Dial.Encoder.read();
+        if (newPosition != oldPosition) {
+            ESP_LOGI(TAG, "New position: %ld", newPosition);
+            M5Dial.Speaker.tone(8000, 7);
+
+            int delta = newPosition - oldPosition;
+            update_page_idx(delta);
+
+            oldPosition = newPosition;
+        }
+        if (M5Dial.BtnA.wasPressed()) {
+            M5Dial.Encoder.readAndReset();
+        }
+        if (M5Dial.BtnA.pressedFor(5000)) {
+            M5Dial.Encoder.write(100);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
@@ -224,23 +283,14 @@ void init_config() {
 extern "C" void app_main(void) {
     init_config();
   
-    M5Dial.begin();
+    auto m5_cfg = M5.config();
+    M5Dial.begin(m5_cfg, true, false);
 
     // Create a queue to communicate Wi-Fi connection status
     wifi_connected_queue = xQueueCreate(1, sizeof(bool));
 
-    if (wifi_connected_queue == nullptr) {
-        ESP_LOGE(TAG, "Failed to create queue");
-        return;
-    }
-
-    // Create Wi-Fi and MQTT tasks
     xTaskCreate(wifi_task, "wifi_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(mqtt_task, "mqtt_task", 4096, nullptr, 5, &mqtt_task_handle);
     xTaskCreate(display_task, "display_task", 4096, nullptr, 5, nullptr);
-
-    // Ensure the MQTT task is created successfully
-    if (mqtt_task_handle == nullptr) {
-        ESP_LOGE(TAG, "Failed to create MQTT task");
-    }
+    xTaskCreate(m5dial_task, "m5dial_task", 4096, nullptr, 5, nullptr);
 }
