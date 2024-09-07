@@ -17,6 +17,7 @@
 #include <vector>
 #include <algorithm>
 #include "esp_timer.h"
+#include "ntp_client.h"
 
 static const char *TAG = "main";
 
@@ -28,6 +29,9 @@ QueueHandle_t wifi_connected_queue;
 
 // Initialize ConfigManager
 ConfigManager config_manager;
+
+// Initialize NTPClient
+NTPClient ntp_client;
 
 // Delayed initialization for these
 WiFiConnector *wifi_connector;
@@ -117,12 +121,25 @@ void mqtt_task(void *pvParameter)
             ESP_LOGI(TAG, "Connected to Wi-Fi. Initializing MQTT...");
 
             std::string broker_host = config_manager.get("MQTT_BROKER");
-            mqtt_client = new MqttClient(broker_host);
-            mqtt_client->subscribe("devices/+/device_status", [](const std::string &data)
-                                   {
+
+            auto handle_msg = [](const std::string &data)
+            {
                 ESP_LOGI(TAG, "Received data on topic devices/+/device_status: %s", data.c_str());
                 DeviceStatusMessage msg = parse_device_status_message(data);
-                handle_device_status_message(msg); });
+                handle_device_status_message(msg);
+            };
+
+            auto subscribe = [&handle_msg]()
+            {
+                mqtt_client->subscribe("devices/+/device_status", handle_msg);
+            };
+
+            auto onConnect = [&subscribe]()
+            {
+                subscribe();
+            };
+
+            mqtt_client = new MqttClient(broker_host, onConnect);
         }
         else
         {
@@ -179,15 +196,25 @@ DeviceStatusMessage get_value_at_index(const std::map<int, DeviceStatusMessage> 
 
 void draw_home(M5Canvas &canvas)
 {
+    // Image
     const char *png_file = "/fallout boy.png";
     if (SPIFFS.exists(png_file))
     {
-        canvas.drawPngFile(SPIFFS, png_file, 50, 50);
+        canvas.drawPngFile(SPIFFS, png_file, 20, 55);
     }
     else
     {
         ESP_LOGE("PNG", "PNG file not found");
     }
+
+    // Time
+    canvas.drawString(ntp_client.get_time_str("%H:%M:%S").c_str(), 100, 55);
+    // Date
+    canvas.drawString(ntp_client.get_time_str("%Y-%m-%d").c_str(), 100, 75);
+
+    // # Connected Devices
+    // # Alerts
+    // Overall system status
 }
 
 std::string float_to_str(float num, std::string postfix = "")

@@ -5,11 +5,13 @@
 #include <string>
 #include <cstring> // For strtok
 
-static const char* TAG = "MqttClient";
+static const char *TAG = "MqttClient";
 
-MqttClient::MqttClient(const std::string& broker_url) {
+MqttClient::MqttClient(const std::string &broker_url, std::function<void()> onConnectCallback)
+    : onConnectCallback(onConnectCallback)
+{
     esp_mqtt_client_config_t mqtt_cfg = {};
-    mqtt_cfg.broker.address.uri = broker_url.c_str(); 
+    mqtt_cfg.broker.address.uri = broker_url.c_str();
     mqtt_cfg.session.protocol_ver = MQTT_PROTOCOL_V_5;
 
     // Initialize MQTT client
@@ -40,19 +42,23 @@ MqttClient::MqttClient(const std::string& broker_url) {
     esp_mqtt_client_start(client);
 }
 
-MqttClient::~MqttClient() {
-    if (client) {
+MqttClient::~MqttClient()
+{
+    if (client)
+    {
         esp_mqtt_client_stop(client);
         esp_mqtt_client_destroy(client);
         client = nullptr;
     }
 }
 
-void MqttClient::subscribe(const std::string& topic, std::function<void(const std::string&)> callback) {
+void MqttClient::subscribe(const std::string &topic, std::function<void(const std::string &)> callback)
+{
     topic_callbacks[topic] = callback;
 
     // If the topic has a wildcard, store it for pattern matching
-    if (topic.find('#') != std::string::npos || topic.find('+') != std::string::npos) {
+    if (topic.find('#') != std::string::npos || topic.find('+') != std::string::npos)
+    {
         wildcard_topics.push_back(topic);
     }
 
@@ -60,95 +66,122 @@ void MqttClient::subscribe(const std::string& topic, std::function<void(const st
     ESP_LOGI(TAG, "Subscribed to topic: %s", topic.c_str());
 }
 
-void MqttClient::mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data) {
-    MqttClient* self = static_cast<MqttClient*>(handler_args);
+void MqttClient::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+    MqttClient *self = static_cast<MqttClient *>(handler_args);
     esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
 
-    switch (event_id) {
-        case MQTT_EVENT_CONNECTED:
-            ESP_LOGI(TAG, "MQTT Connected");
-            break;
-        case MQTT_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "MQTT Disconnected");
-            break;
-        case MQTT_EVENT_SUBSCRIBED:
-            if (event->topic) {
-                ESP_LOGI(TAG, "Subscription confirmed for topic: %s", event->topic);
-            } else {
-                ESP_LOGI(TAG, "Subscription confirmed (unknown topic)");
-            }
-            break;
-        case MQTT_EVENT_UNSUBSCRIBED:
-            ESP_LOGI(TAG, "Unsubscribed from topic");
-            break;
-        case MQTT_EVENT_PUBLISHED:
-            ESP_LOGI(TAG, "Message published");
-            break;
-        case MQTT_EVENT_DATA:
+    switch (event_id)
+    {
+    case MQTT_EVENT_CONNECTED:
+        ESP_LOGI(TAG, "MQTT Connected");
+        // Invoke the callback if it's set
+        if (self->onConnectCallback)
         {
-            std::string topic(event->topic, event->topic_len);
-            std::string data(event->data, event->data_len);
+            self->onConnectCallback();
+        }
+        break;
+    case MQTT_EVENT_DISCONNECTED:
+        ESP_LOGI(TAG, "MQTT Disconnected");
+        break;
+    case MQTT_EVENT_SUBSCRIBED:
+        if (event->topic)
+        {
+            ESP_LOGI(TAG, "Subscription confirmed for topic: %s", event->topic);
+        }
+        else
+        {
+            ESP_LOGI(TAG, "Subscription confirmed (unknown topic)");
+        }
+        break;
+    case MQTT_EVENT_UNSUBSCRIBED:
+        ESP_LOGI(TAG, "Unsubscribed from topic");
+        break;
+    case MQTT_EVENT_PUBLISHED:
+        ESP_LOGI(TAG, "Message published");
+        break;
+    case MQTT_EVENT_DATA:
+    {
+        std::string topic(event->topic, event->topic_len);
+        std::string data(event->data, event->data_len);
 
-            // Check for exact match first
-            if (self->topic_callbacks.find(topic) != self->topic_callbacks.end()) {
-                self->topic_callbacks[topic](data);
-            } else {
-                // Check for wildcard matches
-                for (const auto& wildcard_topic : self->wildcard_topics) {
-                    if (self->topic_matches(topic, wildcard_topic)) {
-                        self->topic_callbacks[wildcard_topic](data);
-                    } else {
-                        ESP_LOGW(TAG, "No callback exists to handle MQTT_EVENT_DATA for topic: %s", topic.c_str());
-                    }
+        // Check for exact match first
+        if (self->topic_callbacks.find(topic) != self->topic_callbacks.end())
+        {
+            self->topic_callbacks[topic](data);
+        }
+        else
+        {
+            // Check for wildcard matches
+            for (const auto &wildcard_topic : self->wildcard_topics)
+            {
+                if (self->topic_matches(topic, wildcard_topic))
+                {
+                    self->topic_callbacks[wildcard_topic](data);
+                }
+                else
+                {
+                    ESP_LOGW(TAG, "No callback exists to handle MQTT_EVENT_DATA for topic: %s", topic.c_str());
                 }
             }
-            break;
         }
-        case MQTT_EVENT_ERROR:
-            ESP_LOGE(TAG, "MQTT Error: %d", event->error_handle->error_type);
-            break;
-        default:
-            ESP_LOGW(TAG, "Unhandled MQTT event id: %ld", event_id);
-            break;
+        break;
+    }
+    case MQTT_EVENT_ERROR:
+        ESP_LOGE(TAG, "MQTT Error: %d", event->error_handle->error_type);
+        break;
+    default:
+        ESP_LOGW(TAG, "Unhandled MQTT event id: %ld", event_id);
+        break;
     }
 }
 
 // Helper function to split a string by a delimiter
-std::vector<std::string> split(const std::string &str, char delimiter) {
+std::vector<std::string> split(const std::string &str, char delimiter)
+{
     std::vector<std::string> tokens;
     size_t start = 0;
     size_t end = str.find(delimiter);
-    
-    while (end != std::string::npos) {
+
+    while (end != std::string::npos)
+    {
         tokens.push_back(str.substr(start, end - start));
         start = end + 1;
         end = str.find(delimiter, start);
     }
-    
+
     tokens.push_back(str.substr(start));
     return tokens;
 }
 
 // Helper function to check if a topic matches a wildcard pattern
-bool MqttClient::topic_matches(const std::string& topic, const std::string& pattern) {
+bool MqttClient::topic_matches(const std::string &topic, const std::string &pattern)
+{
     std::vector<std::string> topic_levels = split(topic, '/');
     std::vector<std::string> pattern_levels = split(pattern, '/');
 
     // If levels don't match in size and there's no wildcard '#', it's not a match
-    if (pattern_levels.size() != topic_levels.size() && pattern_levels.back() != "#") {
+    if (pattern_levels.size() != topic_levels.size() && pattern_levels.back() != "#")
+    {
         return false;
     }
 
     // Compare each level
-    for (size_t i = 0; i < pattern_levels.size(); i++) {
-        const std::string& pattern_level = pattern_levels[i];
-        const std::string& topic_level = topic_levels[i];
+    for (size_t i = 0; i < pattern_levels.size(); i++)
+    {
+        const std::string &pattern_level = pattern_levels[i];
+        const std::string &topic_level = topic_levels[i];
 
-        if (pattern_level == "#") {
+        if (pattern_level == "#")
+        {
             return true; // Matches anything after this point
-        } else if (pattern_level == "+") {
+        }
+        else if (pattern_level == "+")
+        {
             continue; // Matches exactly one level, so skip to next
-        } else if (pattern_level != topic_level) {
+        }
+        else if (pattern_level != topic_level)
+        {
             return false; // No match
         }
     }
@@ -156,4 +189,3 @@ bool MqttClient::topic_matches(const std::string& topic, const std::string& patt
     // If all levels matched, return true
     return true;
 }
-

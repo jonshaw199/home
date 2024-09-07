@@ -9,5 +9,6 @@ idf_component_register(
         ConfigManager
         esp_event
         json
+        NTPClient
 )
 
