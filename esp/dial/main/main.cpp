@@ -14,8 +14,6 @@
 #include <map>
 #include "cJSON.h"
 #include <mutex>
-#include <vector>
-#include <algorithm>
 #include "esp_timer.h"
 #include "ntp_client.h"
 
@@ -24,8 +22,8 @@ static const char *TAG = "main";
 // Task handles
 TaskHandle_t mqtt_task_handle = nullptr;
 
-// Queue to communicate Wi-Fi connection status
-QueueHandle_t wifi_connected_queue;
+// Semaphore to communicate Wi-Fi connection status
+SemaphoreHandle_t wifi_connected_semaphore;
 
 // Initialize ConfigManager
 ConfigManager config_manager;
@@ -112,39 +110,35 @@ void mqtt_task(void *pvParameter)
 {
     ESP_LOGI(TAG, "MQTT Task started");
 
-    // Wait for Wi-Fi connection event
-    bool wifi_connected;
-    if (xQueueReceive(wifi_connected_queue, &wifi_connected, portMAX_DELAY))
+    // Wait for the semaphore indicating Wi-Fi connection
+    if (xSemaphoreTake(wifi_connected_semaphore, portMAX_DELAY) == pdTRUE)
     {
-        if (wifi_connected)
+        ESP_LOGI(TAG, "Connected to Wi-Fi. Initializing MQTT...");
+
+        std::string broker_host = config_manager.get("MQTT_BROKER");
+
+        auto handle_msg = [](const std::string &data)
         {
-            ESP_LOGI(TAG, "Connected to Wi-Fi. Initializing MQTT...");
+            ESP_LOGI(TAG, "Received data on topic devices/+/device_status: %s", data.c_str());
+            DeviceStatusMessage msg = parse_device_status_message(data);
+            handle_device_status_message(msg);
+        };
 
-            std::string broker_host = config_manager.get("MQTT_BROKER");
-
-            auto handle_msg = [](const std::string &data)
-            {
-                ESP_LOGI(TAG, "Received data on topic devices/+/device_status: %s", data.c_str());
-                DeviceStatusMessage msg = parse_device_status_message(data);
-                handle_device_status_message(msg);
-            };
-
-            auto subscribe = [&handle_msg]()
-            {
-                mqtt_client->subscribe("devices/+/device_status", handle_msg);
-            };
-
-            auto onConnect = [&subscribe]()
-            {
-                subscribe();
-            };
-
-            mqtt_client = new MqttClient(broker_host, onConnect);
-        }
-        else
+        auto subscribe = [&handle_msg]()
         {
-            ESP_LOGE(TAG, "Failed to connect to Wi-Fi. MQTT initialization aborted.");
-        }
+            mqtt_client->subscribe("devices/+/device_status", handle_msg);
+        };
+
+        auto onConnect = [&subscribe]()
+        {
+            subscribe();
+        };
+
+        mqtt_client = new MqttClient(broker_host, onConnect);
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Failed to receive semaphore. MQTT initialization aborted.");
     }
     vTaskDelete(nullptr);
 }
@@ -162,8 +156,7 @@ void wifi_task(void *pvParameter)
     auto onConnect = []()
     {
         ESP_LOGI(TAG, "Connected to Wi-Fi!");
-        bool wifi_connected = true;
-        xQueueSend(wifi_connected_queue, &wifi_connected, portMAX_DELAY);
+        xSemaphoreGive(wifi_connected_semaphore); // Signal that Wi-Fi is connected
     };
 
     // Initialize Wi-Fi with callback
@@ -369,6 +362,17 @@ void m5dial_task(void *pvParameter)
     }
 }
 
+// Function to set system time using sntp
+void ntp_task(void *pvParameter)
+{
+    ESP_LOGI(TAG, "NTP task started");
+
+    // TODO: handle timezone
+    ntp_client.begin();
+
+    vTaskDelete(nullptr);
+}
+
 void init_config()
 {
     // Get Wi-Fi credentials from ConfigManager
@@ -422,11 +426,12 @@ extern "C" void app_main(void)
     auto m5_cfg = M5.config();
     M5Dial.begin(m5_cfg, true, false);
 
-    // Create a queue to communicate Wi-Fi connection status
-    wifi_connected_queue = xQueueCreate(1, sizeof(bool));
+    // Create a semaphore to communicate Wi-Fi connection status
+    wifi_connected_semaphore = xSemaphoreCreateBinary();
 
     xTaskCreate(wifi_task, "wifi_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(mqtt_task, "mqtt_task", 4096, nullptr, 5, &mqtt_task_handle);
     xTaskCreate(display_task, "display_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(m5dial_task, "m5dial_task", 4096, nullptr, 5, nullptr);
+    xTaskCreate(ntp_task, "ntp_task", 4096, nullptr, 5, nullptr);
 }
