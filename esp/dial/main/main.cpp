@@ -127,7 +127,6 @@ void mqtt_task(void *pvParameter)
         else
         {
             ESP_LOGE(TAG, "Failed to connect to Wi-Fi. MQTT initialization aborted.");
-            vTaskDelete(nullptr);
         }
     }
     vTaskDelete(nullptr);
@@ -244,7 +243,7 @@ void draw_status(M5Canvas &canvas, DeviceStatusMessage &msg)
             .c_str(),
         50,
         162);
-    canvas.drawString("Alerts: 3", 50, 179);
+    canvas.drawString("Alerts: 3", 50, 179); // TODO
 }
 
 void draw(M5Canvas &canvas)
@@ -285,7 +284,7 @@ void display_task(void *pvParameter)
         canvas.pushSprite(&M5Dial.Display, 0, 0);
         M5Dial.Display.endWrite();
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(75));
     }
 }
 
@@ -299,12 +298,13 @@ void update_page_idx(int delta)
         int max_idx = num_devices; // This assumes there is a home screen
         page_idx = min(page_idx + delta, max_idx);
     }
-    else if (delta < 0)
+    else
     {
         page_idx = max(page_idx + delta, 0);
     }
 }
 
+// Function to handle user input from encoder, buttons, etc...
 void m5dial_task(void *pvParameter)
 {
     ESP_LOGI(TAG, "M5Dial task started");
@@ -327,14 +327,16 @@ void m5dial_task(void *pvParameter)
 
             oldPosition = newPosition;
         }
-        if (M5Dial.BtnA.wasPressed())
-        {
-            M5Dial.Encoder.readAndReset();
-        }
-        if (M5Dial.BtnA.pressedFor(5000))
-        {
-            M5Dial.Encoder.write(100);
-        }
+
+        // Handle buttons
+        // if (M5Dial.BtnA.wasPressed())
+        // {
+        //     M5Dial.Encoder.readAndReset();
+        // }
+        // if (M5Dial.BtnA.pressedFor(5000))
+        // {
+        //     M5Dial.Encoder.write(100);
+        // }
 
         vTaskDelay(pdMS_TO_TICKS(20));
     }
