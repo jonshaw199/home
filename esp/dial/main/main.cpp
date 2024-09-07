@@ -29,6 +29,10 @@ QueueHandle_t wifi_connected_queue;
 // Initialize ConfigManager
 ConfigManager config_manager;
 
+// Delayed initialization for these
+WiFiConnector *wifi_connector;
+MqttClient *mqtt_client;
+
 struct DeviceStatusMessage
 {
     std::string msg_domain = "";
@@ -113,22 +117,16 @@ void mqtt_task(void *pvParameter)
             ESP_LOGI(TAG, "Connected to Wi-Fi. Initializing MQTT...");
 
             std::string broker_host = config_manager.get("MQTT_BROKER");
-            MqttClient mqtt_client(broker_host);
-            mqtt_client.subscribe("devices/+/device_status", [](const std::string &data)
-                                  {
+            mqtt_client = new MqttClient(broker_host);
+            mqtt_client->subscribe("devices/+/device_status", [](const std::string &data)
+                                   {
                 ESP_LOGI(TAG, "Received data on topic devices/+/device_status: %s", data.c_str());
                 DeviceStatusMessage msg = parse_device_status_message(data);
                 handle_device_status_message(msg); });
-
-            // Keep the MQTT task alive
-            while (1)
-            {
-                vTaskDelay(pdMS_TO_TICKS(100));
-            }
-            ESP_LOGE(TAG, "Failed to connect to Wi-Fi. MQTT initialization aborted.");
         }
         else
         {
+            ESP_LOGE(TAG, "Failed to connect to Wi-Fi. MQTT initialization aborted.");
             vTaskDelete(nullptr);
         }
     }
@@ -153,14 +151,9 @@ void wifi_task(void *pvParameter)
     };
 
     // Initialize Wi-Fi with callback
-    WiFiConnector wifi(ssid.c_str(), password.c_str(), onConnect);
-    wifi.connect();
-
-    // Keep the Wi-Fi task alive
-    while (1)
-    {
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
+    wifi_connector = new WiFiConnector(ssid.c_str(), password.c_str(), onConnect);
+    wifi_connector->connect();
+    vTaskDelete(nullptr);
 }
 
 // Function to get value at a specific index by sorting
