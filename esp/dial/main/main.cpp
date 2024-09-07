@@ -49,8 +49,10 @@ struct DeviceStatusMessage
     int64_t first_received_at = -1;
 };
 
+typedef std::map<int, DeviceStatusMessage> status_message_map_t;
+
 // Map device ID to last status message
-std::map<int, DeviceStatusMessage> status_message_map;
+status_message_map_t status_message_map;
 std::mutex status_message_map_mutex; // Protects status_message_map
 
 int page_idx = 0;
@@ -187,7 +189,7 @@ DeviceStatusMessage get_value_at_index(const std::map<int, DeviceStatusMessage> 
     return DeviceStatusMessage(); // Return default if index is out of bounds
 }
 
-void draw_home(M5Canvas &canvas)
+void draw_home(M5Canvas &canvas, int num_devices)
 {
     // Image
     const char *png_file = "/fallout boy.png";
@@ -200,14 +202,17 @@ void draw_home(M5Canvas &canvas)
         ESP_LOGE("PNG", "PNG file not found");
     }
 
-    // Time
-    canvas.drawString(ntp_client.get_time_str("%H:%M:%S").c_str(), 100, 55);
-    // Date
-    canvas.drawString(ntp_client.get_time_str("%Y-%m-%d").c_str(), 100, 75);
+    int32_t x = 110;
 
-    // # Connected Devices
+    // Time
+    canvas.drawString(ntp_client.get_time_str("%H:%M:%S").c_str(), x, 60);
+    // Date
+    canvas.drawString(ntp_client.get_time_str("%Y-%m-%d").c_str(), x, 80);
+
+    // # Devices
+    canvas.drawString(std::string("Devices: ").append(std::to_string(num_devices)).c_str(), x, 110);
     // # Alerts
-    // Overall system status
+    canvas.drawString("Alerts: 0", x, 130); // TODO
 }
 
 std::string float_to_str(float num, std::string postfix = "")
@@ -224,7 +229,7 @@ std::string float_to_str(float num, std::string postfix = "")
 
 void draw_status(M5Canvas &canvas, DeviceStatusMessage &msg)
 {
-    canvas.drawString("Name: Test Name", 50, 43);
+    canvas.drawString("Name: Office PC", 50, 43);
     canvas.drawString(
         std::string("ID: ")
             .append(std::to_string(msg.device_id))
@@ -269,9 +274,9 @@ void draw_status(M5Canvas &canvas, DeviceStatusMessage &msg)
 void draw(M5Canvas &canvas)
 {
     page_idx_mutex.lock();
+    status_message_map_mutex.lock();
     if (page_idx)
     {
-        status_message_map_mutex.lock();
         DeviceStatusMessage msg = get_value_at_index(status_message_map, page_idx - 1);
         page_idx_mutex.unlock();
         status_message_map_mutex.unlock();
@@ -280,7 +285,9 @@ void draw(M5Canvas &canvas)
     else
     {
         page_idx_mutex.unlock();
-        draw_home(canvas);
+        int num_devices = status_message_map.size();
+        status_message_map_mutex.unlock();
+        draw_home(canvas, num_devices);
     }
 }
 
