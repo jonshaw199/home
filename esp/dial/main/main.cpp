@@ -346,7 +346,6 @@ void m5dial_task(void *pvParameter)
         long newPosition = M5Dial.Encoder.read();
         if (newPosition != oldPosition)
         {
-            ESP_LOGI(TAG, "New position: %ld", newPosition);
             M5Dial.Speaker.tone(8000, 7);
 
             int delta = newPosition - oldPosition;
