@@ -5,6 +5,8 @@ import json
 from devices.models import Device
 from datetime import datetime
 
+SHELLY_PLUG_ID_PREFIX = "shellyplugus"
+
 
 class BaseMessageHandler:
     handlers = {}
@@ -52,6 +54,12 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
         DeviceStatusMessageHandler.update_device(content)
 
 
+@BaseMessageHandler.register("shellyplugs__NotifyStatus")
+class ShellyPlugStatusMessageHandler(BaseMessageHandler):
+    def handle(self, content):
+        logging.info(f"Handling Shelly Plug status message: {content}")
+
+
 class ControllerConsumer(JsonWebsocketConsumer):
     def __init__(self):
         self.group_names = []  # List to store multiple group names
@@ -84,11 +92,16 @@ class ControllerConsumer(JsonWebsocketConsumer):
         logging.info(f"Received message: {text_data}")
         try:
             content = json.loads(text_data)
-            self.receive_json(content)
+            if isinstance(content, dict):
+                self.receive_json(content)
+            else:
+                raise ValueError(f"JSON content is not a dict: {content}")
         except json.JSONDecodeError:
             logging.error("Invalid JSON; closing connection")
             self.send_json({"error": "Invalid JSON; closing connection..."})
             self.close()
+        except ValueError:
+            logging.error("Invalid message; unable to process")
 
     def receive_json(self, content):
         logging.info(f"Received JSON message: {content}")
@@ -108,14 +121,28 @@ class ControllerConsumer(JsonWebsocketConsumer):
         return [1]
 
     def handle_json(self, content):
-        domain = content.get("msg_domain")
-        type = content.get("msg_type")
-        handler_id = "__".join([x for x in [domain, type] if x is not None])
+        handler_id = self.get_handler_id(content)
         handler = BaseMessageHandler.handlers.get(handler_id)
         if handler:
             handler.handle(content)
         else:
             logging.warning(f"No handler found for ID: {handler_id}")
+
+    def get_handler_id(self, content):
+        # Shelly
+        if (
+            "src" in content
+            and "method" in content
+            and content.get("src").startswith(SHELLY_PLUG_ID_PREFIX)
+        ):
+            return f'shellyplugs__{content.get("method")}'
+
+        # Other integrations...
+
+        # Internal
+        domain = content.get("msg_domain")
+        type = content.get("msg_type")
+        return "__".join([x for x in [domain, type] if x is not None])
 
     def broadcast_to_location_group(self, content):
         # Get location_id from content, otherwise query for location_id using given device_id

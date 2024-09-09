@@ -16,5 +16,14 @@
       "location": 1,
       "device_type": 2
     }
+  },
+  {
+    "model": "devices.device",
+    "pk": 3,
+    "fields": {
+      "name": "Jon's Shelly Plug",
+      "location": 1,
+      "device_type": 3
+    }
   }
 ]

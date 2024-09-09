@@ -3,7 +3,7 @@
     "model": "devices.devicetype",
     "pk": 1,
     "fields": {
-      "name": "ESP32"
+      "name": "M5 Dial"
     }
   },
   {
@@ -11,6 +11,13 @@
     "pk": 2,
     "fields": {
       "name": "PC"
+    }
+  },
+  {
+    "model": "devices.devicetype",
+    "pk": 3,
+    "fields": {
+      "name": "Shelly Plug"
     }
   }
 ]
