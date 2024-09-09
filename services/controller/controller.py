@@ -16,7 +16,7 @@ logging.basicConfig(
 #   - domain_id/device_id
 #   - domain_id
 #   - <root topic>
-#   - domain_id/device_id/something/else...
+#   - domain_id/device_id/msg_type
 RESERVED_MSG_KEYS = ["msg_domain", "device_id", "msg_type"]
 ROOT_TOPIC = "ROOT_TOPIC"
 
