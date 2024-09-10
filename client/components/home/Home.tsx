@@ -1,14 +1,10 @@
 import React from "react";
-import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
+import { Platform, StatusBar, StyleSheet, Text } from "react-native";
 
 const Home = () => {
   const style = styles();
 
-  return (
-    <View style={style.container}>
-      <Text>Home</Text>
-    </View>
-  );
+  return <Text style={style.container}>Home</Text>;
 };
 
 const styles = () =>
