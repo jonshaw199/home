@@ -36,7 +36,10 @@ export function useSession() {
 }
 
 export function SessionProvider({ children }: PropsWithChildren) {
-  const [[isLoading, session], setSession] = useStorageState("session");
+  const key = process.env.EXPO_PUBLIC_HOME_SESSION_STORAGE_KEY;
+  if (!key) throw "Session storage key not found";
+
+  const [[isLoading, session], setSession] = useStorageState(key);
 
   const signIn: AuthContextProps["signIn"] = async (props) => {
     const token = await getToken(props);
