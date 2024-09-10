@@ -26,12 +26,13 @@ SECRET_KEY = "django-insecure-h=3960u#(1&b)na1u#k92p1$xk2thq=kkaj4gul6&%9ep$6jq^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["home", "localhost", "127.0.0.1", "0.0.0.0"]
+ALLOWED_HOSTS = ["home", "localhost", "127.0.0.1", "0.0.0.0", "10.199.1.4"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -61,6 +62,9 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # CorsMiddleware should be placed as high as possible, especially before any middleware that can generate responses such as Django’s CommonMiddleware or Whitenoise’s WhiteNoiseMiddleware. If it is not before, it will not be able to add the CORS headers to these responses.
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -173,3 +177,5 @@ LOGGING = {
     },
 }
 
+
+CORS_ALLOWED_ORIGINS = ["http://localhost:8081", "http://10.199.1.4:8081"]
