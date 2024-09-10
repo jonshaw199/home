@@ -14,7 +14,7 @@ const Login = ({ onLogin }: LoginProps) => {
 
   const loginBtnDisabled = React.useMemo(
     () => !(username && password) || loggingIn,
-    [username, password, loggingIn],
+    [username, password, loggingIn]
   );
 
   const handleLogin = async () => {
@@ -45,11 +45,13 @@ const Login = ({ onLogin }: LoginProps) => {
         placeholder="Password"
         size="lg"
         secureTextEntry
+        // Submit on enter
+        onSubmitEditing={handleLogin}
       />
       <Button
         title="Log In"
         disabled={loginBtnDisabled}
-        onPress={() => handleLogin()}
+        onPress={handleLogin}
       />
     </View>
   );
