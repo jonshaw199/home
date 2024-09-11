@@ -3,8 +3,7 @@
     "model": "core.location",
     "pk": 1,
     "fields": {
-      "name": "Jon's House",
-      "organization": 1
+      "name": "Jon's House"
     }
   }
 ]

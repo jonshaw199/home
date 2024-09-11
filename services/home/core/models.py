@@ -2,15 +2,15 @@ from django.db import models
 
 
 # Create your models here.
-class Organization(models.Model):
-    name = models.CharField()
-
-    def __str__(self):
-        return self.name
-
 class Location(models.Model):
     name = models.CharField()
-    organization = models.ForeignKey(Organization, related_name='locations', on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sublocations",
+    )
 
     def __str__(self):
         return self.name

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from django.contrib.auth.models import User, Group
-from core.models import Location, Organization
+from core.models import Location
 from rest_framework import serializers
 
 
@@ -16,11 +16,6 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
         model = Group
         fields = ["url", "name"]
 
-
-class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Organization
-        fields = ["name"]
 
 class LocationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

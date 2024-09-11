@@ -1,9 +1,0 @@
-[
-  {
-    "model": "core.organization",
-    "pk": 1,
-    "fields": {
-      "name": "Jon's org"
-    }
-  }
-]
