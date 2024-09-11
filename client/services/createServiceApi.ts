@@ -3,7 +3,7 @@ import { Device, ID, Identifiable, User } from "@/models";
 export type QueryParams = Record<string, string | number | boolean>;
 
 export type PaginatedResponse<T extends Identifiable> = {
-  results: Map<ID, T>;
+  results: { [key: ID]: T };
   count: number;
   next: string | null;
   previous: string | null;
@@ -23,7 +23,7 @@ export type ServiceApi<T extends Identifiable> = {
   }: {
     token: string | null;
     data: Partial<T>[];
-  }) => Promise<Map<ID, T>>;
+  }) => Promise<{ [key: ID]: T }>;
   readOne: ({ token, id }: { token: string | null; id: ID }) => Promise<T>;
   readAll: ({
     token,
@@ -31,7 +31,7 @@ export type ServiceApi<T extends Identifiable> = {
   }: {
     token: string | null;
     queryParams?: QueryParams;
-  }) => Promise<Map<ID, T>>;
+  }) => Promise<{ [key: ID]: T }>;
   readPaginated: ({
     token,
     queryParams,
@@ -53,7 +53,7 @@ export type ServiceApi<T extends Identifiable> = {
   }: {
     token: string | null;
     data: { id: ID; payload: Partial<T> }[];
-  }) => Promise<Map<ID, T>>;
+  }) => Promise<{ [key: ID]: T }>;
   deleteOne: ({ token, id }: { token: string | null; id: ID }) => Promise<ID>;
   deleteMany: ({
     token,
@@ -62,11 +62,6 @@ export type ServiceApi<T extends Identifiable> = {
     token: string | null;
     ids: ID[];
   }) => Promise<void>;
-};
-
-export type ServiceApis = {
-  user: ServiceApi<User>;
-  device: ServiceApi<Device>;
 };
 
 function buildQueryString(params?: QueryParams): string {
@@ -80,6 +75,13 @@ function buildQueryString(params?: QueryParams): string {
       )
       .join("&")
   );
+}
+
+function keyById<T extends Identifiable>(arr: T[]) {
+  return arr.reduce((res: { [key: ID]: T }, cur: T) => {
+    res[cur.id] = cur;
+    return res;
+  }, {});
 }
 
 export function createServiceApi<T extends Identifiable>(
@@ -114,7 +116,7 @@ export function createServiceApi<T extends Identifiable>(
         throw new Error(`Failed to create resources: ${response.statusText}`);
       }
       const results = await response.json();
-      return new Map(results.map((item: T) => [item.id, item]));
+      return keyById<T>(results);
     },
 
     async readOne({ token, id }) {
@@ -142,7 +144,7 @@ export function createServiceApi<T extends Identifiable>(
         throw new Error(`Failed to fetch resources: ${response.statusText}`);
       }
       const results = await response.json();
-      return new Map(results.map((item: T) => [item.id, item]));
+      return keyById<T>(results);
     },
 
     async readPaginated({ token, queryParams }) {
@@ -200,7 +202,7 @@ export function createServiceApi<T extends Identifiable>(
         })
       );
       const results = await Promise.all(promises);
-      return new Map(results.map((item: T) => [item.id, item]));
+      return keyById<T>(results);
     },
 
     async deleteOne({ token, id }) {
