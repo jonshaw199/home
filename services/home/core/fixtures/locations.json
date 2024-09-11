@@ -5,5 +5,13 @@
     "fields": {
       "name": "Jon's House"
     }
+  },
+  {
+    "model": "core.location",
+    "pk": 2,
+    "fields": {
+      "name": "Office",
+      "parent": 1
+    }
   }
 ]
