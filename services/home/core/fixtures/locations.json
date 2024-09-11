@@ -10,7 +10,7 @@
     "model": "core.location",
     "pk": 2,
     "fields": {
-      "name": "Office",
+      "name": "Jon's Office",
       "parent": 1
     }
   }
