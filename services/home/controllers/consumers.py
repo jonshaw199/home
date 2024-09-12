@@ -132,12 +132,10 @@ class ControllerConsumer(JsonWebsocketConsumer):
                 # Add the IDs to the set (to ensure uniqueness)
                 accessible_location_ids.update(descendant_ids)
 
-            return list(
-                accessible_location_ids
-            )  # Convert the set to a list for further use
+            return accessible_location_ids
 
-        # If the user has no profile or locations, return an empty list
-        return []
+        # If the user has no profile or locations, return an empty set
+        return set()
 
     def handle_json(self, content):
         handler_id = self.get_handler_id(content)
