@@ -2,7 +2,7 @@ import { Device } from "../models";
 import { ServiceApi } from "../services/createServiceApi";
 import { deviceService } from "../services/deviceService";
 import { configureStore as configureStoreRedux } from "@reduxjs/toolkit";
-import { deviceSliceReducer } from "@/slices/deviceSlice";
+import { deviceSliceReducer } from "@/store/slices/deviceSlice";
 import { getStorageItemAsync } from "@/hooks/useStorageState";
 
 export type ServiceApis = {

@@ -1,5 +1,5 @@
 import { useAppDispatch } from "@/hooks/redux";
-import { deviceSliceActions } from "@/slices/deviceSlice";
+import { deviceSliceActions } from "@/store/slices/deviceSlice";
 import React, { useEffect } from "react";
 import { Platform, StatusBar, StyleSheet, Text } from "react-native";
 
