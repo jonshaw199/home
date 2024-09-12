@@ -31,7 +31,7 @@ export type ServiceApi<T extends Identifiable> = {
   }: {
     token: string | null;
     queryParams?: QueryParams;
-  }) => Promise<PaginatedResponse<T>>;
+  }) => Promise<{ [key: ID]: T }>;
   updateOne: ({
     token,
     data,
