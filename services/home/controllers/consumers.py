@@ -116,9 +116,28 @@ class ControllerConsumer(JsonWebsocketConsumer):
             self.send_json(message)
 
     def get_accessible_location_ids(self, user):
-        # TODO
-        # return list(Location.objects.values_list('id', flat=True))
-        return [1]
+        # Ensure the user has a profile and locations associated with it
+        if hasattr(user, "profile"):
+            # Get the locations directly assigned to the user
+            user_locations = user.profile.locations.all()
+
+            # Initialize an empty set to collect unique location IDs
+            accessible_location_ids = set()
+
+            # Loop through each location and get its descendants (including itself)
+            for location in user_locations:
+                descendant_ids = location.get_descendants(
+                    include_self=True
+                ).values_list("id", flat=True)
+                # Add the IDs to the set (to ensure uniqueness)
+                accessible_location_ids.update(descendant_ids)
+
+            return list(
+                accessible_location_ids
+            )  # Convert the set to a list for further use
+
+        # If the user has no profile or locations, return an empty list
+        return []
 
     def handle_json(self, content):
         handler_id = self.get_handler_id(content)
