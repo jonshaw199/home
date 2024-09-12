@@ -1,13 +1,15 @@
-import React from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import React, { useEffect } from "react";
+import { View, Button, StyleSheet } from "react-native";
 import {
   DrawerContentScrollView,
   DrawerItemList,
   DrawerContentComponentProps,
 } from "@react-navigation/drawer";
 import { useSession } from "@/context/SessionContext";
-import { Redirect } from "expo-router";
 import { Drawer as ExpoDrawer } from "expo-router/drawer";
+import { useAppDispatch } from "@/hooks/redux";
+import { deviceSliceActions } from "@/store/slices/deviceSlice";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
@@ -32,22 +34,24 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 };
 
 export default function Drawer() {
-  const { session, isLoading } = useSession();
+  const dispatch = useAppDispatch();
 
-  if (isLoading) {
-    return <Text>Loading...</Text>;
-  }
-
-  if (!session) {
-    return <Redirect href="/login" />;
-  }
+  // Initial load
+  useEffect(() => {
+    dispatch(deviceSliceActions.fetchAll());
+  }, [dispatch]);
 
   // This is the app layout
   return (
-    <ExpoDrawer drawerContent={(props) => <CustomDrawerContent {...props} />}>
-      <ExpoDrawer.Screen name="index" options={{ title: "Home" }} />
-      <ExpoDrawer.Screen name="devices/index" options={{ title: "Devices" }} />
-    </ExpoDrawer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ExpoDrawer drawerContent={(props) => <CustomDrawerContent {...props} />}>
+        <ExpoDrawer.Screen name="index" options={{ title: "Home" }} />
+        <ExpoDrawer.Screen
+          name="devices/index"
+          options={{ title: "Devices" }}
+        />
+      </ExpoDrawer>
+    </GestureHandlerRootView>
   );
 }
 
