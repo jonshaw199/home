@@ -3,7 +3,7 @@
     "model": "devices.devicetype",
     "pk": 1,
     "fields": {
-      "name": "M5 Dial"
+      "name": "Dial"
     }
   },
   {
@@ -17,7 +17,7 @@
     "model": "devices.devicetype",
     "pk": 3,
     "fields": {
-      "name": "Shelly Plug"
+      "name": "Smart Plug"
     }
   }
 ]
