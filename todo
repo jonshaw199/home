@@ -1,1 +1,2 @@
-- BUG: Controller fails to reconnect when bringing home down and back up
+- [CONTROLLER] [BUG]: Controller fails to reconnect when bringing home down and back up
+- [CLIENT] [BUG]: May need to compose actions like deleting a device type should trigger a refetch of devices (bad example) otherwise things could break
