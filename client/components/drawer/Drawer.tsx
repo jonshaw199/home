@@ -10,6 +10,7 @@ import { Drawer as ExpoDrawer } from "expo-router/drawer";
 import { useAppDispatch } from "@/store";
 import { deviceSliceActions } from "@/store/slices/deviceSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { deviceTypeSliceActions } from "@/store/slices/deviceTypeSlice";
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
@@ -39,6 +40,7 @@ export default function Drawer() {
   // Initial load
   useEffect(() => {
     dispatch(deviceSliceActions.fetchAll());
+    dispatch(deviceTypeSliceActions.fetchAll());
   }, [dispatch]);
 
   // This is the app layout

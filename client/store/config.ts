@@ -1,16 +1,20 @@
-import { Device } from "../models";
+import { Device, DeviceType } from "../models";
 import { ServiceApi } from "../services/createServiceApi";
 import { deviceService } from "../services/deviceService";
 import { configureStore as configureStoreRedux } from "@reduxjs/toolkit";
 import { deviceSliceReducer } from "@/store/slices/deviceSlice";
 import { getStorageItemAsync } from "@/hooks/useStorageState";
+import { deviceTypeService } from "@/services/deviceTypeService";
+import { deviceTypeSliceReducer } from "./slices/deviceTypeSlice";
 
 export type ServiceApis = {
   devices: ServiceApi<Device>;
+  deviceTypes: ServiceApi<DeviceType>;
 };
 
 export const serviceApis: ServiceApis = {
   devices: deviceService,
+  deviceTypes: deviceTypeService,
 };
 
 export type ThunkExtraArgument = {
@@ -31,6 +35,7 @@ export const configureStore = () =>
   configureStoreRedux({
     reducer: {
       devices: deviceSliceReducer,
+      deviceTypes: deviceTypeSliceReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({

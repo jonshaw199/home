@@ -4,7 +4,12 @@ import { View } from "react-native";
 import DeviceTile from "./DeviceTile";
 
 const Devices = () => {
-  const devices = useAppSelector((state) => state.devices.data);
+  const { devices, deviceTypes } = useAppSelector((state) => ({
+    devices: state.devices.data,
+    deviceTypes: state.deviceTypes.data,
+  }));
+
+  console.log(deviceTypes);
 
   return (
     <View>
