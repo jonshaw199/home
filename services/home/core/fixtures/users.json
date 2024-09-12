@@ -20,5 +20,16 @@
       "is_staff": true,
       "is_active": true
     }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "username": "restrictedlocationuser",
+      "password": "pbkdf2_sha256$600000$quy84fZFl7xikncIiZjRIS$VCu2Pzm+c4uHEW5/69+vu3ufnz0B1oQQMtPBmGnFPrg=",
+      "is_superuser": false,
+      "is_staff": false,
+      "is_active": true
+    }
   }
 ]
