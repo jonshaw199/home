@@ -147,27 +147,6 @@ export function createServiceApi<T extends Identifiable>(
       return keyById<T>(results);
     },
 
-    async readPaginated({ token, queryParams }) {
-      const queryString = buildQueryString(queryParams);
-      const response = await fetch(`${baseUrl}${queryString}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch paginated resources: ${response.statusText}`
-        );
-      }
-      const data = await response.json();
-      const results = new Map(data.results.map((item: T) => [item.id, item]));
-      return {
-        ...data,
-        results,
-      };
-    },
-
     async updateOne({ token, id, data }) {
       const response = await fetch(`${baseUrl}/${id}`, {
         method: "PUT",
