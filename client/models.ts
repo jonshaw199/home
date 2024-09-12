@@ -13,6 +13,12 @@ export interface User extends Identifiable {
   lastName: string;
 }
 
+export interface DeviceType extends Identifiable {
+  name: string;
+}
+
 export interface Device extends Identifiable {
+  deviceType: ID;
+  location: ID;
   name: string;
 }
