@@ -1,13 +1,24 @@
 from django.contrib.auth.models import User, Group
-from core.models import Location
+from core.models import Location, Profile
 from rest_framework import permissions, viewsets
 
-from core.serializers import UserSerializer, GroupSerializer, LocationSerializer
+from core.serializers import (
+    UserSerializer,
+    GroupSerializer,
+    LocationSerializer,
+    ProfileSerializer,
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAdminUser]
 
 
