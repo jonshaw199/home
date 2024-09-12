@@ -26,4 +26,4 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 class LocationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Location
-        fields = ["name"]
+        fields = ["name", "parent"]
