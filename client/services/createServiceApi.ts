@@ -2,12 +2,14 @@ import { ID, Identifiable } from "@/models";
 
 export type QueryParams = Record<string, string | number | boolean>;
 
+/*
 export type PaginatedResponse<T extends Identifiable> = {
   results: { [key: ID]: T };
   count: number;
   next: string | null;
   previous: string | null;
 };
+*/
 
 export type ServiceApi<T extends Identifiable> = {
   createOne: ({
@@ -77,12 +79,44 @@ function keyById<T extends Identifiable>(arr: T[]) {
   }, {});
 }
 
+// Helper function to convert snake_case to camelCase
+function snakeToCamel(snakeStr: string): string {
+  return snakeStr.replace(/(_\w)/g, (matches) => matches[1].toUpperCase());
+}
+
+// Recursively convert keys from snake_case to camelCase
+function convertKeysToCamelCase(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertKeysToCamelCase(item));
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      const camelKey = snakeToCamel(key);
+      acc[camelKey] = convertKeysToCamelCase(value);
+      return acc;
+    }, {} as any);
+  }
+  return obj; // Return the value as is if it's not an object or array
+}
+
+// Utility function to handle fetch and camelCase conversion
+async function fetchAndConvert<T>(
+  url: string,
+  options: RequestInit
+): Promise<T> {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch resource: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return convertKeysToCamelCase(data);
+}
+
 export function createServiceApi<T extends Identifiable>(
   baseUrl: string
 ): ServiceApi<T> {
   return {
     async createOne({ token, data }) {
-      const response = await fetch(baseUrl, {
+      return fetchAndConvert<T>(baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,14 +124,10 @@ export function createServiceApi<T extends Identifiable>(
         },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        throw new Error(`Failed to create resource: ${response.statusText}`);
-      }
-      return response.json();
     },
 
     async createMany({ token, data }) {
-      const response = await fetch(baseUrl, {
+      const results = await fetchAndConvert<T[]>(baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,43 +135,31 @@ export function createServiceApi<T extends Identifiable>(
         },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        throw new Error(`Failed to create resources: ${response.statusText}`);
-      }
-      const results = await response.json();
       return keyById<T>(results);
     },
 
     async readOne({ token, id }) {
-      const response = await fetch(`${baseUrl}/${id}`, {
+      return fetchAndConvert<T>(`${baseUrl}/${id}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch resource: ${response.statusText}`);
-      }
-      return response.json();
     },
 
     async readAll({ token, queryParams }) {
       const queryString = buildQueryString(queryParams);
-      const response = await fetch(`${baseUrl}${queryString}`, {
+      const results = await fetchAndConvert<T[]>(`${baseUrl}${queryString}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch resources: ${response.statusText}`);
-      }
-      const results = await response.json();
       return keyById<T>(results);
     },
 
     async updateOne({ token, id, data }) {
-      const response = await fetch(`${baseUrl}/${id}`, {
+      return fetchAndConvert<T>(`${baseUrl}/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -149,28 +167,17 @@ export function createServiceApi<T extends Identifiable>(
         },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        throw new Error(`Failed to update resource: ${response.statusText}`);
-      }
-      return response.json();
     },
 
     async updateMany({ token, data }) {
       const promises = data.map(({ id, payload }) =>
-        fetch(`${baseUrl}/${id}`, {
+        fetchAndConvert<T>(`${baseUrl}/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
-        }).then(async (response) => {
-          if (!response.ok) {
-            throw new Error(
-              `Failed to update resource ${id}: ${response.statusText}`
-            );
-          }
-          return response.json();
         })
       );
       const results = await Promise.all(promises);
