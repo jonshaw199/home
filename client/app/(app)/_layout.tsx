@@ -1,6 +1,6 @@
 import AuthWall from "@/components/AuthWall";
 import Drawer from "@/components/drawer/Drawer";
-import { store } from "@/store/store";
+import { store } from "@/store";
 import { Provider } from "react-redux";
 
 export default function Layout() {

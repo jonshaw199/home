@@ -7,7 +7,7 @@ import {
 } from "@react-navigation/drawer";
 import { useSession } from "@/context/SessionContext";
 import { Drawer as ExpoDrawer } from "expo-router/drawer";
-import { useAppDispatch } from "@/hooks/redux";
+import { useAppDispatch } from "@/store";
 import { deviceSliceActions } from "@/store/slices/deviceSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
