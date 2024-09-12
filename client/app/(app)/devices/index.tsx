@@ -1,10 +1,10 @@
+import Devices from "@/components/devices/Devices";
 import React from "react";
-import { Text } from "react-native";
 
 const DevicesScreen = () => {
   return (
     <>
-      <Text>Devices</Text>
+      <Devices />
     </>
   );
 };
