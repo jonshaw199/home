@@ -6,11 +6,11 @@ import { deviceSliceReducer } from "@/store/slices/deviceSlice";
 import { getStorageItemAsync } from "@/hooks/useStorageState";
 
 export type ServiceApis = {
-  device: ServiceApi<Device>;
+  devices: ServiceApi<Device>;
 };
 
 export const serviceApis: ServiceApis = {
-  device: deviceService,
+  devices: deviceService,
 };
 
 export type ThunkExtraArgument = {
@@ -30,7 +30,7 @@ const extraArgument: ThunkExtraArgument = { serviceApis, getSession };
 export const configureStore = () =>
   configureStoreRedux({
     reducer: {
-      device: deviceSliceReducer,
+      devices: deviceSliceReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
