@@ -1,4 +1,4 @@
-import { Device, ID, Identifiable, User } from "@/models";
+import { ID, Identifiable } from "@/models";
 
 export type QueryParams = Record<string, string | number | boolean>;
 
@@ -26,13 +26,6 @@ export type ServiceApi<T extends Identifiable> = {
   }) => Promise<{ [key: ID]: T }>;
   readOne: ({ token, id }: { token: string | null; id: ID }) => Promise<T>;
   readAll: ({
-    token,
-    queryParams,
-  }: {
-    token: string | null;
-    queryParams?: QueryParams;
-  }) => Promise<{ [key: ID]: T }>;
-  readPaginated: ({
     token,
     queryParams,
   }: {

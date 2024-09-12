@@ -3,7 +3,6 @@ import { ID, Identifiable } from "@/models";
 import { QueryParams } from "@/services/createServiceApi";
 import { ServiceApis, ThunkExtraArgument } from "@/store/config";
 import { Draft } from "immer";
-import * as SecureStore from "expo-secure-store";
 
 // Define the common slice state for each model
 export interface ModelState<T extends Identifiable> {
