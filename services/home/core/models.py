@@ -1,17 +1,20 @@
 from django.contrib.auth.models import User
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
 
 
-# Create your models here.
-class Location(models.Model):
-    name = models.CharField()
-    parent = models.ForeignKey(
+class Location(MPTTModel):
+    name = models.CharField(max_length=255)
+    parent = TreeForeignKey(
         "self",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="sublocations",
+        related_name="children",
     )
+
+    class MPTTMeta:
+        order_insertion_by = ["name"]
 
     def __str__(self):
         return self.name
