@@ -3,7 +3,12 @@
     "model": "core.location",
     "pk": 1,
     "fields": {
-      "name": "Jon's House"
+      "name": "Jon's House",
+      "parent": null,
+      "lft": 1,
+      "rght": 4,
+      "tree_id": 1,
+      "level": 0
     }
   },
   {
@@ -11,7 +16,11 @@
     "pk": 2,
     "fields": {
       "name": "Jon's Office",
-      "parent": 1
+      "parent": 1,
+      "lft": 2,
+      "rght": 3,
+      "tree_id": 1,
+      "level": 1
     }
   }
 ]
