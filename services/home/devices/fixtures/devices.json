@@ -23,7 +23,8 @@
     "fields": {
       "name": "Jon's Shelly Plug",
       "location": 2,
-      "device_type": 3
+      "device_type": 3,
+      "vendor_id": "shellyplugus-a0dd6c27a4dc"
     }
   }
 ]
