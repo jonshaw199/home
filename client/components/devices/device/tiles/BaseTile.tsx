@@ -1,5 +1,4 @@
 import { Device } from "@/models";
-import { useAppSelector } from "@/store";
 import { StyleSheet, Text } from "react-native";
 
 export type BaseTileProps = {
@@ -7,10 +6,6 @@ export type BaseTileProps = {
 };
 
 export default function BaseTile({ device }: BaseTileProps) {
-  const { deviceTypes } = useAppSelector((state) => ({
-    deviceTypes: state.deviceTypes.data,
-  }));
-
   const style = styles();
 
   return <Text style={style.container}>{device.name}</Text>;
