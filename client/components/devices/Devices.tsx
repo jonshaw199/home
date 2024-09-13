@@ -4,9 +4,7 @@ import { StyleSheet, View } from "react-native";
 import DeviceTile from "./device/DeviceTile";
 
 export default function Devices() {
-  const { devices } = useAppSelector((state) => ({
-    devices: state.devices.data,
-  }));
+  const devices = useAppSelector((state) => state.devices.data);
 
   const style = styles();
 
@@ -24,7 +22,7 @@ const styles = () =>
     container: {
       display: "flex",
       flexDirection: "row",
-      gap: 8,
+      gap: 15,
       flexWrap: "wrap",
       padding: 10,
     },
