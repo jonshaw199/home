@@ -11,6 +11,15 @@ import { useAppDispatch } from "@/store";
 import { deviceSliceActions } from "@/store/slices/deviceSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { deviceTypeSliceActions } from "@/store/slices/deviceTypeSlice";
+import WebSocketManager from "@/ws/WebSocketManager";
+
+function connectWebSocket(token: string) {
+  // Initialize WebSocket connection
+  const url = process.env.EXPO_PUBLIC_HOME_WS_URL;
+  if (!url) throw "WebSocket URL not found; cannot connect";
+  const wsManager = WebSocketManager.getInstance();
+  wsManager.connect(`${url}?token=${token}`);
+}
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
@@ -36,12 +45,21 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
 export default function Drawer() {
   const dispatch = useAppDispatch();
+  const { session } = useSession();
 
   // Initial load
   useEffect(() => {
     dispatch(deviceSliceActions.fetchAll());
     dispatch(deviceTypeSliceActions.fetchAll());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (session) {
+      connectWebSocket(session);
+    } else {
+      console.error("Can't connect to websocket; session is null");
+    }
+  }, [session]);
 
   // This is the app layout
   return (
