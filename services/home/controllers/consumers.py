@@ -37,17 +37,24 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
         except Device.DoesNotExist:
             raise ValueError(f"Device with ID {device_id} does not exist")
 
-        # Update fields with data from JSON object
-        device.cpu_usage = data.get("cpu_usage", device.cpu_usage)
-        device.cpu_temp = data.get("cpu_temperature", device.cpu_temp)
-        device.mem_usage = data.get("memory_usage", device.mem_usage)
-        device.disk_usage = data.get("disk_usage", device.disk_usage)
-        device.network_sent = data.get("network_sent", device.network_sent)
-        device.network_received = data.get("network_received", device.network_received)
-        device.status_updated_at = datetime.now()  # Update the status_updated_at field
+        if hasattr(device, "system"):
+            # Update fields with data from JSON object
+            device.system.cpu_usage = data.get("cpu_usage", device.system.cpu_usage)
+            device.system.cpu_temp = data.get("cpu_temperature", device.system.cpu_temp)
+            device.system.mem_usage = data.get("memory_usage", device.system.mem_usage)
+            device.system.disk_usage = data.get("disk_usage", device.system.disk_usage)
+            device.system.network_sent = data.get(
+                "network_sent", device.system.network_sent
+            )
+            device.system.network_received = data.get(
+                "network_received", device.system.network_received
+            )
+            # device.system.status_updated_at = datetime.now()  # Update the status_updated_at field
 
-        # Save the updated device instance
-        device.save()
+            # Save the updated device instance
+            device.system.save()
+        else:
+            logging.warn(f"System not found for Device ID {device_id}")
 
     def handle(self, content):
         logging.info(f"Handling device status message: {content}")

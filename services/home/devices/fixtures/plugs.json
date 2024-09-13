@@ -1,0 +1,10 @@
+[
+  {
+    "model": "devices.plug",
+    "pk": 1,
+    "fields": {
+      "device": 3,
+      "is_on": false
+    }
+  }
+]

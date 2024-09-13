@@ -1,0 +1,9 @@
+[
+  {
+    "model": "devices.system",
+    "pk": 1,
+    "fields": {
+      "device": 2
+    }
+  }
+]
