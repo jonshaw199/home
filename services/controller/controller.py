@@ -12,12 +12,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 
-# Topics:
-#   - domain_id/device_id
-#   - domain_id
-#   - <root topic>
-#   - domain_id/device_id/msg_type
-RESERVED_MSG_KEYS = ["msg_domain", "device_id", "msg_type"]
 ROOT_TOPIC = "ROOT_TOPIC"
 
 
@@ -30,7 +24,7 @@ class Controller:
 
     def handle_message_ws(self, message):
         logging.info("Handle message: %s", message)
-        topic = self.build_topic(message)
+        topic = self.get_topic(message)
         if topic:
             self.mqtt_client.publish(topic, message)
         else:
@@ -46,13 +40,11 @@ class Controller:
     def handle_message_mqtt(self, topic, message):
         logging.info("Handle message: %s", message)
         # We are subscribed to everything; pass along messages to server
-        # TODO: Do we need to include "topic" as well?
         self.websocket_client.send(message)
 
-    def build_topic(self, message):
+    def get_topic(self, message):
         json_msg = json.loads(message)
-        vals = [str(json_msg[key]) for key in RESERVED_MSG_KEYS if key in json_msg]
-        return "/".join(vals) if vals else ROOT_TOPIC
+        return json_msg["dest"] if "dest" in json_msg else ROOT_TOPIC
 
     def start(self):
         mqtt_thread = Thread(target=self.mqtt_client.start)

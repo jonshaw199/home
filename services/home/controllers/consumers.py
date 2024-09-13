@@ -3,7 +3,17 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
-from datetime import datetime
+
+"""
+Expected message shape:
+
+{
+    "src": string, // This is typically the ID of the source device
+    "dest": string, // For WS<->MQTT, this is the topic
+    "action": string, // i.e. "get-status", "set", etc.
+    "body": string | null
+}
+"""
 
 SHELLY_PLUG_ID_PREFIX = "shellyplugus"
 
@@ -23,38 +33,45 @@ class BaseMessageHandler:
         raise NotImplementedError("Handle method not implemented.")
 
 
-@BaseMessageHandler.register("devices__device_status")
+@BaseMessageHandler.register("announce_status")
 class DeviceStatusMessageHandler(BaseMessageHandler):
     @staticmethod
     def update_device(data):
-        device_id = data.get("device_id")
-        if device_id is None:
-            raise ValueError("Device ID is required")
+        src = data.get("src")
+        if src is None:
+            raise ValueError("src is required")
 
         # Retrieve the device instance
         try:
-            device = Device.objects.get(pk=device_id)
+            device = Device.objects.get(pk=src)
         except Device.DoesNotExist:
-            raise ValueError(f"Device with ID {device_id} does not exist")
+            raise ValueError(f"Device with ID {src} does not exist")
 
-        if hasattr(device, "system"):
-            # Update fields with data from JSON object
-            device.system.cpu_usage = data.get("cpu_usage", device.system.cpu_usage)
-            device.system.cpu_temp = data.get("cpu_temperature", device.system.cpu_temp)
-            device.system.mem_usage = data.get("memory_usage", device.system.mem_usage)
-            device.system.disk_usage = data.get("disk_usage", device.system.disk_usage)
-            device.system.network_sent = data.get(
-                "network_sent", device.system.network_sent
-            )
-            device.system.network_received = data.get(
-                "network_received", device.system.network_received
-            )
-            # device.system.status_updated_at = datetime.now()  # Update the status_updated_at field
+        if not hasattr(device, "system"):
+            logging.warn(f"System not found for Device ID {src}")
+            return
 
-            # Save the updated device instance
-            device.system.save()
-        else:
-            logging.warn(f"System not found for Device ID {device_id}")
+        body = data.get("body")
+
+        if body is None:
+            logging.warn("Status not provided")
+            return
+
+        # Update fields with data from JSON object
+        device.system.cpu_usage = body.get("cpu_usage", device.system.cpu_usage)
+        device.system.cpu_temp = body.get("cpu_temperature", device.system.cpu_temp)
+        device.system.mem_usage = body.get("memory_usage", device.system.mem_usage)
+        device.system.disk_usage = body.get("disk_usage", device.system.disk_usage)
+        device.system.network_sent = body.get(
+            "network_sent", device.system.network_sent
+        )
+        device.system.network_received = body.get(
+            "network_received", device.system.network_received
+        )
+        # device.system.status_updated_at = datetime.now()  # Update the status_updated_at field
+
+        # Save the updated device instance
+        device.system.save()
 
     def handle(self, content):
         logging.info(f"Handling device status message: {content}")
@@ -164,9 +181,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
         # Other integrations...
 
         # Internal
-        domain = content.get("msg_domain")
-        type = content.get("msg_type")
-        return "__".join([x for x in [domain, type] if x is not None])
+        return content.get("action")
 
     def broadcast_to_location_group(self, content):
         # Get location_id from content, otherwise query for location_id using given device_id
