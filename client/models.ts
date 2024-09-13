@@ -13,6 +13,12 @@ export interface User extends Identifiable {
   lastName: string;
 }
 
+export enum DeviceTypes {
+  DIAL,
+  PC,
+  SMART_PLUG,
+}
+
 export interface DeviceType extends Identifiable {
   name: string;
 }

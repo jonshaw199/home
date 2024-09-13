@@ -1,23 +1,31 @@
 import { useAppSelector } from "@/store";
 import React from "react";
-import { View } from "react-native";
-import DeviceTile from "./DeviceTile";
+import { StyleSheet, View } from "react-native";
+import DeviceTile from "./device/DeviceTile";
 
-const Devices = () => {
-  const { devices, deviceTypes } = useAppSelector((state) => ({
+export default function Devices() {
+  const { devices } = useAppSelector((state) => ({
     devices: state.devices.data,
-    deviceTypes: state.deviceTypes.data,
   }));
 
-  console.log(deviceTypes);
+  const style = styles();
 
   return (
-    <View>
+    <View style={style.container}>
       {Object.values(devices).map((device) => (
         <DeviceTile key={device.id} device={device} />
       ))}
     </View>
   );
-};
+}
 
-export default Devices;
+const styles = () =>
+  StyleSheet.create({
+    container: {
+      display: "flex",
+      flexDirection: "row",
+      gap: 8,
+      flexWrap: "wrap",
+      padding: 10,
+    },
+  });
