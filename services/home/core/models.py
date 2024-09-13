@@ -1,9 +1,18 @@
 from django.contrib.auth.models import User
 from django.db import models
+import uuid
 from mptt.models import MPTTModel, TreeForeignKey
 
 
+class BaseModel(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+
+    class Meta:
+        abstract = True
+
+
 class Location(MPTTModel):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     parent = TreeForeignKey(
         "self",
@@ -20,7 +29,7 @@ class Location(MPTTModel):
         return self.name
 
 
-class Profile(models.Model):
+class Profile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     locations = models.ManyToManyField(Location, related_name="users")
 

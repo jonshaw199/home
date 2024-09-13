@@ -11,7 +11,14 @@ Expected message shape:
     "src": string, // This is typically the ID of the source device
     "dest": string, // For WS<->MQTT, this is the topic
     "action": string, // i.e. "get-status", "set", etc.
-    "body": string | null
+    "body": {
+        <cpu_usage>,
+        <cpu_temperature>,
+        <memory_usage>,
+        <disk_usage>,
+        <network_sent>,
+        <network_received>
+    }
 }
 """
 
