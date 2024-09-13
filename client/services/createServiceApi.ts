@@ -98,86 +98,130 @@ function convertKeysToCamelCase(obj: any): any {
   return obj; // Return the value as is if it's not an object or array
 }
 
+function transform(obj: any, transformer: (obj: any) => any) {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => transformer(item));
+  } else if (obj !== null && typeof obj === "object") {
+    return transformer(obj);
+  } else {
+    return obj;
+  }
+}
+
 // Utility function to handle fetch and camelCase conversion
-async function fetchAndConvert<T>(
-  url: string,
-  options: RequestInit
-): Promise<T> {
+async function fetchAndConvert<T>({
+  url,
+  options,
+  transformer = (obj) => obj,
+}: {
+  url: string;
+  options: RequestInit;
+  transformer?: (obj: any) => any;
+}): Promise<T> {
   const response = await fetch(url, options);
   if (!response.ok) {
     throw new Error(`Failed to fetch resource: ${response.statusText}`);
   }
   const data = await response.json();
-  return convertKeysToCamelCase(data);
+  const converted = convertKeysToCamelCase(data);
+  return transform(converted, transformer);
 }
 
-export function createServiceApi<T extends Identifiable>(
-  baseUrl: string
-): ServiceApi<T> {
+export function createServiceApi<T extends Identifiable>({
+  baseUrl,
+  transformer = (obj) => obj,
+}: {
+  baseUrl: string;
+  transformer?: (obj: T) => T;
+}): ServiceApi<T> {
   return {
     async createOne({ token, data }) {
-      return fetchAndConvert<T>(baseUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      return fetchAndConvert<T>({
+        url: baseUrl,
+        options: {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
         },
-        body: JSON.stringify(data),
+        transformer,
       });
     },
 
     async createMany({ token, data }) {
-      const results = await fetchAndConvert<T[]>(baseUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const results = await fetchAndConvert<T[]>({
+        url: baseUrl,
+        options: {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
         },
-        body: JSON.stringify(data),
+        transformer,
       });
       return keyById<T>(results);
     },
 
     async readOne({ token, id }) {
-      return fetchAndConvert<T>(`${baseUrl}/${id}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      return fetchAndConvert<T>({
+        url: `${baseUrl}/${id}`,
+        options: {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
+        transformer,
       });
     },
 
     async readAll({ token, queryParams }) {
       const queryString = buildQueryString(queryParams);
-      const results = await fetchAndConvert<T[]>(`${baseUrl}${queryString}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const results = await fetchAndConvert<T[]>({
+        url: `${baseUrl}${queryString}`,
+        options: {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
+        transformer,
       });
       return keyById<T>(results);
     },
 
     async updateOne({ token, id, data }) {
-      return fetchAndConvert<T>(`${baseUrl}/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-    },
-
-    async updateMany({ token, data }) {
-      const promises = data.map(({ id, payload }) =>
-        fetchAndConvert<T>(`${baseUrl}/${id}`, {
+      return fetchAndConvert<T>({
+        url: `${baseUrl}/${id}`,
+        options: {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(data),
+        },
+        transformer,
+      });
+    },
+
+    async updateMany({ token, data }) {
+      const promises = data.map(({ id, payload }) =>
+        fetchAndConvert<T>({
+          url: `${baseUrl}/${id}`,
+          options: {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          },
+          transformer,
         })
       );
       const results = await Promise.all(promises);
