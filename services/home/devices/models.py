@@ -20,12 +20,12 @@ class Device(models.Model):
         Location, related_name="devices", on_delete=models.CASCADE
     )
 
-    cpu_usage = models.FloatField(null=True)
-    cpu_temp = models.FloatField(null=True)
-    mem_usage = models.FloatField(null=True)
-    disk_usage = models.FloatField(null=True)
-    network_sent = models.BigIntegerField(null=True)
-    network_received = models.BigIntegerField(null=True)
+    cpu_usage = models.FloatField(null=True, blank=True)
+    cpu_temp = models.FloatField(null=True, blank=True)
+    mem_usage = models.FloatField(null=True, blank=True)
+    disk_usage = models.FloatField(null=True, blank=True)
+    network_sent = models.BigIntegerField(null=True, blank=True)
+    network_received = models.BigIntegerField(null=True, blank=True)
 
     vendor_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
