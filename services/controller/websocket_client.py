@@ -18,6 +18,7 @@ class WebsocketClient:
         self.message_queue = deque()  # Queue to store unsent messages
         self.ws = None
         self.is_reconnecting = False
+        self.max_queue_size = 100  # Limit the queue size to 100 messages
         self.connect()
 
     def connect(self):
@@ -67,8 +68,15 @@ class WebsocketClient:
             self.ws.send(message)
         except Exception as e:
             logging.error(f"Send failed: {e}")
-            self.message_queue.append(message)  # Queue the message for retry
+            self.queue_message(message)  # Queue the message for retry
             self.ws.close()
+
+    # Queue the message with a size limit
+    def queue_message(self, message):
+        if len(self.message_queue) >= self.max_queue_size:
+            logging.warning("Message queue size exceeded. Removing oldest message.")
+            self.message_queue.popleft()  # Remove the oldest message
+        self.message_queue.append(message)  # Add new message to the queue
 
     def resend_queued_messages(self):
         while self.message_queue:
