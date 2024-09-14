@@ -14,6 +14,8 @@ Expected message shape:
 }
 """
 
+INTEGRATION_ACTION = "integration"
+
 
 class BaseMessageHandler:
     handlers = {}
@@ -32,6 +34,7 @@ class BaseMessageHandler:
 
 """
 body: {
+    "device_uuid": string,
     "is_on": boolean
 }
 """
@@ -42,37 +45,40 @@ class ShellyPlugSetMessageHandler(BaseMessageHandler):
     def handle(self, content, consumer):
         logging.info(f"Handling Shelly Plug set message: {content}")
 
-        src = content.get("src")
-        if src is None:
-            raise ValueError("src is required")
-
         body = content.get("body")
         if body is None:
-            raise ValueError("body required")
+            raise ValueError("body is required")
+
+        device_uuid = body.get("device_uuid")
+        if device_uuid is None:
+            raise ValueError("device_uuid is required")
+
+        is_on = body.get("is_on")
+        if is_on is None:
+            raise ValueError("is_on is required")
 
         # Retrieve the device instance
         try:
-            device = Device.objects.get(vendor_id=src)
+            device = Device.objects.get(uuid=device_uuid)
         except Device.DoesNotExist:
-            raise ValueError(f"Device with vendor_id {src} does not exist")
+            raise ValueError(f"Device with uuid {device_uuid} does not exist")
 
         if not hasattr(device, "plug"):
             raise ValueError(f"Plug not found for Device ID {device.id}")
 
         # Set values
-        if hasattr(body, "is_on"):
-            is_on = body.get("is_on")
-            logging.info(f"Setting is_on to {is_on}")
-            device.plug.is_on = is_on
-
-        # Save
+        logging.info(f"Setting is_on to {is_on} for Device ID {device.id}")
+        device.plug.is_on = is_on
         device.plug.save()
 
-        adapted = copy(content)
-        # src was vendor_id; need actual id
-        adapted["src"] = device.id
-        # Broadcast adapted message
-        consumer.broadcast_to_location_group(adapted, device.location.id)
+        # Broadcast
+        outbound = {
+            "src": "client",
+            "dest": f"{device.vendor_id}/command/switch:0",
+            "action": INTEGRATION_ACTION,
+            "body": "on" if is_on else "off",
+        }
+        consumer.broadcast_to_location_group(outbound, device.location.id)
 
 
 class ClientConsumer(JsonWebsocketConsumer):
