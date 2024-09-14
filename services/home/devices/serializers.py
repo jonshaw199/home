@@ -10,7 +10,6 @@ class DeviceSerializer(UUIDModelSerializer):
             "device_type",
             "location",
             "name",
-            "plug",
         ]
 
 
