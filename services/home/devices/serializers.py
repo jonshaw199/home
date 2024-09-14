@@ -6,7 +6,12 @@ from core.serializers import UUIDModelSerializer
 class DeviceSerializer(UUIDModelSerializer):
     class Meta:
         model = Device
-        fields = UUIDModelSerializer.Meta.fields + ["device_type", "location", "name"]
+        fields = UUIDModelSerializer.Meta.fields + [
+            "device_type",
+            "location",
+            "name",
+            "plug",
+        ]
 
 
 class DeviceTypeSerializer(UUIDModelSerializer):
