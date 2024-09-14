@@ -2,6 +2,8 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
+from devices.models import Device
+from copy import copy
 
 """
 Expected message shape:
@@ -24,8 +26,53 @@ class BaseMessageHandler:
 
         return decorator
 
-    def handle(self, content):
+    def handle(self, content, consumer):
         raise NotImplementedError("Handle method not implemented.")
+
+
+"""
+body: {
+    "is_on": boolean
+}
+"""
+
+
+@BaseMessageHandler.register("shellyplug__set")
+class ShellyPlugSetMessageHandler(BaseMessageHandler):
+    def handle(self, content, consumer):
+        logging.info(f"Handling Shelly Plug set message: {content}")
+
+        src = content.get("src")
+        if src is None:
+            raise ValueError("src is required")
+
+        body = content.get("body")
+        if body is None:
+            raise ValueError("body required")
+
+        # Retrieve the device instance
+        try:
+            device = Device.objects.get(vendor_id=src)
+        except Device.DoesNotExist:
+            raise ValueError(f"Device with vendor_id {src} does not exist")
+
+        if not hasattr(device, "plug"):
+            raise ValueError(f"Plug not found for Device ID {device.id}")
+
+        # Set values
+        if hasattr(body, "is_on"):
+            is_on = body.get("is_on")
+            logging.info(f"Setting is_on to {is_on}")
+            device.plug.is_on = is_on
+
+        # Save
+        device.plug.save()
+
+        adapted = copy(content)
+        # src was vendor_id; need actual id
+        adapted["src"] = device.id
+        # Broadcast adapted message
+        consumer.broadcast_to_location_group(adapted, device.location.id)
 
 
 class ClientConsumer(JsonWebsocketConsumer):
@@ -109,9 +156,20 @@ class ClientConsumer(JsonWebsocketConsumer):
         handler_id = self.get_handler_id(content)
         handler = BaseMessageHandler.handlers.get(handler_id)
         if handler:
-            handler.handle(content)
+            handler.handle(content, self)
         else:
             logging.warning(f"No handler found for ID: {handler_id}")
 
     def get_handler_id(self, content):
         return content.get("action")
+
+    def broadcast_to_location_group(self, content, location_id):
+        group_name = f"location_{location_id}_group"
+        if group_name in self.group_names:
+            logging.info(
+                f"Broadcasting message to group; message: {content}; group: {group_name}"
+            )
+            content["sender"] = self.channel_name
+            async_to_sync(self.channel_layer.group_send)(
+                group_name, {"type": "group_message", "message": content}
+            )
