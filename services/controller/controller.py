@@ -13,6 +13,7 @@ logging.basicConfig(
 )
 
 ROOT_TOPIC = "ROOT_TOPIC"
+INTEGRATION_ACTION = "integration"
 
 
 class Controller:
@@ -24,14 +25,20 @@ class Controller:
 
     def handle_message_ws(self, message):
         logging.info("Handle message: %s", message)
-        topic = self.get_topic(message)
-        if topic:
-            self.mqtt_client.publish(topic, message)
+        parsed = json.loads(message)
+        topic = parsed["dest"] if "dest" in parsed else ROOT_TOPIC
+        # Our devices use a standardized json payload but not integrated ones
+        if parsed.get("action") == INTEGRATION_ACTION:
+            body = parsed.get("body")
+            if isinstance(body, dict):
+                to_send = json.dumps(parsed["body"])
+            elif isinstance(body, str):
+                to_send = body
+            else:
+                to_send = ""
         else:
-            # Assuming the message isn't important to the server if no topic
-            logging.error(
-                f"Cannot publish websocket message to mqtt (unable to determine topic): {message}"
-            )
+            to_send = message
+        self.mqtt_client.publish(topic, to_send)
 
     def handle_connect_mqtt(self):
         # Subscribe to everything; our job is to keep the server in the loop
@@ -41,10 +48,6 @@ class Controller:
         logging.info("Handle message: %s", message)
         # We are subscribed to everything; pass along messages to server
         self.websocket_client.send(message)
-
-    def get_topic(self, message):
-        json_msg = json.loads(message)
-        return json_msg["dest"] if "dest" in json_msg else ROOT_TOPIC
 
     def start(self):
         mqtt_thread = Thread(target=self.mqtt_client.start)
