@@ -136,7 +136,7 @@ void mqtt_task(void *pvParameter)
 
         auto handle_msg = [](const std::string &data)
         {
-            ESP_LOGI(TAG, "Received data on topic devices/+/device_status: %s", data.c_str());
+            ESP_LOGI(TAG, "Received MQTT data: %s", data.c_str());
             DeviceStatusMessage msg = parse_device_status_message(data);
             handle_device_status_message(msg);
         };
