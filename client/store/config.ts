@@ -1,20 +1,46 @@
-import { Device, DeviceType } from "../models";
+import { Device, DeviceType, Plug } from "../models";
 import { ServiceApi } from "../services/createServiceApi";
 import { deviceService } from "../services/deviceService";
-import { configureStore as configureStoreRedux } from "@reduxjs/toolkit";
+import {
+  Reducer,
+  configureStore as configureStoreRedux,
+} from "@reduxjs/toolkit";
 import { deviceSliceReducer } from "@/store/slices/deviceSlice";
 import { getStorageItemAsync } from "@/hooks/useStorageState";
 import { deviceTypeService } from "@/services/deviceTypeService";
 import { deviceTypeSliceReducer } from "./slices/deviceTypeSlice";
+import { plugService } from "@/services/plugService";
+import { ModelState } from "./slices/createModelSlice";
+import { plugSliceReducer } from "./slices/plugSlice";
 
+/*
+  Add new services to `ServiceApis` type and `serviceApis` object
+*/
 export type ServiceApis = {
   devices: ServiceApi<Device>;
   deviceTypes: ServiceApi<DeviceType>;
+  plugs: ServiceApi<Plug>;
 };
 
 export const serviceApis: ServiceApis = {
   devices: deviceService,
   deviceTypes: deviceTypeService,
+  plugs: plugService,
+};
+
+/*
+  Add new slices to `RootReducer` type and `rootReducer` object
+*/
+type RootReducer = {
+  devices: Reducer<ModelState<Device>>;
+  deviceTypes: Reducer<ModelState<DeviceType>>;
+  plugs: Reducer<ModelState<Plug>>;
+};
+
+const rootReducer: RootReducer = {
+  devices: deviceSliceReducer,
+  deviceTypes: deviceTypeSliceReducer,
+  plugs: plugSliceReducer,
 };
 
 export type ThunkExtraArgument = {
@@ -33,10 +59,7 @@ const extraArgument: ThunkExtraArgument = { serviceApis, getSession };
 
 export const configureStore = () =>
   configureStoreRedux({
-    reducer: {
-      devices: deviceSliceReducer,
-      deviceTypes: deviceTypeSliceReducer,
-    },
+    reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         thunk: {

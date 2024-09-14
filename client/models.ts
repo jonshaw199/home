@@ -28,3 +28,7 @@ export interface Device extends Identifiable {
   location: ID;
   name: string;
 }
+
+export interface Plug extends Identifiable {
+  isOn: boolean;
+}
