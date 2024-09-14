@@ -6,23 +6,27 @@ from rest_framework import serializers
 from django.db import models
 
 
+from rest_framework import serializers
+from django.db import models
+
+
 class UUIDModelSerializer(serializers.ModelSerializer):
     def build_field(self, field_name, info, model_class, nested_depth):
         """
-        This method is called to construct each field in the serializer.
-        Override it to replace foreign key 'id' references with 'uuid'.
+        Override this method to replace foreign key 'id' references with 'uuid'.
         """
-        # Check if the field name corresponds to a ForeignKey field
         if hasattr(model_class, field_name):
             field = getattr(model_class, field_name)
-            if isinstance(field, models.ForeignKey):
+            if isinstance(field, (models.ForeignKey, models.OneToOneField)):
                 # Replace with the UUID of the related model
                 return (
                     serializers.UUIDField(source=f"{field_name}.uuid", read_only=True),
                     True,
                 )
+            elif isinstance(field, models.ManyToManyField):
+                # For ManyToMany, we'll handle it in to_representation()
+                return super().build_field(field_name, info, model_class, nested_depth)
 
-        # Default behavior for other fields
         return super().build_field(field_name, info, model_class, nested_depth)
 
     class Meta:
@@ -41,17 +45,21 @@ class UUIDModelSerializer(serializers.ModelSerializer):
                 related_objects = getattr(instance, field_name, None)
                 if hasattr(
                     related_objects, "all"
-                ):  # Reverse Many-to-One or Many-to-Many
+                ):  # Many-to-One or Many-to-Many reverse
                     uuid_list = [
                         related_instance.uuid
                         for related_instance in related_objects.all()
                         if hasattr(related_instance, "uuid")
                     ]
                     representation[field_name] = uuid_list
+                elif related_objects and hasattr(
+                    related_objects, "uuid"
+                ):  # One-to-One reverse
+                    representation[field_name] = related_objects.uuid
                 continue
 
-            # Handle ForeignKey (One-to-Many) relationships
-            if isinstance(model_field, models.ForeignKey):
+            # Handle ForeignKey and OneToOne relationships
+            if isinstance(model_field, (models.ForeignKey, models.OneToOneField)):
                 related_instance = getattr(instance, field_name, None)
                 if related_instance and hasattr(related_instance, "uuid"):
                     representation[field_name] = related_instance.uuid
@@ -65,6 +73,14 @@ class UUIDModelSerializer(serializers.ModelSerializer):
                     if hasattr(related_instance, "uuid")
                 ]
                 representation[field_name] = uuid_list
+
+        # Handle reverse OneToOneField manually (e.g., "plug" in Device)
+        for related_object in instance._meta.related_objects:
+            if isinstance(related_object, models.OneToOneRel):
+                related_field_name = related_object.related_name or related_object.name
+                related_instance = getattr(instance, related_field_name, None)
+                if related_instance and hasattr(related_instance, "uuid"):
+                    representation[related_field_name] = related_instance.uuid
 
         return representation
 
