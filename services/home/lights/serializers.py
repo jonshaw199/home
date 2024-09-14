@@ -2,8 +2,10 @@
 
 from lights.models import Light
 from rest_framework import serializers
+from core.serializers import UUIDModelSerializer
 
-class LightSerializer(serializers.HyperlinkedModelSerializer):
+
+class LightSerializer(UUIDModelSerializer):
     class Meta:
         model = Light
-        fields = ['name', 'location']
+        fields = UUIDModelSerializer.Meta.fields + ["name", "location"]

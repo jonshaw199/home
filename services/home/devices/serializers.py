@@ -1,27 +1,27 @@
 # serializers.py
-from rest_framework import serializers
 from .models import Device, DeviceType, System, Plug
+from core.serializers import UUIDModelSerializer
 
 
-class DeviceSerializer(serializers.ModelSerializer):
+class DeviceSerializer(UUIDModelSerializer):
     class Meta:
         model = Device
-        fields = ["device_type", "id", "location", "name"]
+        fields = UUIDModelSerializer.Meta.fields + ["device_type", "location", "name"]
 
 
-class DeviceTypeSerializer(serializers.ModelSerializer):
+class DeviceTypeSerializer(UUIDModelSerializer):
     class Meta:
         model = DeviceType
-        fields = ["id", "name"]
+        fields = UUIDModelSerializer.Meta.fields + ["name"]
 
 
-class SystemSerializer(serializers.ModelSerializer):
+class SystemSerializer(UUIDModelSerializer):
     class Meta:
         model = System
-        fields = ["device", "cpu_usage"]
+        fields = UUIDModelSerializer.Meta.fields + ["device", "cpu_usage"]
 
 
-class PlugSerializer(serializers.ModelSerializer):
+class PlugSerializer(UUIDModelSerializer):
     class Meta:
         model = Plug
-        fields = ["device", "is_on"]
+        fields = UUIDModelSerializer.Meta.fields + ["device", "is_on"]
