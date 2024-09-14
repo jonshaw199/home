@@ -36,7 +36,7 @@ class BaseMessageHandler:
 
         return decorator
 
-    def handle(self, content):
+    def handle(self, content, consumer):
         raise NotImplementedError("Handle method not implemented.")
 
 
@@ -80,15 +80,17 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
         # Save the updated device instance
         device.system.save()
 
-    def handle(self, content):
+    def handle(self, content, consumer):
         logging.info(f"Handling device status message: {content}")
         DeviceStatusMessageHandler.update_device(content)
+        consumer.broadcast_to_location_group(content)
 
 
 @BaseMessageHandler.register("shellyplugs__NotifyStatus")
 class ShellyPlugStatusMessageHandler(BaseMessageHandler):
-    def handle(self, content):
+    def handle(self, content, consumer):
         logging.info(f"Handling Shelly Plug status message: {content}")
+        # TODO: adapt message content, then call `broadcast` with it
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
@@ -137,7 +139,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
     def receive_json(self, content):
         logging.info(f"Received JSON message: {content}")
         self.handle_json(content)
-        self.broadcast_to_location_group(content)
+        # self.broadcast_to_location_group(content)
 
     def group_message(self, event):
         message = event["message"]
@@ -172,7 +174,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
         handler_id = self.get_handler_id(content)
         handler = BaseMessageHandler.handlers.get(handler_id)
         if handler:
-            handler.handle(content)
+            handler.handle(content, self)
         else:
             logging.warning(f"No handler found for ID: {handler_id}")
 
