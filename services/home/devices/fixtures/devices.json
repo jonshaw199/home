@@ -3,6 +3,7 @@
     "model": "devices.device",
     "pk": 1,
     "fields": {
+      "uuid": "c614b958-9a78-4b0f-8c2f-727a36e40b1c",
       "name": "Jon's M5 Dial",
       "location": 2,
       "device_type": 1
@@ -12,6 +13,7 @@
     "model": "devices.device",
     "pk": 2,
     "fields": {
+      "uuid": "380d7a59-f957-41f3-9d51-def726b9e52a",
       "name": "Jon's ThinkPad",
       "location": 2,
       "device_type": 2
@@ -21,6 +23,7 @@
     "model": "devices.device",
     "pk": 3,
     "fields": {
+      "uuid": "cf7d8486-18ad-4064-b757-e671a4749a3e",
       "name": "Jon's Shelly Plug",
       "location": 2,
       "device_type": 3,

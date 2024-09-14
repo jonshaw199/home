@@ -50,12 +50,12 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
 
         # Retrieve the device instance
         try:
-            device = Device.objects.get(pk=src)
+            device = Device.objects.get(uuid=src)
         except Device.DoesNotExist:
-            raise ValueError(f"Device with ID {src} does not exist")
+            raise ValueError(f"Device with UUID {src} does not exist")
 
         if not hasattr(device, "system"):
-            logging.warn(f"System not found for Device ID {src}")
+            logging.warn(f"System not found for Device UUID {src}")
             return
 
         body = data.get("body")
@@ -131,8 +131,8 @@ class ControllerConsumer(JsonWebsocketConsumer):
             logging.error("Invalid JSON; closing connection")
             self.send_json({"error": "Invalid JSON; closing connection..."})
             self.close()
-        except ValueError:
-            logging.error("Invalid message; unable to process")
+        except ValueError as e:
+            logging.error(f"Invalid message; unable to process; error: {e}")
 
     def receive_json(self, content):
         logging.info(f"Received JSON message: {content}")
@@ -191,32 +191,25 @@ class ControllerConsumer(JsonWebsocketConsumer):
         return content.get("action")
 
     def broadcast_to_location_group(self, content):
-        # Get location_id from content, otherwise query for location_id using given device_id
-        # Need either location_id or device_id
-        location_id = content.get("location_id")
-        if not location_id:
-            device_id = content.get("device_id")
-            if device_id:
-                data = (
-                    Device.objects.filter(pk=device_id).values("location__id").first()
-                )
-                if "location__id" in data:
-                    location_id = data["location__id"]
-                else:
-                    logging.warn(f"Location ID not found for device ID: {device_id}")
-        if location_id:
-            group_name = f"location_{location_id}_group"
-            if group_name in self.group_names:
-                logging.info(
-                    f"Broadcasting message to group; message: {content}; group: {group_name}"
-                )
-                content["sender"] = self.channel_name
-                async_to_sync(self.channel_layer.group_send)(
-                    group_name, {"type": "group_message", "message": content}
-                )
+        src = content.get("src")
+        if src:
+            try:
+                device = Device.objects.filter(uuid=src).values("location__id").first()
+            except:
+                logging.error(f"Error querying for Device UUID {src}")
+                return
+
+            if device and "location__id" in device:
+                group_name = f"location_{device['location__id']}_group"
+                if group_name in self.group_names:
+                    logging.info(
+                        f"Broadcasting message to group; message: {content}; group: {group_name}"
+                    )
+                    content["sender"] = self.channel_name
+                    async_to_sync(self.channel_layer.group_send)(
+                        group_name, {"type": "group_message", "message": content}
+                    )
             else:
-                logging.warn(f"User not part of group for location {location_id}")
+                logging.warn(f"Location ID not found for device ID: {src}")
         else:
-            logging.error(
-                "Location ID not provided or cannot be determined; unable to broadcast message"
-            )
+            logging.warn("Key 'src' does not exist; unable to broadcast")

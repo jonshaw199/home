@@ -16,7 +16,7 @@ mqtt_broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
 mqtt_topic = os.getenv("MQTT_TOPIC", "system/status")
 interval = os.getenv("PUB_INTERVAL_SEC", 60)
 # TODO: get this from somewhere else maybe NVS
-device_id = int(os.getenv("DEVICE_ID", None))
+device_id = os.getenv("DEVICE_ID", "")
 
 logging.basicConfig(
     level=logging.DEBUG,
