@@ -14,7 +14,9 @@ Expected message shape:
 }
 """
 
-INTEGRATION_ACTION = "integration"
+ACTION_INTEGRATION = "integration"
+
+HANDLER_SHELLY_PLUG = "shellyplug__set"
 
 
 class BaseMessageHandler:
@@ -34,13 +36,13 @@ class BaseMessageHandler:
 
 """
 body: {
-    "device_uuid": string,
+    "device_id": string, // UUID
     "is_on": boolean
 }
 """
 
 
-@BaseMessageHandler.register("shellyplug__set")
+@BaseMessageHandler.register(HANDLER_SHELLY_PLUG)
 class ShellyPlugSetMessageHandler(BaseMessageHandler):
     def handle(self, content, consumer):
         logging.info(f"Handling Shelly Plug set message: {content}")
@@ -49,9 +51,9 @@ class ShellyPlugSetMessageHandler(BaseMessageHandler):
         if body is None:
             raise ValueError("body is required")
 
-        device_uuid = body.get("device_uuid")
-        if device_uuid is None:
-            raise ValueError("device_uuid is required")
+        device_id = body.get("device_id")
+        if device_id is None:
+            raise ValueError("device_id is required")
 
         is_on = body.get("is_on")
         if is_on is None:
@@ -59,9 +61,9 @@ class ShellyPlugSetMessageHandler(BaseMessageHandler):
 
         # Retrieve the device instance
         try:
-            device = Device.objects.get(uuid=device_uuid)
+            device = Device.objects.get(uuid=device_id)
         except Device.DoesNotExist:
-            raise ValueError(f"Device with uuid {device_uuid} does not exist")
+            raise ValueError(f"Device with uuid {device_id} does not exist")
 
         if not hasattr(device, "plug"):
             raise ValueError(f"Plug not found for Device ID {device.id}")
@@ -75,7 +77,7 @@ class ShellyPlugSetMessageHandler(BaseMessageHandler):
         outbound = {
             "src": "client",
             "dest": f"{device.vendor_id}/command/switch:0",
-            "action": INTEGRATION_ACTION,
+            "action": ACTION_INTEGRATION,
             "body": "on" if is_on else "off",
         }
         consumer.broadcast_to_location_group(outbound, device.location.id)
