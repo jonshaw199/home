@@ -5,5 +5,4 @@ const base_url = process.env.EXPO_PUBLIC_HOME_API_URL;
 
 export const deviceService = createServiceApi<Device>({
   baseUrl: `${base_url}/api/devices`,
-  transformer: (obj) => obj,
 });

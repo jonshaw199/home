@@ -1,4 +1,5 @@
 import { ID, Identifiable } from "@/models";
+import transform from "./transformer";
 
 export type QueryParams = Record<string, string | number | boolean>;
 
@@ -79,64 +80,36 @@ function keyById<T extends Identifiable>(arr: T[]) {
   }, {});
 }
 
-// Helper function to convert snake_case to camelCase
-function snakeToCamel(snakeStr: string): string {
-  return snakeStr.replace(/(_\w)/g, (matches) => matches[1].toUpperCase());
-}
-
-// Recursively convert keys from snake_case to camelCase
-function convertKeysToCamelCase(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map((item) => convertKeysToCamelCase(item));
-  } else if (obj !== null && typeof obj === "object") {
-    return Object.entries(obj).reduce((acc, [key, value]) => {
-      const camelKey = snakeToCamel(key);
-      acc[camelKey] = convertKeysToCamelCase(value);
-      return acc;
-    }, {} as any);
-  }
-  return obj; // Return the value as is if it's not an object or array
-}
-
-function transform(obj: any, transformer: (obj: any) => any) {
-  if (Array.isArray(obj)) {
-    return obj.map((item) => transformer(item));
-  } else if (obj !== null && typeof obj === "object") {
-    return transformer(obj);
-  } else {
-    return obj;
-  }
-}
-
 // Utility function to handle fetch and camelCase conversion
-async function fetchAndConvert<T>({
+async function fetchAndTransform<T>({
   url,
   options,
-  transformer = (obj) => obj,
+  customTransformer = (obj) => obj,
 }: {
   url: string;
   options: RequestInit;
-  transformer?: (obj: any) => any;
+  customTransformer?: (obj: any) => any;
 }): Promise<T> {
   const response = await fetch(url, options);
   if (!response.ok) {
     throw new Error(`Failed to fetch resource: ${response.statusText}`);
   }
   const data = await response.json();
-  const converted = convertKeysToCamelCase(data);
-  return transform(converted, transformer);
+
+  // Transform data
+  return transform({ data, customTransformer });
 }
 
 export function createServiceApi<T extends Identifiable>({
   baseUrl,
-  transformer = (obj) => obj,
+  transformer: customTransformer = (obj) => obj,
 }: {
   baseUrl: string;
   transformer?: (obj: T) => T;
 }): ServiceApi<T> {
   return {
     async createOne({ token, data }) {
-      return fetchAndConvert<T>({
+      return fetchAndTransform<T>({
         url: baseUrl,
         options: {
           method: "POST",
@@ -146,12 +119,12 @@ export function createServiceApi<T extends Identifiable>({
           },
           body: JSON.stringify(data),
         },
-        transformer,
+        customTransformer,
       });
     },
 
     async createMany({ token, data }) {
-      const results = await fetchAndConvert<T[]>({
+      const results = await fetchAndTransform<T[]>({
         url: baseUrl,
         options: {
           method: "POST",
@@ -161,13 +134,13 @@ export function createServiceApi<T extends Identifiable>({
           },
           body: JSON.stringify(data),
         },
-        transformer,
+        customTransformer,
       });
       return keyById<T>(results);
     },
 
     async readOne({ token, id }) {
-      return fetchAndConvert<T>({
+      return fetchAndTransform<T>({
         url: `${baseUrl}/${id}`,
         options: {
           method: "GET",
@@ -175,13 +148,13 @@ export function createServiceApi<T extends Identifiable>({
             Authorization: `Bearer ${token}`,
           },
         },
-        transformer,
+        customTransformer,
       });
     },
 
     async readAll({ token, queryParams }) {
       const queryString = buildQueryString(queryParams);
-      const results = await fetchAndConvert<T[]>({
+      const results = await fetchAndTransform<T[]>({
         url: `${baseUrl}${queryString}`,
         options: {
           method: "GET",
@@ -189,13 +162,13 @@ export function createServiceApi<T extends Identifiable>({
             Authorization: `Bearer ${token}`,
           },
         },
-        transformer,
+        customTransformer,
       });
       return keyById<T>(results);
     },
 
     async updateOne({ token, id, data }) {
-      return fetchAndConvert<T>({
+      return fetchAndTransform<T>({
         url: `${baseUrl}/${id}`,
         options: {
           method: "PUT",
@@ -205,13 +178,13 @@ export function createServiceApi<T extends Identifiable>({
           },
           body: JSON.stringify(data),
         },
-        transformer,
+        customTransformer,
       });
     },
 
     async updateMany({ token, data }) {
       const promises = data.map(({ id, payload }) =>
-        fetchAndConvert<T>({
+        fetchAndTransform<T>({
           url: `${baseUrl}/${id}`,
           options: {
             method: "PUT",
@@ -221,7 +194,7 @@ export function createServiceApi<T extends Identifiable>({
             },
             body: JSON.stringify(payload),
           },
-          transformer,
+          customTransformer,
         })
       );
       const results = await Promise.all(promises);
