@@ -10,7 +10,7 @@ class UUIDModelSerializer(serializers.ModelSerializer):
     def build_field(self, field_name, info, model_class, nested_depth):
         """
         This method is called to construct each field in the serializer.
-        We override it to replace foreign key 'id' references with 'uuid'.
+        Override it to replace foreign key 'id' references with 'uuid'.
         """
         # Check if the field name corresponds to a ForeignKey field
         if hasattr(model_class, field_name):
@@ -30,29 +30,43 @@ class UUIDModelSerializer(serializers.ModelSerializer):
         fields = ["uuid"]  # This can be expanded or modified in subclasses
 
     def to_representation(self, instance):
-        """Override `to_representation` to replace foreign key IDs with UUIDs."""
+        """Override `to_representation` to replace foreign key IDs, M2M IDs, and reverse IDs with UUIDs."""
         representation = super().to_representation(instance)
 
         for field_name, field in self.fields.items():
-            # Check if the field is a foreign key
-            model_field = self.Meta.model._meta.get_field(field_name)
+            try:
+                model_field = self.Meta.model._meta.get_field(field_name)
+            except models.FieldDoesNotExist:
+                # Handle reverse relationships not in _meta (e.g., related_name fields)
+                related_objects = getattr(instance, field_name, None)
+                if hasattr(
+                    related_objects, "all"
+                ):  # Reverse Many-to-One or Many-to-Many
+                    uuid_list = [
+                        related_instance.uuid
+                        for related_instance in related_objects.all()
+                        if hasattr(related_instance, "uuid")
+                    ]
+                    representation[field_name] = uuid_list
+                continue
+
+            # Handle ForeignKey (One-to-Many) relationships
             if isinstance(model_field, models.ForeignKey):
-                # Get the related instance (e.g., instance.device_type)
                 related_instance = getattr(instance, field_name, None)
-                # Replace the ID with the related instance's UUID if it exists
                 if related_instance and hasattr(related_instance, "uuid"):
                     representation[field_name] = related_instance.uuid
 
+            # Handle ManyToMany relationships
+            elif isinstance(model_field, models.ManyToManyField):
+                related_manager = getattr(instance, field_name)
+                uuid_list = [
+                    related_instance.uuid
+                    for related_instance in related_manager.all()
+                    if hasattr(related_instance, "uuid")
+                ]
+                representation[field_name] = uuid_list
+
         return representation
-
-
-"""
-    def to_representation(self, instance):
-        # Remove the 'id' field if present in the serialized output
-        data = super().to_representation(instance)
-        data.pop("id", None)  # Remove 'id' if it exists
-        return data
-"""
 
 
 class UserSerializer(UUIDModelSerializer):
