@@ -1,7 +1,7 @@
 menu "Home Config"
 config DEVICE_ID
     string "Device ID"
-    default "default_device_id"
+    default "c614b958-9a78-4b0f-8c2f-727a36e40b1c"
     help
       Set a unique ID for the device.
 
@@ -19,7 +19,7 @@ config WIFI_PASSWORD
 
 config MQTT_BROKER
     string "MQTT Broker Host"
-    default "mqtt://test.mosquitto.org"
+    default "mqtt://localhost"
     help
       Set the MQTT broker host.
 endmenu
