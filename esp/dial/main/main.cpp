@@ -35,21 +35,26 @@ NTPClient ntp_client;
 WiFiConnector *wifi_connector;
 MqttClient *mqtt_client;
 
-struct DeviceStatusMessage
+struct DeviceStatus
 {
-    std::string msg_domain = "";
-    int device_id = -1; // -1 represents null
-    std::string msg_type = "";
     float cpu_usage = -1.0;
     float cpu_temperature = -1.0;
     float memory_usage = -1.0;
     float disk_usage = -1.0;
     int network_sent = -1;
     int network_received = -1;
-    int64_t first_received_at = -1;
+    int64_t first_received_at = -1;   
 };
 
-typedef std::map<int, DeviceStatusMessage> status_message_map_t;
+struct DeviceStatusMessage
+{
+    std::string src = "";
+    std::string dest = "";
+    std::string action = "";
+    DeviceStatus body;
+};
+
+typedef std::map<std::string, DeviceStatusMessage> status_message_map_t;
 
 // Map device ID to last status message
 status_message_map_t status_message_map;
@@ -61,11 +66,11 @@ std::mutex page_idx_mutex;
 void handle_device_status_message(DeviceStatusMessage msg)
 {
     const std::lock_guard<std::mutex> lock(status_message_map_mutex);
-    if (!status_message_map.contains(msg.device_id))
+    if (!status_message_map.contains(msg.src))
     {
-        msg.first_received_at = esp_timer_get_time();
+        msg.body.first_received_at = esp_timer_get_time();
     }
-    status_message_map[msg.device_id] = msg;
+    status_message_map[msg.src] = msg;
 }
 
 DeviceStatusMessage parse_device_status_message(const std::string &json_str)
@@ -75,37 +80,47 @@ DeviceStatusMessage parse_device_status_message(const std::string &json_str)
     if (!root)
         return msg; // Return default if parsing fails
 
-    auto get_string = [&](const char *key) -> std::string
+    // Helper lambdas to extract data
+    auto get_string = [&](cJSON *node, const char *key) -> std::string
     {
-        cJSON *item = cJSON_GetObjectItem(root, key);
+        cJSON *item = cJSON_GetObjectItem(node, key);
         return (item && cJSON_IsString(item)) ? item->valuestring : "";
     };
 
-    auto get_float = [&](const char *key) -> float
+    auto get_float = [&](cJSON *node, const char *key) -> float
     {
-        cJSON *item = cJSON_GetObjectItem(root, key);
+        cJSON *item = cJSON_GetObjectItem(node, key);
         return (item && cJSON_IsNumber(item)) ? static_cast<float>(item->valuedouble) : -1.0;
     };
 
-    auto get_int = [&](const char *key) -> int
+    auto get_int = [&](cJSON *node, const char *key) -> int
     {
-        cJSON *item = cJSON_GetObjectItem(root, key);
+        cJSON *item = cJSON_GetObjectItem(node, key);
         return (item && cJSON_IsNumber(item)) ? item->valueint : -1;
     };
 
-    msg.msg_domain = get_string("msg_domain");
-    msg.device_id = get_int("device_id");
-    msg.msg_type = get_string("msg_type");
-    msg.cpu_usage = get_float("cpu_usage");
-    msg.cpu_temperature = get_float("cpu_temperature");
-    msg.memory_usage = get_float("memory_usage");
-    msg.disk_usage = get_float("disk_usage");
-    msg.network_sent = get_int("network_sent");
-    msg.network_received = get_int("network_received");
+    // Parse top-level fields
+    msg.src = get_string(root, "src");
+    msg.dest = get_string(root, "dest");
+    msg.action = get_string(root, "action");
+
+    // Parse the "body" object
+    cJSON *body = cJSON_GetObjectItem(root, "body");
+    if (body && cJSON_IsObject(body))
+    {
+        msg.body.cpu_usage = get_float(body, "cpu_usage");
+        msg.body.cpu_temperature = get_float(body, "cpu_temperature");
+        msg.body.memory_usage = get_float(body, "memory_usage");
+        msg.body.disk_usage = get_float(body, "disk_usage");
+        msg.body.network_sent = get_int(body, "network_sent");
+        msg.body.network_received = get_int(body, "network_received");
+        // Optionally set first_received_at if the JSON contains a timestamp
+    }
 
     cJSON_Delete(root);
     return msg;
 }
+
 
 // Function to initialize MQTT
 void mqtt_task(void *pvParameter)
@@ -128,7 +143,7 @@ void mqtt_task(void *pvParameter)
 
         auto subscribe = [&handle_msg]()
         {
-            mqtt_client->subscribe("devices/+/device_status", handle_msg);
+            mqtt_client->subscribe("+/announce_status", handle_msg);
         };
 
         auto onConnect = [&subscribe]()
@@ -168,13 +183,13 @@ void wifi_task(void *pvParameter)
 }
 
 // Function to get value at a specific index by sorting
-DeviceStatusMessage get_value_at_index(const std::map<int, DeviceStatusMessage> &m, int i)
+DeviceStatusMessage get_value_at_index(const std::map<std::string, DeviceStatusMessage> &m, int i)
 {
     // Step 1: Use a multimap to sort by `first_received_at`
     std::multimap<long, DeviceStatusMessage> sorted_map;
     for (const auto &pair : m)
     {
-        sorted_map.emplace(pair.second.first_received_at, pair.second);
+        sorted_map.emplace(pair.second.body.first_received_at, pair.second);
     }
 
     // Step 2: Iterate over the sorted map and get the value at index `i`
@@ -232,39 +247,39 @@ void draw_status(M5Canvas &canvas, DeviceStatusMessage &msg)
     canvas.drawString("Name: Office PC", 50, 43);
     canvas.drawString(
         std::string("ID: ")
-            .append(std::to_string(msg.device_id))
+            .append(msg.src)
             .c_str(),
         50,
         60);
     canvas.drawString(
-        std::string("CPU Usage: ").append(float_to_str(msg.cpu_usage, "%")).c_str(),
+        std::string("CPU Usage: ").append(float_to_str(msg.body.cpu_usage, "%")).c_str(),
         50,
         77);
     canvas.drawString(
-        std::string("CPU Temp: ").append(float_to_str(msg.cpu_temperature, "C")).c_str(),
+        std::string("CPU Temp: ").append(float_to_str(msg.body.cpu_temperature, "C")).c_str(),
         50,
         94);
     canvas.drawString(
         std::string("Mem Usage: ")
-            .append(float_to_str(msg.memory_usage, "%"))
+            .append(float_to_str(msg.body.memory_usage, "%"))
             .c_str(),
         50,
         111);
     canvas.drawString(
         std::string("Disk Usage: ")
-            .append(float_to_str(msg.disk_usage, "%"))
+            .append(float_to_str(msg.body.disk_usage, "%"))
             .c_str(),
         50,
         128);
     canvas.drawString(
         std::string("Upload: ")
-            .append(float_to_str(msg.network_sent, "B"))
+            .append(float_to_str(msg.body.network_sent, "B"))
             .c_str(),
         50,
         145);
     canvas.drawString(
         std::string("Download: ")
-            .append(float_to_str(msg.network_received, "B"))
+            .append(float_to_str(msg.body.network_received, "B"))
             .c_str(),
         50,
         162);

@@ -1,11 +1,11 @@
 from django.db import models
 
-from core.models import Location
+from core.models import Location, BaseModel
 
 # Create your models here.
 
 
-class Light(models.Model):
+class Light(BaseModel):
     name = models.CharField()
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
 

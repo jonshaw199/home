@@ -3,7 +3,24 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
-from datetime import datetime
+
+"""
+Expected message shape:
+
+{
+    "src": string, // This is typically the ID of the source device
+    "dest": string, // For WS<->MQTT, this is the topic
+    "action": string, // i.e. "get-status", "set", etc.
+    "body": {
+        <cpu_usage>,
+        <cpu_temperature>,
+        <memory_usage>,
+        <disk_usage>,
+        <network_sent>,
+        <network_received>
+    }
+}
+"""
 
 SHELLY_PLUG_ID_PREFIX = "shellyplugus"
 
@@ -19,52 +36,61 @@ class BaseMessageHandler:
 
         return decorator
 
-    def handle(self, content):
+    def handle(self, content, consumer):
         raise NotImplementedError("Handle method not implemented.")
 
 
-@BaseMessageHandler.register("devices__device_status")
+@BaseMessageHandler.register("announce_status")
 class DeviceStatusMessageHandler(BaseMessageHandler):
     @staticmethod
     def update_device(data):
-        device_id = data.get("device_id")
-        if device_id is None:
-            raise ValueError("Device ID is required")
+        src = data.get("src")
+        if src is None:
+            raise ValueError("src is required")
 
         # Retrieve the device instance
         try:
-            device = Device.objects.get(pk=device_id)
+            device = Device.objects.get(uuid=src)
         except Device.DoesNotExist:
-            raise ValueError(f"Device with ID {device_id} does not exist")
+            raise ValueError(f"Device with UUID {src} does not exist")
 
-        if hasattr(device, "system"):
-            # Update fields with data from JSON object
-            device.system.cpu_usage = data.get("cpu_usage", device.system.cpu_usage)
-            device.system.cpu_temp = data.get("cpu_temperature", device.system.cpu_temp)
-            device.system.mem_usage = data.get("memory_usage", device.system.mem_usage)
-            device.system.disk_usage = data.get("disk_usage", device.system.disk_usage)
-            device.system.network_sent = data.get(
-                "network_sent", device.system.network_sent
-            )
-            device.system.network_received = data.get(
-                "network_received", device.system.network_received
-            )
-            # device.system.status_updated_at = datetime.now()  # Update the status_updated_at field
+        if not hasattr(device, "system"):
+            logging.warn(f"System not found for Device UUID {src}")
+            return
 
-            # Save the updated device instance
-            device.system.save()
-        else:
-            logging.warn(f"System not found for Device ID {device_id}")
+        body = data.get("body")
 
-    def handle(self, content):
+        if body is None:
+            logging.warn("Status not provided")
+            return
+
+        # Update fields with data from JSON object
+        device.system.cpu_usage = body.get("cpu_usage", device.system.cpu_usage)
+        device.system.cpu_temp = body.get("cpu_temperature", device.system.cpu_temp)
+        device.system.mem_usage = body.get("memory_usage", device.system.mem_usage)
+        device.system.disk_usage = body.get("disk_usage", device.system.disk_usage)
+        device.system.network_sent = body.get(
+            "network_sent", device.system.network_sent
+        )
+        device.system.network_received = body.get(
+            "network_received", device.system.network_received
+        )
+        # device.system.status_updated_at = datetime.now()  # Update the status_updated_at field
+
+        # Save the updated device instance
+        device.system.save()
+
+    def handle(self, content, consumer):
         logging.info(f"Handling device status message: {content}")
         DeviceStatusMessageHandler.update_device(content)
+        consumer.broadcast_to_location_group(content)
 
 
 @BaseMessageHandler.register("shellyplugs__NotifyStatus")
 class ShellyPlugStatusMessageHandler(BaseMessageHandler):
-    def handle(self, content):
+    def handle(self, content, consumer):
         logging.info(f"Handling Shelly Plug status message: {content}")
+        # TODO: adapt message content, then call `broadcast` with it
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
@@ -107,13 +133,13 @@ class ControllerConsumer(JsonWebsocketConsumer):
             logging.error("Invalid JSON; closing connection")
             self.send_json({"error": "Invalid JSON; closing connection..."})
             self.close()
-        except ValueError:
-            logging.error("Invalid message; unable to process")
+        except ValueError as e:
+            logging.error(f"Invalid message; unable to process; error: {e}")
 
     def receive_json(self, content):
         logging.info(f"Received JSON message: {content}")
         self.handle_json(content)
-        self.broadcast_to_location_group(content)
+        # self.broadcast_to_location_group(content)
 
     def group_message(self, event):
         message = event["message"]
@@ -148,7 +174,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
         handler_id = self.get_handler_id(content)
         handler = BaseMessageHandler.handlers.get(handler_id)
         if handler:
-            handler.handle(content)
+            handler.handle(content, self)
         else:
             logging.warning(f"No handler found for ID: {handler_id}")
 
@@ -164,37 +190,28 @@ class ControllerConsumer(JsonWebsocketConsumer):
         # Other integrations...
 
         # Internal
-        domain = content.get("msg_domain")
-        type = content.get("msg_type")
-        return "__".join([x for x in [domain, type] if x is not None])
+        return content.get("action")
 
     def broadcast_to_location_group(self, content):
-        # Get location_id from content, otherwise query for location_id using given device_id
-        # Need either location_id or device_id
-        location_id = content.get("location_id")
-        if not location_id:
-            device_id = content.get("device_id")
-            if device_id:
-                data = (
-                    Device.objects.filter(pk=device_id).values("location__id").first()
-                )
-                if "location__id" in data:
-                    location_id = data["location__id"]
-                else:
-                    logging.warn(f"Location ID not found for device ID: {device_id}")
-        if location_id:
-            group_name = f"location_{location_id}_group"
-            if group_name in self.group_names:
-                logging.info(
-                    f"Broadcasting message to group; message: {content}; group: {group_name}"
-                )
-                content["sender"] = self.channel_name
-                async_to_sync(self.channel_layer.group_send)(
-                    group_name, {"type": "group_message", "message": content}
-                )
+        src = content.get("src")
+        if src:
+            try:
+                device = Device.objects.filter(uuid=src).values("location__id").first()
+            except:
+                logging.error(f"Error querying for Device UUID {src}")
+                return
+
+            if device and "location__id" in device:
+                group_name = f"location_{device['location__id']}_group"
+                if group_name in self.group_names:
+                    logging.info(
+                        f"Broadcasting message to group; message: {content}; group: {group_name}"
+                    )
+                    content["sender"] = self.channel_name
+                    async_to_sync(self.channel_layer.group_send)(
+                        group_name, {"type": "group_message", "message": content}
+                    )
             else:
-                logging.warn(f"User not part of group for location {location_id}")
+                logging.warn(f"Location ID not found for device ID: {src}")
         else:
-            logging.error(
-                "Location ID not provided or cannot be determined; unable to broadcast message"
-            )
+            logging.warn("Key 'src' does not exist; unable to broadcast")

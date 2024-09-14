@@ -16,7 +16,7 @@ mqtt_broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
 mqtt_topic = os.getenv("MQTT_TOPIC", "system/status")
 interval = os.getenv("PUB_INTERVAL_SEC", 60)
 # TODO: get this from somewhere else maybe NVS
-device_id = int(os.getenv("DEVICE_ID", None))
+device_id = os.getenv("DEVICE_ID", "")
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -53,20 +53,21 @@ def publish_system_metrics():
     while True:
         metrics = {
             # Required
-            "msg_domain": "devices",
-            "device_id": device_id,
-            "msg_type": "device_status",
-            # Optional
-            "cpu_usage": psutil.cpu_percent(),
-            "cpu_temperature": (
-                psutil.sensors_temperatures().get("cpu_thermal", [])[0].current
-                if psutil.sensors_temperatures().get("cpu_thermal")
-                else None
-            ),
-            "memory_usage": psutil.virtual_memory().percent,
-            "disk_usage": psutil.disk_usage("/").percent,
-            "network_sent": psutil.net_io_counters().bytes_sent,
-            "network_received": psutil.net_io_counters().bytes_recv,
+            "src": device_id,
+            "dest": mqtt_topic,
+            "action": "announce_status",
+            "body": {
+                "cpu_usage": psutil.cpu_percent(),
+                "cpu_temperature": (
+                    psutil.sensors_temperatures().get("cpu_thermal", [])[0].current
+                    if psutil.sensors_temperatures().get("cpu_thermal")
+                    else None
+                ),
+                "memory_usage": psutil.virtual_memory().percent,
+                "disk_usage": psutil.disk_usage("/").percent,
+                "network_sent": psutil.net_io_counters().bytes_sent,
+                "network_received": psutil.net_io_counters().bytes_recv,
+            },
         }
 
         # Serialize the metrics to a JSON string

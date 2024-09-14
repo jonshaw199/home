@@ -1,16 +1,16 @@
 from django.db import models
-from core.models import Location
+from core.models import Location, BaseModel
 
 
 # Create your models here.
-class DeviceType(models.Model):
+class DeviceType(BaseModel):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
 
 
-class Device(models.Model):
+class Device(BaseModel):
     name = models.CharField(max_length=100)
     device_type = models.ForeignKey(
         DeviceType, related_name="devices", on_delete=models.CASCADE
@@ -24,7 +24,7 @@ class Device(models.Model):
         return self.name
 
 
-class System(models.Model):
+class System(BaseModel):
     device = models.OneToOneField(
         Device, on_delete=models.CASCADE, null=True, blank=True
     )
@@ -40,7 +40,7 @@ class System(models.Model):
         return self.device.name
 
 
-class Plug(models.Model):
+class Plug(BaseModel):
     device = models.OneToOneField(
         Device, on_delete=models.CASCADE, null=True, blank=True
     )
