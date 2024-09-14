@@ -1,23 +1,45 @@
 import { Device } from "@/models";
-import { StyleSheet, Text } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  PressableProps,
+} from "react-native";
 
 export type BaseTileProps = {
   device: Device;
+  pressableProps?: PressableProps;
 };
 
-export default function BaseTile({ device }: BaseTileProps) {
+export default function BaseTile({
+  device,
+  pressableProps = {},
+}: BaseTileProps) {
   const style = styles();
 
-  return <Text style={style.container}>{device.name}</Text>;
+  return (
+    <Pressable {...pressableProps} style={style.pressable}>
+      <View style={style.container}>
+        <Text>{device.name}</Text>
+      </View>
+    </Pressable>
+  );
 }
 
-const styles = () =>
-  StyleSheet.create({
+const styles = () => {
+  const borderRadius = 30;
+
+  return StyleSheet.create({
+    pressable: {
+      borderRadius,
+    },
     container: {
-      borderRadius: 30,
+      borderRadius,
       backgroundColor: "lightgrey",
       padding: 15,
       height: 85,
       width: 200,
     },
   });
+};

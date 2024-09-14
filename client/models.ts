@@ -14,7 +14,7 @@ export interface User extends Identifiable {
 }
 
 export enum DeviceTypes {
-  DIAL,
+  DIAL = 1,
   PC,
   SMART_PLUG,
 }
