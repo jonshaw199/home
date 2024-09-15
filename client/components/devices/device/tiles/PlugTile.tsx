@@ -10,22 +10,30 @@ export type PlugTileProps = Pick<BaseTileProps, "device">;
 export default function PlugTile({ device }: PlugTileProps) {
   const plugs = useAppSelector((state) => state.plugs.data);
 
-  //const plug = useMemo(() => plugs[device.], [plugs])
+  const plug = useMemo(() => {
+    if (device.plug && device.plug in plugs) {
+      return plugs[device.plug];
+    }
+  }, [device, plugs]);
 
   const handlePress = () => {
-    const ws = WebSocketManager.getInstance();
-    const msg = {
-      action: HANDLER_SHELLY_PLUG,
-      body: {
-        device_id: device.id,
-        is_on: true,
-      },
-    };
+    if (plug) {
+      const ws = WebSocketManager.getInstance();
+      const msg = {
+        action: HANDLER_SHELLY_PLUG,
+        body: {
+          device_id: device.id,
+          is_on: !plug.isOn,
+        },
+      };
 
-    try {
-      //ws.sendMessage(JSON.stringify(msg));
-    } catch (e) {
-      console.error("Error when sending Plug message", e);
+      try {
+        ws.sendMessage(JSON.stringify(msg));
+      } catch (e) {
+        console.error("Error when sending Plug message", e);
+      }
+    } else {
+      console.warn(`Plug not found for device ${device.id}`);
     }
   };
 
