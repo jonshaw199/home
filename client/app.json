@@ -32,6 +32,8 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
-  }
+    },
+    "sdkVersion": "51.0.0"
+  },
+  "name": "home"
 }
