@@ -3,6 +3,7 @@
     "model": "core.location",
     "pk": 1,
     "fields": {
+      "uuid": "ac5c0b2c-259e-4d19-85a0-6bbc9b675553",
       "name": "Jon's House",
       "parent": null,
       "lft": 1,
@@ -15,6 +16,7 @@
     "model": "core.location",
     "pk": 2,
     "fields": {
+      "uuid": "0c6ec98c-03df-49d4-90be-09ec88e99996",
       "name": "Jon's Office",
       "parent": 1,
       "lft": 2,
