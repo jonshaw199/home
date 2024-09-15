@@ -12,6 +12,7 @@ import { deviceSliceActions } from "@/store/slices/deviceSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { deviceTypeSliceActions } from "@/store/slices/deviceTypeSlice";
 import WebSocketManager from "@/ws/WebSocketManager";
+import { plugSliceActions } from "@/store/slices/plugSlice";
 
 function connectWebSocket(token: string) {
   // Initialize WebSocket connection
@@ -49,8 +50,9 @@ export default function Drawer() {
 
   // Initial load
   useEffect(() => {
-    dispatch(deviceSliceActions.fetchAll());
     dispatch(deviceTypeSliceActions.fetchAll());
+    dispatch(deviceSliceActions.fetchAll());
+    dispatch(plugSliceActions.fetchAll());
   }, [dispatch]);
 
   useEffect(() => {
