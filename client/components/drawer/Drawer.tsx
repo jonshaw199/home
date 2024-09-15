@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { View, Button, StyleSheet } from "react-native";
 import {
   DrawerContentScrollView,
@@ -13,14 +13,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { deviceTypeSliceActions } from "@/store/slices/deviceTypeSlice";
 import WebSocketManager from "@/ws/WebSocketManager";
 import { plugSliceActions } from "@/store/slices/plugSlice";
-
-function connectWebSocket(token: string) {
-  // Initialize WebSocket connection
-  const url = process.env.EXPO_PUBLIC_HOME_WS_URL;
-  if (!url) throw "WebSocket URL not found; cannot connect";
-  const wsManager = WebSocketManager.getInstance();
-  wsManager.connect(`${url}?token=${token}`);
-}
+import { WS_CONNECT } from "@/ws/websocketActionTypes";
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
@@ -48,20 +41,27 @@ export default function Drawer() {
   const dispatch = useAppDispatch();
   const { session } = useSession();
 
+  const connectWebSocket = useCallback(
+    (token: string) => {
+      // Initialize WebSocket connection
+      const url = process.env.EXPO_PUBLIC_HOME_WS_URL;
+      if (!url) throw "WebSocket URL not found; cannot connect";
+      dispatch({ type: WS_CONNECT, payload: { url: `${url}?token=${token}` } });
+    },
+    [dispatch]
+  );
+
   // Initial load
   useEffect(() => {
-    dispatch(deviceTypeSliceActions.fetchAll());
-    dispatch(deviceSliceActions.fetchAll());
-    dispatch(plugSliceActions.fetchAll());
-  }, [dispatch]);
-
-  useEffect(() => {
     if (session) {
+      dispatch(deviceTypeSliceActions.fetchAll());
+      dispatch(deviceSliceActions.fetchAll());
+      dispatch(plugSliceActions.fetchAll());
       connectWebSocket(session);
     } else {
-      console.error("Can't connect to websocket; session is null");
+      console.error("Session is null; unable to load");
     }
-  }, [session]);
+  }, [session, dispatch]);
 
   // This is the app layout
   return (

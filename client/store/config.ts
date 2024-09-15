@@ -12,6 +12,7 @@ import { deviceTypeSliceReducer } from "./slices/deviceTypeSlice";
 import { plugService } from "@/services/plugService";
 import { ModelState } from "./slices/createModelSlice";
 import { plugSliceReducer } from "./slices/plugSlice";
+import websocketMiddleware from "@/ws/websocketMiddleware";
 
 /*
   Add new services to `ServiceApis` type and `serviceApis` object
@@ -65,5 +66,5 @@ export const configureStore = () =>
         thunk: {
           extraArgument,
         },
-      }),
+      }).concat(websocketMiddleware),
   });
