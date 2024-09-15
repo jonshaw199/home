@@ -5,11 +5,21 @@ services:
       - "5432:5432"
     env_file:
       - ./services/db/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "1"
 
   redis:
     image: "redis:7"
     ports:
       - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "2"
 
   home:
     build: ./services/home
@@ -25,12 +35,24 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://home:8000/api/"]
       interval: 5s
-      timeout: 5s
+      timeout: 2s
+      retries: 40
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.33"
+    cpuset: "3"
 
   mqtt-broker:
     build: ./services/mqtt-broker
     ports:
       - "1883:1883"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "4"
 
   controller:
     build: ./services/controller
@@ -41,6 +63,11 @@ services:
         condition: service_healthy
       mqtt-broker:
         condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "5"
 
   system-reporter:
     build: ./services/system-reporter
@@ -49,3 +76,8 @@ services:
     env_file:
       - ./services/system-reporter/.env
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "6"
