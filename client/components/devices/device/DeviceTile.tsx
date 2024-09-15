@@ -11,7 +11,7 @@ export default function DeviceTile({ device }: DeviceTileProps) {
   switch (device.deviceType) {
     case DeviceTypes.DIAL:
       return <DialTile device={device} />;
-    case DeviceTypes.SMART_PLUG:
+    case DeviceTypes.PLUG:
       return <PlugTile device={device} />;
     default:
       return <BaseTile device={device} />;

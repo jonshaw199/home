@@ -3,6 +3,7 @@
     "model": "devices.devicetype",
     "pk": 1,
     "fields": {
+      "uuid": "18014960-6d98-412c-a62d-e400c647112e",
       "name": "Dial"
     }
   },
@@ -10,6 +11,7 @@
     "model": "devices.devicetype",
     "pk": 2,
     "fields": {
+      "uuid": "7d69fa8c-c969-427d-836f-f45523e5dbb5",
       "name": "PC"
     }
   },
@@ -17,6 +19,7 @@
     "model": "devices.devicetype",
     "pk": 3,
     "fields": {
+      "uuid": "f8773a6b-f0f0-489c-aa0a-fca087020069",
       "name": "Smart Plug"
     }
   }
