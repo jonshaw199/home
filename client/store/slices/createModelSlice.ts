@@ -103,7 +103,31 @@ export function createModelSlice<T extends Identifiable>(
   const slice = createSlice({
     name,
     initialState: createInitialModelState<T>(),
-    reducers: {},
+    reducers: {
+      // Action to update a single resource
+      updateResource: (state, action: PayloadAction<T>) => {
+        const resource = action.payload;
+        const data = { ...state.data, [resource.id]: resource as Draft<T> };
+        return { ...state, data };
+      },
+      // Action to set multiple resources
+      setResources: (state, action: PayloadAction<{ [key: ID]: T }>) => {
+        return { ...state, data: action.payload };
+      },
+      // Additional action to handle specific update scenarios
+      updateResourceField: (
+        state,
+        action: PayloadAction<{ id: ID; field: keyof T; value: any }>
+      ) => {
+        const { id, field, value } = action.payload;
+        const resource = state.data[id];
+        if (resource) {
+          const updated = { ...resource, [field]: value };
+          const data = { ...state.data, [resource.id]: updated };
+          return { ...state, data };
+        }
+      },
+    },
     extraReducers: (builder) => {
       // Handle fetchAll
       builder.addCase(fetchAll.pending, (state) => {
@@ -200,6 +224,13 @@ export function createModelSlice<T extends Identifiable>(
   // Return the reducer and the thunks
   return {
     reducer: slice.reducer,
-    actions: { fetchAll, fetchOne, createOne, updateOne, deleteOne },
+    actions: {
+      ...slice.actions,
+      fetchAll,
+      fetchOne,
+      createOne,
+      updateOne,
+      deleteOne,
+    },
   };
 }
