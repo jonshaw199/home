@@ -85,10 +85,11 @@ class UUIDModelSerializer(serializers.ModelSerializer):
         return representation
 
 
-class UserSerializer(UUIDModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = UUIDModelSerializer.Meta.fields + [
+        fields = [
+            "id",
             "url",
             "username",
             "email",
@@ -98,16 +99,16 @@ class UserSerializer(UUIDModelSerializer):
         ]
 
 
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ["id", "url", "name"]
+
+
 class ProfileSerializer(UUIDModelSerializer):
     class Meta:
         model = Profile
         fields = UUIDModelSerializer.Meta.fields + ["locations"]
-
-
-class GroupSerializer(UUIDModelSerializer):
-    class Meta:
-        model = Group
-        fields = UUIDModelSerializer.Meta.fields + ["url", "name"]
 
 
 class LocationSerializer(UUIDModelSerializer):
