@@ -10,11 +10,13 @@ import {
 export type BaseTileProps = {
   device: Device;
   pressableProps?: PressableProps;
+  children?: React.ReactNode;
 };
 
 export default function BaseTile({
   device,
   pressableProps = {},
+  children,
 }: BaseTileProps) {
   const style = styles();
 
@@ -22,6 +24,7 @@ export default function BaseTile({
     <Pressable {...pressableProps} style={style.pressable}>
       <View style={style.container}>
         <Text>{device.name}</Text>
+        {children}
       </View>
     </Pressable>
   );

@@ -35,5 +35,9 @@ export default function PlugTile({ device }: PlugTileProps) {
     }
   };
 
-  return <BaseTile device={device} pressableProps={{ onPress: handlePress }} />;
+  return (
+    <BaseTile device={device} pressableProps={{ onPress: handlePress }}>
+      {plug?.isOn}
+    </BaseTile>
+  );
 }
