@@ -2,6 +2,8 @@ import BaseTile, { BaseTileProps } from "./BaseTile";
 import { useAppSelector, useAppDispatch } from "@/store";
 import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
+import { plugSliceActions } from "@/store/slices/plugSlice";
+import { Text } from "react-native";
 
 const HANDLER_SHELLY_PLUG = "shellyplug__set";
 
@@ -26,10 +28,19 @@ export default function PlugTile({ device }: PlugTileProps) {
           is_on: !plug.isOn,
         },
       };
+      // Send message
       dispatch({
         type: WS_SEND_MESSAGE,
         payload: { message: JSON.stringify(message) },
       });
+      // Update state optimistically
+      dispatch(
+        plugSliceActions.updateResourceField({
+          id: plug.id,
+          field: "isOn",
+          value: message.body.is_on,
+        })
+      );
     } else {
       console.warn(`Plug not found for device ${device.id}`);
     }
@@ -37,7 +48,7 @@ export default function PlugTile({ device }: PlugTileProps) {
 
   return (
     <BaseTile device={device} pressableProps={{ onPress: handlePress }}>
-      {plug?.isOn}
+      <Text>{plug?.isOn ? "On" : "Off"}</Text>
     </BaseTile>
   );
 }
