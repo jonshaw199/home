@@ -15,10 +15,7 @@ HOME_PORT = os.getenv("HOME_PORT")
 class WebsocketClient:
     def __init__(self, message_handler):
         self.message_handler = message_handler
-        self.message_queue = deque()  # Queue to store unsent messages
         self.ws = None
-        self.is_reconnecting = False
-        self.max_queue_size = 100  # Limit the queue size to 100 messages
         self.connect()
 
     def connect(self):
@@ -40,27 +37,11 @@ class WebsocketClient:
 
     def on_close(self, ws, close_status_code, close_msg):
         logging.info(
-            f"### Connection closed (status: {close_status_code}, message: {close_msg}). Reconnecting... ###"
+            f"### Connection closed (status: {close_status_code}, message: {close_msg}). ###"
         )
-        self.reconnect()
-
-    def reconnect(self):
-        if not self.is_reconnecting:
-            self.is_reconnecting = True
-            while True:
-                try:
-                    logging.info("Attempting to reconnect...")
-                    self.connect()
-                    self.ws.run_forever(dispatcher=rel)
-                    break  # Break loop if reconnection succeeds
-                except Exception as e:
-                    logging.error(f"Reconnection failed: {e}. Retrying in 5 seconds...")
-                    time.sleep(5)
-            self.is_reconnecting = False
 
     def on_open(self, ws):
         logging.info("Opened connection")
-        self.resend_queued_messages()
 
     def send(self, message):
         logging.info(f"Sending websocket message: {message}")
@@ -68,25 +49,16 @@ class WebsocketClient:
             self.ws.send(message)
         except Exception as e:
             logging.error(f"Send failed: {e}")
-            self.queue_message(message)  # Queue the message for retry
             self.ws.close()
 
-    # Queue the message with a size limit
-    def queue_message(self, message):
-        if len(self.message_queue) >= self.max_queue_size:
-            logging.warning("Message queue size exceeded. Removing oldest message.")
-            self.message_queue.popleft()  # Remove the oldest message
-        self.message_queue.append(message)  # Add new message to the queue
-
-    def resend_queued_messages(self):
-        while self.message_queue:
-            message = self.message_queue.popleft()
-            logging.info(f"Resending queued message: {message}")
-            self.send(message)
-
     def start(self):
-        self.ws.run_forever(
-            dispatcher=rel, ping_interval=30, ping_timeout=10, ping_payload="keepalive"
-        )
-        rel.signal(2, rel.abort)  # Handle Keyboard Interrupt (Ctrl+C)
-        rel.dispatch()
+        while 1:
+            try:
+                self.ws.run_forever(
+                    dispatcher=rel,
+                    ping_interval=30,
+                    ping_timeout=10,
+                    ping_payload="keepalive",
+                )
+            except:
+                pass
