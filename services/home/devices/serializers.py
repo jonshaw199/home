@@ -1,5 +1,5 @@
 # serializers.py
-from .models import Device, DeviceType, System, Plug
+from .models import Device, DeviceType, System, Plug, Environmental
 from core.serializers import UUIDModelSerializer
 
 
@@ -29,3 +29,14 @@ class PlugSerializer(UUIDModelSerializer):
     class Meta:
         model = Plug
         fields = UUIDModelSerializer.Meta.fields + ["device", "is_on"]
+
+
+class EnvironmentalSerializer(UUIDModelSerializer):
+    class Meta:
+        model = Environmental
+        fields = UUIDModelSerializer.Meta.fields + [
+            "device",
+            "humidity",
+            "temperature_c",
+            "temperature_f",
+        ]

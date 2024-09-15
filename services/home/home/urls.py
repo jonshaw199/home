@@ -22,7 +22,13 @@ from rest_framework.authtoken import views
 
 from core.views import UserViewSet, GroupViewSet, LocationViewSet, ProfileViewSet
 from lights.views import LightViewSet
-from devices.views import DeviceViewSet, DeviceTypeViewSet, SystemViewSet, PlugViewSet
+from devices.views import (
+    DeviceViewSet,
+    DeviceTypeViewSet,
+    SystemViewSet,
+    PlugViewSet,
+    EnvironmentalViewSet,
+)
 
 router = routers.DefaultRouter()
 router.register(r"users", UserViewSet)
@@ -34,6 +40,7 @@ router.register(r"devices", DeviceViewSet)
 router.register(r"device_types", DeviceTypeViewSet)
 router.register(r"systems", SystemViewSet)
 router.register(r"plugs", PlugViewSet)
+router.register(r"environmental", EnvironmentalViewSet)
 
 urlpatterns = [
     path("api/", include(router.urls)),

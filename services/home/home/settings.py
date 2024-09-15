@@ -43,12 +43,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "mptt",
-    "core",
+    # Internal
     "chat",
-    "controllers",
-    "lights",
-    "devices",
     "clients",
+    "controllers",
+    "core",
+    "devices",
+    "lights",
 ]
 
 REST_FRAMEWORK = {

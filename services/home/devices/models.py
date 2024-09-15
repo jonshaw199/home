@@ -37,7 +37,7 @@ class System(BaseModel):
     network_received = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self):
-        return self.device.name
+        return f"{self.device.name}: System"
 
 
 class Plug(BaseModel):
@@ -48,4 +48,20 @@ class Plug(BaseModel):
     is_on = models.BooleanField()
 
     def __str__(self):
-        return self.device.name
+        return f"{self.device.name}: Plug"
+
+
+class Environmental(BaseModel):
+    device = models.OneToOneField(
+        Device, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    temperature_c = models.FloatField(null=True, blank=True)
+    humidity = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.device.name}: Environmental"
+
+    @property
+    def temperature_f(self):
+        return (self.temperature_c * 9 / 5) + 32
