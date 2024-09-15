@@ -1,5 +1,6 @@
 import os
 import paho.mqtt.client as mqtt
+from paho.mqtt.subscribeoptions import SubscribeOptions
 from dotenv import load_dotenv
 import logging
 
@@ -12,7 +13,7 @@ MQTT_KEEP_ALIVE_INTERVAL = int(os.getenv("MQTT_KEEP_ALIVE_INTERVAL", 60))
 class MqttClient:
     def __init__(self, on_connect, on_message):
         # Initialize MQTT client with the latest version of Paho MQTT
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(protocol=mqtt.MQTTv5)
         self.client.on_connect = self.handle_connect
         self.client.on_message = self.handle_message
         self.client.on_disconnect = self.handle_disconnect
@@ -71,7 +72,8 @@ class MqttClient:
 
     def subscribe(self, topic):
         logging.info(f"Subscribing to topic: {topic}")
-        self.client.subscribe(topic)
+        options = SubscribeOptions(noLocal=True)
+        self.client.subscribe(topic, options=options)
 
     def start(self):
         self.connect()
