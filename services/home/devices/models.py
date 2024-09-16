@@ -64,4 +64,5 @@ class Environmental(BaseModel):
 
     @property
     def temperature_f(self):
-        return (self.temperature_c * 9 / 5) + 32
+        if self.temperature_c is not None:
+            return (self.temperature_c * 9 / 5) + 32

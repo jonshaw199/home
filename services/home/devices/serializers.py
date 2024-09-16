@@ -1,6 +1,7 @@
 # serializers.py
 from .models import Device, DeviceType, System, Plug, Environmental
 from core.serializers import UUIDModelSerializer
+from rest_framework import serializers
 
 
 class DeviceSerializer(UUIDModelSerializer):
@@ -32,6 +33,10 @@ class PlugSerializer(UUIDModelSerializer):
 
 
 class EnvironmentalSerializer(UUIDModelSerializer):
+    temperature_f = serializers.FloatField(
+        read_only=True
+    )  # Adjusted to read the property directly
+
     class Meta:
         model = Environmental
         fields = UUIDModelSerializer.Meta.fields + [
