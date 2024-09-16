@@ -1,10 +1,11 @@
 from rest_framework import viewsets
-from .models import Device, DeviceType, System, Plug
+from .models import Device, DeviceType, System, Plug, Environmental
 from .serializers import (
     DeviceSerializer,
     DeviceTypeSerializer,
     SystemSerializer,
     PlugSerializer,
+    EnvironmentalSerializer,
 )
 
 
@@ -26,3 +27,8 @@ class SystemViewSet(viewsets.ModelViewSet):
 class PlugViewSet(viewsets.ModelViewSet):
     queryset = Plug.objects.all()
     serializer_class = PlugSerializer
+
+
+class EnvironmentalViewSet(viewsets.ModelViewSet):
+    queryset = Environmental.objects.all()
+    serializer_class = EnvironmentalSerializer

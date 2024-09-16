@@ -189,3 +189,17 @@ bool MqttClient::topic_matches(const std::string &topic, const std::string &patt
     // If all levels matched, return true
     return true;
 }
+
+void MqttClient::publish(const std::string &topic, const std::string &message, int qos, bool retain)
+{
+    int msg_id = esp_mqtt_client_publish(client, topic.c_str(), message.c_str(), 0, qos, retain);
+
+    if (msg_id != -1)
+    {
+        ESP_LOGI(TAG, "Message published to topic: %s, msg_id=%d", topic.c_str(), msg_id);
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Failed to publish message to topic: %s", topic.c_str());
+    }
+}

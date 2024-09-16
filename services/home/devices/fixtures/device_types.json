@@ -20,7 +20,15 @@
     "pk": 3,
     "fields": {
       "uuid": "f8773a6b-f0f0-489c-aa0a-fca087020069",
-      "name": "Smart Plug"
+      "name": "Plug"
+    }
+  },
+  {
+    "model": "devices.devicetype",
+    "pk": 4,
+    "fields": {
+      "uuid": "973f049b-64dc-442c-838e-b7fae7270fe2",
+      "name": "Environmental"
     }
   }
 ]

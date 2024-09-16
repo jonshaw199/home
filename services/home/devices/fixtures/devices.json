@@ -29,5 +29,15 @@
       "device_type": 3,
       "vendor_id": "shellyplugus-a0dd6c27a4dc"
     }
+  },
+  {
+    "model": "devices.device",
+    "pk": 4,
+    "fields": {
+      "uuid": "ae84ac05-0d32-40b0-9703-a12e479764bd",
+      "name": "Jon's M5 Atom",
+      "location": 2,
+      "device_type": 4
+    }
   }
 ]

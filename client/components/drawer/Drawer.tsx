@@ -14,6 +14,7 @@ import { deviceTypeSliceActions } from "@/store/slices/deviceTypeSlice";
 import WebSocketManager from "@/ws/WebSocketManager";
 import { plugSliceActions } from "@/store/slices/plugSlice";
 import { WS_CONNECT } from "@/ws/websocketActionTypes";
+import { environmentalSliceActions } from "@/store/slices/environmentalSlice";
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
@@ -57,6 +58,7 @@ export default function Drawer() {
       dispatch(deviceTypeSliceActions.fetchAll());
       dispatch(deviceSliceActions.fetchAll());
       dispatch(plugSliceActions.fetchAll());
+      dispatch(environmentalSliceActions.fetchAll());
       connectWebSocket(session);
     } else {
       console.error("Session is null; unable to load");
