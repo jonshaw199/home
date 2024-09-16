@@ -17,6 +17,7 @@ export enum DeviceTypes {
   DIAL = "18014960-6d98-412c-a62d-e400c647112e",
   PC = "7d69fa8c-c969-427d-836f-f45523e5dbb5",
   PLUG = "f8773a6b-f0f0-489c-aa0a-fca087020069",
+  ENVIRONMENTAL = "973f049b-64dc-442c-838e-b7fae7270fe2",
 }
 
 export interface DeviceType extends Identifiable {
@@ -33,4 +34,10 @@ export interface Device extends Identifiable {
 
 export interface Plug extends Identifiable {
   isOn: boolean;
+}
+
+export interface Environmental extends Identifiable {
+  humidity?: number;
+  temperatureC?: number;
+  temperatureF?: number;
 }

@@ -7,7 +7,7 @@ import { Text } from "react-native";
 
 const HANDLER_SHELLY_PLUG = "shellyplug__set";
 
-export type PlugTileProps = Pick<BaseTileProps, "device">;
+export type PlugTileProps = BaseTileProps;
 
 export default function PlugTile({ device }: PlugTileProps) {
   const dispatch = useAppDispatch();

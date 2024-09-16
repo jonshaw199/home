@@ -1,4 +1,4 @@
-import { Device, DeviceType, Plug } from "../models";
+import { Device, DeviceType, Environmental, Plug } from "../models";
 import { ServiceApi } from "../services/createServiceApi";
 import { deviceService } from "../services/deviceService";
 import {
@@ -13,6 +13,8 @@ import { plugService } from "@/services/plugService";
 import { ModelState } from "./slices/createModelSlice";
 import { plugSliceReducer } from "./slices/plugSlice";
 import websocketMiddleware from "@/ws/websocketMiddleware";
+import { environmentalService } from "@/services/environmentalService";
+import { environmentalSliceReducer } from "./slices/environmentalSlice";
 
 /*
   Add new services to `ServiceApis` type and `serviceApis` object
@@ -21,12 +23,14 @@ export type ServiceApis = {
   devices: ServiceApi<Device>;
   deviceTypes: ServiceApi<DeviceType>;
   plugs: ServiceApi<Plug>;
+  environmentals: ServiceApi<Environmental>;
 };
 
 export const serviceApis: ServiceApis = {
   devices: deviceService,
   deviceTypes: deviceTypeService,
   plugs: plugService,
+  environmentals: environmentalService,
 };
 
 /*
@@ -36,12 +40,14 @@ type RootReducer = {
   devices: Reducer<ModelState<Device>>;
   deviceTypes: Reducer<ModelState<DeviceType>>;
   plugs: Reducer<ModelState<Plug>>;
+  environmentals: Reducer<ModelState<Environmental>>;
 };
 
 const rootReducer: RootReducer = {
   devices: deviceSliceReducer,
   deviceTypes: deviceTypeSliceReducer,
   plugs: plugSliceReducer,
+  environmentals: environmentalSliceReducer,
 };
 
 export type ThunkExtraArgument = {
