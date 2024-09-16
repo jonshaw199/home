@@ -161,7 +161,7 @@ void temp_humidity_task(void *pvParameter)
 
             // Publish to MQTT
             std::string topic = "environmentals/" + config_manager.get("DEVICE_ID") + "/status";
-            mqtt_client->publish(topic, json_str);
+            //mqtt_client->publish(topic, json_str);
 
             // Clean up
             cJSON_Delete(root);
