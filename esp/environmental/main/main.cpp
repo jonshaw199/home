@@ -11,6 +11,9 @@
 #include "mqtt_client.hpp"
 #include "nvs_manager.h"
 #include "config_manager.h"
+#include "KY015.hpp"
+
+#define KY015_GPIO_PIN GPIO_NUM_8 // Use the appropriate GPIO pin connected to the KY-015 data pin
 
 static const char *TAG = "main";
 static const int UPDATE_INTERVAL_MS = 1000;
@@ -32,6 +35,8 @@ MqttClient *mqtt_client;
 float global_temperature = 0.0;
 float global_humidity = 0.0;
 std::mutex temp_humidity_mutex;  // Mutex for thread-safe access
+
+KY015 sensor(KY015_GPIO_PIN); // TODO: pin
 
 // Function to initialize MQTT
 void mqtt_task(void *pvParameter)
@@ -98,77 +103,12 @@ void temp_humidity_task(void *pvParameter)
 {
     ESP_LOGI(TAG, "Temp/humidity task started");
 
-    int DHpin = 8;  // Assuming GPIO 8, adjust as needed
-    byte dat[5];    // Data array to hold temperature and humidity
-
-    auto read_data = [&]() -> byte {
-        byte result = 0;
-        for (int i = 0; i < 8; ++i) {
-            while (digitalRead(DHpin) == LOW);  // Wait for 50us
-            delayMicroseconds(30);
-            if (digitalRead(DHpin) == HIGH) {
-                result |= (1 << (7 - i));  // Store the received bit
-            }
-            while (digitalRead(DHpin) == HIGH);
-        }
-        return result;
-    };
-
-    auto start_test = [&]() {
-        pinMode(DHpin, OUTPUT);
-        digitalWrite(DHpin, LOW);
-        delay(30);  // Minimum 18ms for start signal
-        digitalWrite(DHpin, HIGH);
-        delayMicroseconds(40);
-        pinMode(DHpin, INPUT);
-        while (digitalRead(DHpin) == HIGH);
-        delayMicroseconds(80);
-        
-        if (digitalRead(DHpin) == LOW) {
-            delayMicroseconds(80);
-            for (int i = 0; i < 5; ++i) {
-                dat[i] = read_data();
-            }
-            pinMode(DHpin, OUTPUT);
-            digitalWrite(DHpin, HIGH);
-        }
-    };
-
     while (true) {
-        start_test();
-
-        float temperature = dat[2] + dat[3] / 10.0;
-        float humidity = dat[0] + dat[1] / 10.0;
-
-        // Checksum verification
-        if (dat[4] == (dat[0] + dat[1] + dat[2] + dat[3])) {
-            temp_humidity_mutex.lock();
-            global_temperature = temperature;
-            global_humidity = humidity;
-            temp_humidity_mutex.unlock();
-
-            // Build the JSON message using cJSON
-            cJSON *root = cJSON_CreateObject();
-            cJSON_AddStringToObject(root, "src", config_manager.get("DEVICE_ID").c_str());
-            cJSON_AddStringToObject(root, "dest", ("environmentals/" + config_manager.get("DEVICE_ID") + "/status").c_str());
-            cJSON_AddStringToObject(root, "action", "environmental__status");
-
-            cJSON *body = cJSON_CreateObject();
-            cJSON_AddNumberToObject(body, "temperature_c", temperature);
-            cJSON_AddNumberToObject(body, "humidity", humidity);
-            cJSON_AddItemToObject(root, "body", body);
-
-            char *json_str = cJSON_Print(root);
-
-            // Publish to MQTT
-            std::string topic = "environmentals/" + config_manager.get("DEVICE_ID") + "/status";
-            if (mqtt_client) mqtt_client->publish(topic, json_str);
-
-            // Clean up
-            cJSON_Delete(root);
-            free(json_str);
+        KY015::Data sensorData = sensor.read();
+        if (sensorData.success) {
+            ESP_LOGI(TAG, "Temperature: %.1f C, Humidity: %.1f %%", sensorData.temperature, sensorData.humidity);
         } else {
-            ESP_LOGE(TAG, "Checksum Error!");
+            ESP_LOGE(TAG, "Failed to read sensor data.");
         }
 
         vTaskDelay(pdMS_TO_TICKS(UPDATE_INTERVAL_MS));
