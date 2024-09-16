@@ -120,7 +120,7 @@ dependencies:
       type: service
     version: 1.4.12
   espressif/esp-modbus:
-    component_hash: ec567c912fbd8b08648ba72b5562df012482584918fb4af670e57025fc30ea42
+    component_hash: 2168e6b4cbda4d0281a2a2d1a40a3848e231473b2690d73217e3600fd2c98c12
     dependencies:
     - name: idf
       require: private
@@ -128,7 +128,14 @@ dependencies:
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 1.0.15
+    version: 1.0.16
+  espressif/esp-serial-flasher:
+    component_hash: dcc42a16712a1a636509cf0bf90e14032d7f2141784b533613b267b6aa318d52
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.0.11
   espressif/esp-sr:
     component_hash: 4aff7847709bd996ea8c381b794fe44a9db9fb5050684dc5715de07331eb70bc
     dependencies:
@@ -226,8 +233,14 @@ dependencies:
       type: service
     version: 1.1.0
   espressif/esp_rainmaker:
-    component_hash: c529b8c691528c517c7239bd6d75c750dc71e65fd0a8b6341c67507284a93e4f
+    component_hash: f89a4759347f3909417fb33059452f36c86befae9d10bda78b5417b7a5d19d11
     dependencies:
+    - name: espressif/esp_rcp_update
+      registry_url: https://components.espressif.com/
+      require: private
+      rules:
+      - if: idf_version >= 5.1
+      version: ~1.2.0
     - name: espressif/esp_schedule
       registry_url: https://components.espressif.com/
       require: private
@@ -265,7 +278,21 @@ dependencies:
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 1.4.1
+    version: 1.5.0
+  espressif/esp_rcp_update:
+    component_hash: c10afbd54a17f27eed880e61262b161656e6d36ad63376c307f9273e99d0abcd
+    dependencies:
+    - name: espressif/esp-serial-flasher
+      registry_url: https://components.espressif.com/
+      require: private
+      version: ~0.0.0
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.2.0
   espressif/esp_schedule:
     component_hash: e202a9c688f7f1ab601efb91d682e4bcfaebc508dcceee1a1e0a0d2d1ca75a26
     dependencies:
