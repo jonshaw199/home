@@ -142,9 +142,10 @@ void temp_humidity_task(void *pvParameter)
 
         // Checksum verification
         if (dat[4] == (dat[0] + dat[1] + dat[2] + dat[3])) {
-            std::lock_guard<std::mutex> lock(temp_humidity_mutex);
+            temp_humidity_mutex.lock();
             global_temperature = temperature;
             global_humidity = humidity;
+            temp_humidity_mutex.unlock();
 
             // Build the JSON message using cJSON
             cJSON *root = cJSON_CreateObject();
@@ -181,16 +182,20 @@ void m5atom_task(void *pvParameter)
 
     while (true) {
         {
-            std::lock_guard<std::mutex> lock(temp_humidity_mutex);
+            temp_humidity_mutex.lock();
+            float temp = global_temperature;
+            float humidity = global_humidity;
+            temp_humidity_mutex.unlock();
+
             // Display the temperature and humidity
             AtomS3.Display.clear();
             AtomS3.Display.setCursor(0, 0);
-            AtomS3.Display.printf("Temp: %.2f C\n", global_temperature);
-            AtomS3.Display.printf("Humidity: %.2f %%\n", global_humidity);
+            AtomS3.Display.printf("Temp: %.2f C\n", temp);
+            AtomS3.Display.printf("Humidity: %.2f %%\n", humidity);
             AtomS3.update();
         }
 
-        vTaskDelay(UPDATE_INTERVAL_MS / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
