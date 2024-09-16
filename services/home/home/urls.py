@@ -40,7 +40,7 @@ router.register(r"devices", DeviceViewSet)
 router.register(r"device_types", DeviceTypeViewSet)
 router.register(r"systems", SystemViewSet)
 router.register(r"plugs", PlugViewSet)
-router.register(r"environmental", EnvironmentalViewSet)
+router.register(r"environmentals", EnvironmentalViewSet)
 
 urlpatterns = [
     path("api/", include(router.urls)),
