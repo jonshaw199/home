@@ -16,7 +16,19 @@
 #define KY015_GPIO_PIN GPIO_NUM_8 // Use the appropriate GPIO pin connected to the KY-015 data pin
 
 static const char *TAG = "main";
-static const int UPDATE_INTERVAL_MS = 1000;
+
+// Subscribe
+const std::string ROOT_COMMAND_SUBSCRIBE_TOPIC = "command";
+const std::string GROUP_COMMAND_SUBSCRIBE_TOPIC = "environmentals/command";
+const std::string DEVICE_COMMAND_SUBSCRIBE_TOPIC = 
+    std::string("environmentals/").
+        append(CONFIG_DEVICE_ID).
+        append("/command").c_str();
+// Publish
+const std::string DEVICE_PUBLISH_STATUS_TOPIC =
+    std::string("environmentals/").
+        append(CONFIG_DEVICE_ID).
+        append("/status").c_str();
 
 // Task handles
 TaskHandle_t mqtt_task_handle = nullptr;
@@ -32,11 +44,52 @@ WiFiConnector *wifi_connector;
 MqttClient *mqtt_client;
 
 // Global variables to store temperature and humidity
-float global_temperature = 0.0;
-float global_humidity = 0.0;
-std::mutex temp_humidity_mutex;  // Mutex for thread-safe access
+std::mutex sensor_state_mutex;
+KY015::Data sensor_state = {0.0, 0.0, false};
 
 KY015 sensor(KY015_GPIO_PIN); // TODO: pin
+
+KY015::Data get_sensor_state() {
+    const std::lock_guard<std::mutex> lock(sensor_state_mutex);
+    return sensor_state;
+}
+
+void set_sensor_state(KY015::Data data) {
+    const std::lock_guard<std::mutex> lock(sensor_state_mutex);
+    sensor_state = data;
+}
+
+cJSON* build_json(float temp, float humidity) {
+    // Build the JSON message using cJSON
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "src", config_manager.get("DEVICE_ID").c_str());
+    cJSON_AddStringToObject(root, "dest", DEVICE_PUBLISH_STATUS_TOPIC.c_str());
+    cJSON_AddStringToObject(root, "action", "environmental__status");
+
+    cJSON *body = cJSON_CreateObject();
+    cJSON_AddNumberToObject(body, "temperature_c", temp);
+    cJSON_AddNumberToObject(body, "humidity", humidity);
+    cJSON_AddItemToObject(root, "body", body);
+
+    return root;
+}
+
+void publish_status() {
+    KY015::Data data = get_sensor_state();
+    if (data.success) {
+        if (mqtt_client) {
+            cJSON *json = build_json(data.temperature, data.humidity);
+            char *json_str = cJSON_Print(json);
+            mqtt_client->publish(DEVICE_PUBLISH_STATUS_TOPIC, json_str);
+            cJSON_Delete(json);
+            free(json_str);
+        } else {
+            ESP_LOGW(TAG, "MQTT is not initialized; not publishing");
+        }
+    } else {
+        ESP_LOGW(TAG, "Sensor failure; not publishing");
+    }
+}
 
 // Function to initialize MQTT
 void mqtt_task(void *pvParameter)
@@ -57,9 +110,9 @@ void mqtt_task(void *pvParameter)
 
         auto subscribe = [&handle_msg]()
         {   
-            mqtt_client->subscribe("command", handle_msg);
-            mqtt_client->subscribe("environmentals/command", handle_msg);
-            mqtt_client->subscribe(std::string("environmentals/").append(CONFIG_DEVICE_ID).append("/command").c_str(), handle_msg);
+            mqtt_client->subscribe(ROOT_COMMAND_SUBSCRIBE_TOPIC.c_str(), handle_msg);
+            mqtt_client->subscribe(GROUP_COMMAND_SUBSCRIBE_TOPIC.c_str(), handle_msg);
+            mqtt_client->subscribe(DEVICE_COMMAND_SUBSCRIBE_TOPIC.c_str(), handle_msg);
         };
 
         auto onConnect = [&subscribe]()
@@ -104,14 +157,15 @@ void temp_humidity_task(void *pvParameter)
     ESP_LOGI(TAG, "Temp/humidity task started");
 
     while (true) {
-        KY015::Data sensorData = sensor.read();
-        if (sensorData.success) {
-            ESP_LOGI(TAG, "Temperature: %.1f C, Humidity: %.1f %%", sensorData.temperature, sensorData.humidity);
+        KY015::Data data = sensor.read();
+        if (data.success) {
+            ESP_LOGD(TAG, "Temperature: %.1f C, Humidity: %.1f %%", data.temperature, data.humidity);
         } else {
-            ESP_LOGE(TAG, "Failed to read sensor data.");
+            ESP_LOGD(TAG, "Failed to read sensor data.");
         }
+        set_sensor_state(data);
 
-        vTaskDelay(pdMS_TO_TICKS(UPDATE_INTERVAL_MS));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -122,20 +176,29 @@ void m5atom_task(void *pvParameter)
 
     while (true) {
         {
-            temp_humidity_mutex.lock();
-            float temp = global_temperature;
-            float humidity = global_humidity;
-            temp_humidity_mutex.unlock();
+            KY015::Data data = get_sensor_state();
 
             // Display the temperature and humidity
             AtomS3.Display.clear();
             AtomS3.Display.setCursor(0, 0);
-            AtomS3.Display.printf("Temp: %.2f C\n", temp);
-            AtomS3.Display.printf("Humidity: %.2f %%\n", humidity);
+            AtomS3.Display.printf("Temp: %.2f C\n", data.temperature);
+            AtomS3.Display.printf("Humidity: %.2f %%\n", data.humidity);
             AtomS3.update();
         }
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+// Function to publish status updates on a regular interval
+void reporting_task(void *pvParameter)
+{
+    ESP_LOGI(TAG, "M5Atom task started");
+
+    while (1) {
+        publish_status();
+
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
 
@@ -180,8 +243,9 @@ extern "C" void app_main(void)
     // Create a semaphore to communicate Wi-Fi connection status
     wifi_connected_semaphore = xSemaphoreCreateBinary();
 
-    xTaskCreate(wifi_task, "wifi_task", 4096, nullptr, 5, nullptr);
+    xTaskCreate(wifi_task, "wifi_task", 4096, nullptr, 4, nullptr);
     xTaskCreate(mqtt_task, "mqtt_task", 4096, nullptr, 5, &mqtt_task_handle);
-    xTaskCreate(m5atom_task, "m5atom_task", 4096, nullptr, 5, nullptr);
+    xTaskCreate(m5atom_task, "m5atom_task", 4096, nullptr, 6, nullptr);
     xTaskCreate(temp_humidity_task, "temp_humidity_task", 4096, nullptr, 5, nullptr);
+    xTaskCreate(reporting_task, "reporting_task", 4096, nullptr, 5, nullptr);
 }
