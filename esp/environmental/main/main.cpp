@@ -150,7 +150,7 @@ void temp_humidity_task(void *pvParameter)
             cJSON *root = cJSON_CreateObject();
             cJSON_AddStringToObject(root, "src", config_manager.get("DEVICE_ID").c_str());
             cJSON_AddStringToObject(root, "dest", ("environmentals/" + config_manager.get("DEVICE_ID") + "/status").c_str());
-            cJSON_AddStringToObject(root, "action", "environmental_status");
+            cJSON_AddStringToObject(root, "action", "environmental__status");
 
             cJSON *body = cJSON_CreateObject();
             cJSON_AddNumberToObject(body, "temperature_c", temperature);
@@ -161,7 +161,7 @@ void temp_humidity_task(void *pvParameter)
 
             // Publish to MQTT
             std::string topic = "environmentals/" + config_manager.get("DEVICE_ID") + "/status";
-            //mqtt_client->publish(topic, json_str);
+            if (mqtt_client) mqtt_client->publish(topic, json_str);
 
             // Clean up
             cJSON_Delete(root);
