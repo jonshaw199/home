@@ -66,7 +66,7 @@ std::mutex page_idx_mutex;
 void handle_device_status_message(DeviceStatusMessage msg)
 {
     const std::lock_guard<std::mutex> lock(status_message_map_mutex);
-    if (!status_message_map.contains(msg.src))
+    if (status_message_map.find(msg.src) == status_message_map.end())
     {
         msg.body.first_received_at = esp_timer_get_time();
     }
