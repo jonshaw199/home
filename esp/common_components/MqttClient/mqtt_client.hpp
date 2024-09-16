@@ -15,6 +15,7 @@ public:
     ~MqttClient();
 
     void subscribe(const std::string &topic, std::function<void(const std::string &)> callback);
+    void publish(const std::string &topic, const std::string &message, int qos = 0, bool retain = false);
 
 private:
     static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);

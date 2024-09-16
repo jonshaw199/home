@@ -1,7 +1,7 @@
 menu "Home Config"
 config DEVICE_ID
     string "Device ID"
-    default ""
+    default "ae84ac05-0d32-40b0-9703-a12e479764bd"
     help
       Set a unique ID for the device.
 

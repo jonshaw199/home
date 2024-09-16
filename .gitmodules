@@ -16,3 +16,6 @@
 [submodule "esp/common_components/M5Dial"]
 	path = esp/common_components/M5Dial
 	url = https://github.com/jonshaw199/M5Dial.git
+[submodule "esp/common_components/FastLED"]
+	path = esp/common_components/FastLED
+	url = https://github.com/FastLED/FastLED.git

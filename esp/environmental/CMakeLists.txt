@@ -7,5 +7,8 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 # Set the additional component directories
 set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/../common_components)
 
+# Define the partition table files
+set(PARTITION_TABLE_CSV "partitions.csv")
+
 # Define the project
 project(environmental)
