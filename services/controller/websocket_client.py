@@ -79,7 +79,10 @@ class WebsocketClient:
                 except:
                     pass
 
-            logging.warn("Attempting to reconnect...")
+            logging.warn("Attempting to reconnect to websocket...")
             self.connect()
             if not self.ws:
+                logging.error(
+                    "Failed to connect to websocket; sleeping then trying again..."
+                )
                 time.sleep(5)
