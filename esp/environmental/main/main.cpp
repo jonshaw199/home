@@ -11,7 +11,7 @@
 #include "mqtt_client.hpp"
 #include "mqtt_utils.hpp"
 #include "nvs_manager.h"
-#include "config_manager.h"
+#include "config_utils.h"
 #include "KY015.hpp"
 
 #define KY015_GPIO_PIN GPIO_NUM_8 // Use the appropriate GPIO pin connected to the KY-015 data pin
@@ -27,8 +27,13 @@ TaskHandle_t mqtt_task_handle = nullptr;
 // Semaphore to communicate Wi-Fi connection status
 SemaphoreHandle_t wifi_connected_semaphore;
 
-// Initialize ConfigManager
-ConfigManager config_manager;
+BaseConfig default_config = {
+    CONFIG_DEVICE_ID, 
+    CONFIG_WIFI_SSID, 
+    CONFIG_WIFI_PASSWORD, 
+    CONFIG_MQTT_BROKER
+};
+BaseConfig config = ConfigUtils::get_or_init_base_config(default_config);
 
 // Delayed initialization for these
 WiFiConnector *wifi_connector;
@@ -53,7 +58,7 @@ void set_sensor_state(KY015::Data data) {
 cJSON* build_json(float temp, float humidity) {
     // Build the JSON message using cJSON
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "src", config_manager.get("DEVICE_ID").c_str());
+    cJSON_AddStringToObject(root, "src", config.device_id.c_str());
     cJSON_AddStringToObject(root, "dest", topics.device_status_publish_topic.c_str());
     cJSON_AddStringToObject(root, "action", status_action.c_str());
 
@@ -92,7 +97,7 @@ void mqtt_task(void *pvParameter)
     {
         ESP_LOGI(TAG, "Connected to Wi-Fi. Initializing MQTT...");
 
-        std::string broker_host = config_manager.get("MQTT_BROKER");
+        std::string broker_host = config.mqtt_broker;
 
         auto handle_msg = [](const std::string &data)
         {
@@ -126,8 +131,8 @@ void wifi_task(void *pvParameter)
     ESP_LOGI(TAG, "Wi-Fi Task started");
 
     // Get Wi-Fi credentials from ConfigManager
-    std::string ssid = config_manager.get("WIFI_SSID");
-    std::string password = config_manager.get("WIFI_PASSWORD");
+    std::string ssid = config.wifi_ssid;
+    std::string password = config.wifi_pass;
 
     // Define a callback function to notify MQTT task after Wi-Fi connects
     auto onConnect = []()
@@ -193,41 +198,8 @@ void reporting_task(void *pvParameter)
     }
 }
 
-void init_config()
-{
-    // Get Wi-Fi credentials from ConfigManager
-    std::string ssid = config_manager.get("WIFI_SSID");
-    std::string password = config_manager.get("WIFI_PASSWORD");
-    std::string device_id = config_manager.get("DEVICE_ID");
-    std::string mqtt_broker_host = config_manager.get("MQTT_BROKER");
-
-    // Check if Wi-Fi credentials are set; if not, use default values
-    if (ssid.empty())
-    {
-        ssid = CONFIG_WIFI_SSID;
-        config_manager.set("WIFI_SSID", ssid);
-    }
-    if (password.empty())
-    {
-        password = CONFIG_WIFI_PASSWORD;
-        config_manager.set("WIFI_PASSWORD", password);
-    }
-    if (device_id.empty())
-    {
-        device_id = CONFIG_DEVICE_ID;
-        config_manager.set("DEVICE_ID", device_id);
-    }
-    if (mqtt_broker_host.empty())
-    {
-        mqtt_broker_host = CONFIG_MQTT_BROKER;
-        config_manager.set("MQTT_BROKER", mqtt_broker_host);
-    }
-}
-
 extern "C" void app_main(void)
 {
-    init_config();
-
     auto cfg = M5.config();
     AtomS3.begin(cfg);
 
