@@ -59,6 +59,8 @@ class WebsocketClient:
                     ping_interval=30,
                     ping_timeout=10,
                     ping_payload="keepalive",
+                    # https://github.com/websocket-client/websocket-client/issues/863#issuecomment-1261353428
+                    reconnect=5,
                 )
             except:
                 pass
