@@ -42,12 +42,9 @@ class MqttClient:
             logging.error(f"Failed to decode message: {e}")
 
     # The callback for when the client disconnects from the broker.
-    def handle_disconnect(self, client, userdata, rc):
-        if rc != 0:
-            logging.warning(f"Unexpected disconnection. Will attempt to reconnect...")
-            self.reconnect()
-        else:
-            logging.info("Disconnected successfully.")
+    def handle_disconnect(self, client, userdata, ws, obj):  # What is `obj`?
+        logging.info("MQTT disconnected.")
+        self.reconnect()
 
     def connect(self):
         try:
