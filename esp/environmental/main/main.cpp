@@ -165,21 +165,58 @@ void temp_humidity_task(void *pvParameter)
     }
 }
 
+std::string float_to_str(float num, std::string postfix = "")
+{
+    if (num < 0.0f)
+    {
+        return "--";
+    }
+    else
+    {
+        return std::to_string(static_cast<int>(num)).append(postfix);
+    }
+}
+
+void draw(M5Canvas &canvas, KY015::Data &data) {
+    canvas.setFont(&fonts::FreeMono12pt7b);
+    canvas.setTextColor(WHITE);
+    canvas.drawString("Temp", 2, 2);
+
+    canvas.setFont(&fonts::FreeMono24pt7b);
+    canvas.setTextColor(GREEN);
+    float temp_f = data.temperature * (9/5) + 32;
+    std::string temp_str = float_to_str(temp_f, "F");
+    canvas.drawString(temp_str.c_str(), 2, 22);
+
+    canvas.setFont(&fonts::FreeMono12pt7b);
+    canvas.setTextColor(WHITE);
+    canvas.drawString("Humidity", 2, 66);
+
+    canvas.setFont(&fonts::FreeMono24pt7b);
+    canvas.setTextColor(GREEN);
+    std::string hum_str = float_to_str(data.humidity, "%");
+    canvas.drawString(hum_str.c_str(), 2, 86);
+}
+
 // Function to update the display, etc.
 void m5atom_task(void *pvParameter)
 {
     ESP_LOGI(TAG, "M5Atom task started");
 
-    while (true) {
-        {
-            KY015::Data data = get_sensor_state();
+    AtomS3.Display.fillScreen(TFT_BLACK);
+    M5Canvas canvas(&AtomS3.Display);
 
-            // Display the temperature and humidity
-            AtomS3.Display.clear();
-            AtomS3.Display.setCursor(0, 0);
-            AtomS3.Display.printf("Temp: %.2f C\n", data.temperature);
-            AtomS3.Display.printf("Humidity: %.2f %%\n", data.humidity);
-            AtomS3.update();
+    while (1) {
+        AtomS3.update();
+
+        KY015::Data data = get_sensor_state();
+
+        if (data.success) {
+            canvas.createSprite(AtomS3.Display.width(), AtomS3.Display.height());
+            draw(canvas, data);
+            AtomS3.Display.startWrite();
+            canvas.pushSprite(&AtomS3.Display, 0, 0);
+            AtomS3.Display.endWrite();
         }
 
         vTaskDelay(pdMS_TO_TICKS(500));
