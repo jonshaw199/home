@@ -9,6 +9,7 @@
 #include "M5AtomS3.h"
 #include "wifi_connector.h"
 #include "mqtt_client.hpp"
+#include "mqtt_utils.hpp"
 #include "nvs_manager.h"
 #include "config_manager.h"
 #include "KY015.hpp"
@@ -17,18 +18,8 @@
 
 static const char *TAG = "main";
 
-// Subscribe
-const std::string ROOT_COMMAND_SUBSCRIBE_TOPIC = "command";
-const std::string GROUP_COMMAND_SUBSCRIBE_TOPIC = "environmentals/command";
-const std::string DEVICE_COMMAND_SUBSCRIBE_TOPIC = 
-    std::string("environmentals/").
-        append(CONFIG_DEVICE_ID).
-        append("/command").c_str();
-// Publish
-const std::string DEVICE_PUBLISH_STATUS_TOPIC =
-    std::string("environmentals/").
-        append(CONFIG_DEVICE_ID).
-        append("/status").c_str();
+Topics topics = MqttUtils::get_topics(GROUP_ENVIRONMENTAL, CONFIG_DEVICE_ID);
+std::string status_action = MqttUtils::get_action_str(ACTION_ENVIRONMENTAL_STATUS);
 
 // Task handles
 TaskHandle_t mqtt_task_handle = nullptr;
@@ -63,8 +54,8 @@ cJSON* build_json(float temp, float humidity) {
     // Build the JSON message using cJSON
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "src", config_manager.get("DEVICE_ID").c_str());
-    cJSON_AddStringToObject(root, "dest", DEVICE_PUBLISH_STATUS_TOPIC.c_str());
-    cJSON_AddStringToObject(root, "action", "environmental__status");
+    cJSON_AddStringToObject(root, "dest", topics.device_status_publish_topic.c_str());
+    cJSON_AddStringToObject(root, "action", status_action.c_str());
 
     cJSON *body = cJSON_CreateObject();
     cJSON_AddNumberToObject(body, "temperature_c", temp);
@@ -80,7 +71,7 @@ void publish_status() {
         if (mqtt_client) {
             cJSON *json = build_json(data.temperature, data.humidity);
             char *json_str = cJSON_Print(json);
-            mqtt_client->publish(DEVICE_PUBLISH_STATUS_TOPIC, json_str);
+            mqtt_client->publish(topics.device_status_publish_topic, json_str);
             cJSON_Delete(json);
             free(json_str);
         } else {
@@ -110,9 +101,9 @@ void mqtt_task(void *pvParameter)
 
         auto subscribe = [&handle_msg]()
         {   
-            mqtt_client->subscribe(ROOT_COMMAND_SUBSCRIBE_TOPIC.c_str(), handle_msg);
-            mqtt_client->subscribe(GROUP_COMMAND_SUBSCRIBE_TOPIC.c_str(), handle_msg);
-            mqtt_client->subscribe(DEVICE_COMMAND_SUBSCRIBE_TOPIC.c_str(), handle_msg);
+            mqtt_client->subscribe(topics.root_command_subscribe_topic.c_str(), handle_msg);
+            mqtt_client->subscribe(topics.group_command_subscribe_topic.c_str(), handle_msg);
+            mqtt_client->subscribe(topics.device_command_subscribe_topic.c_str(), handle_msg);
         };
 
         auto onConnect = [&subscribe]()

@@ -13,7 +13,8 @@ load_dotenv()
 # Get environment variables
 mqtt_broker_host = os.getenv("MQTT_BROKER_HOST", "localhost")
 mqtt_broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
-mqtt_topic = os.getenv("MQTT_TOPIC", "system/status")
+mqtt_topic = os.getenv("MQTT_TOPIC", "")
+mqtt_action = os.getenv("MQTT_ACTION", "system__status")
 interval = os.getenv("PUB_INTERVAL_SEC", 60)
 # TODO: get this from somewhere else maybe NVS
 device_id = os.getenv("DEVICE_ID", "")
@@ -55,7 +56,7 @@ def publish_system_metrics():
             # Required
             "src": device_id,
             "dest": mqtt_topic,
-            "action": "announce_status",
+            "action": mqtt_action,
             "body": {
                 "cpu_usage": psutil.cpu_percent(),
                 "cpu_temperature": (

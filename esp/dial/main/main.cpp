@@ -5,6 +5,7 @@
 #include <freertos/queue.h>
 #include "wifi_connector.h"
 #include "mqtt_client.hpp"
+#include "mqtt_utils.hpp"
 #include "nvs_manager.h"
 #include "config_manager.h"
 // Must come before M5Dial.h
@@ -18,6 +19,8 @@
 #include "ntp_client.h"
 
 static const char *TAG = "main";
+
+Topics topics = MqttUtils::get_topics(GROUP_DIAL, CONFIG_DEVICE_ID);
 
 // Task handles
 TaskHandle_t mqtt_task_handle = nullptr;
@@ -143,7 +146,8 @@ void mqtt_task(void *pvParameter)
 
         auto subscribe = [&handle_msg]()
         {
-            mqtt_client->subscribe("+/announce_status", handle_msg);
+            std::string topic = MqttUtils::get_device_publish_status_topic(GROUP_SYSTEM, "+");
+            mqtt_client->subscribe(topic.c_str(), handle_msg);
         };
 
         auto onConnect = [&subscribe]()

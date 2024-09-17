@@ -5,7 +5,7 @@
 #include <string>
 #include <cstring> // For strtok
 
-static const char *TAG = "MqttClient";
+static const char *TAG = "MqttUtils";
 
 MqttClient::MqttClient(const std::string &broker_url, std::function<void()> onConnectCallback)
     : onConnectCallback(onConnectCallback)
@@ -203,3 +203,4 @@ void MqttClient::publish(const std::string &topic, const std::string &message, i
         ESP_LOGE(TAG, "Failed to publish message to topic: %s", topic.c_str());
     }
 }
+

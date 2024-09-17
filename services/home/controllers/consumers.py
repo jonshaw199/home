@@ -40,7 +40,7 @@ class BaseMessageHandler:
         raise NotImplementedError("Handle method not implemented.")
 
 
-@BaseMessageHandler.register("announce_status")
+@BaseMessageHandler.register("system__status")
 class DeviceStatusMessageHandler(BaseMessageHandler):
     @staticmethod
     def update_device(data):

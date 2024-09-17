@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS
         "mqtt_client.cpp"
+        "mqtt_utils.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES 
