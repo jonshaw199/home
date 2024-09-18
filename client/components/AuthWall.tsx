@@ -1,7 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text } from "react-native";
-import { useSession } from "@/context/SessionContext";
 import { Redirect } from "expo-router";
+import { useAppDispatch, useAppSelector } from "@/store";
+import {
+  loadFromStorage,
+  selectIsLoading,
+  selectSession,
+  setSession,
+} from "@/store/slices/sessionSlice";
 
 type AuthWallProps = {
   redirect: string;
@@ -9,9 +15,22 @@ type AuthWallProps = {
 };
 
 export default function AuthWall({ redirect, children }: AuthWallProps) {
-  const { session, isLoading } = useSession();
+  const dispatch = useAppDispatch();
 
-  if (isLoading) {
+  const session = useAppSelector(selectSession);
+  const isSigningIn = useAppSelector(selectIsLoading);
+
+  const [isLoadingSessionFromStorage, setIsLoadingSessionFromStorage] =
+    useState(true);
+
+  useEffect(() => {
+    // Load from storage
+    dispatch(loadFromStorage()).then(() =>
+      setIsLoadingSessionFromStorage(false)
+    );
+  }, [dispatch]);
+
+  if (isSigningIn || isLoadingSessionFromStorage) {
     return <Text>Loading...</Text>;
   }
 

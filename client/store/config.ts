@@ -6,7 +6,6 @@ import {
   configureStore as configureStoreRedux,
 } from "@reduxjs/toolkit";
 import { deviceSliceReducer } from "@/store/slices/deviceSlice";
-import { getStorageItemAsync } from "@/hooks/useStorageState";
 import { deviceTypeService } from "@/services/deviceTypeService";
 import { deviceTypeSliceReducer } from "./slices/deviceTypeSlice";
 import { plugService } from "@/services/plugService";
@@ -15,6 +14,11 @@ import { plugSliceReducer } from "./slices/plugSlice";
 import websocketMiddleware from "@/ws/websocketMiddleware";
 import { environmentalService } from "@/services/environmentalService";
 import { environmentalSliceReducer } from "./slices/environmentalSlice";
+import { SessionState, sessionSliceReducer } from "./slices/sessionSlice";
+import { getStorageItemAsync } from "@/hooks/useStorageState";
+
+const storageKey = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
+if (!storageKey) throw "EXPO_PUBLIC_SESSION_STORAGE_KEY must be defined";
 
 /*
   Add new services to `ServiceApis` type and `serviceApis` object
@@ -41,6 +45,7 @@ type RootReducer = {
   deviceTypes: Reducer<ModelState<DeviceType>>;
   plugs: Reducer<ModelState<Plug>>;
   environmentals: Reducer<ModelState<Environmental>>;
+  session: Reducer<SessionState>;
 };
 
 const rootReducer: RootReducer = {
@@ -48,6 +53,7 @@ const rootReducer: RootReducer = {
   deviceTypes: deviceTypeSliceReducer,
   plugs: plugSliceReducer,
   environmentals: environmentalSliceReducer,
+  session: sessionSliceReducer,
 };
 
 export type ThunkExtraArgument = {
@@ -55,14 +61,10 @@ export type ThunkExtraArgument = {
   getSession: () => Promise<string | null>;
 };
 
-const getSession = async () => {
-  // Retrieve token from storage directly
-  const key = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
-  if (!key) throw "Session storage key not found; cannot get session";
-  return await getStorageItemAsync(key);
+const extraArgument: ThunkExtraArgument = {
+  serviceApis,
+  getSession: () => getStorageItemAsync(storageKey),
 };
-
-const extraArgument: ThunkExtraArgument = { serviceApis, getSession };
 
 export const configureStore = () =>
   configureStoreRedux({

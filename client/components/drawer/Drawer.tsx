@@ -5,20 +5,19 @@ import {
   DrawerItemList,
   DrawerContentComponentProps,
 } from "@react-navigation/drawer";
-import { useSession } from "@/context/SessionContext";
 import { Drawer as ExpoDrawer } from "expo-router/drawer";
-import { useAppDispatch } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { deviceSliceActions } from "@/store/slices/deviceSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { deviceTypeSliceActions } from "@/store/slices/deviceTypeSlice";
-import WebSocketManager from "@/ws/WebSocketManager";
 import { plugSliceActions } from "@/store/slices/plugSlice";
 import { WS_CONNECT } from "@/ws/websocketActionTypes";
 import { environmentalSliceActions } from "@/store/slices/environmentalSlice";
+import { selectSession, signOut } from "@/store/slices/sessionSlice";
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
-  const { signOut } = useSession();
+  const dispatch = useAppDispatch();
 
   return (
     <DrawerContentScrollView
@@ -32,7 +31,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       {/* Button at the bottom */}
       <View style={styles.buttonContainer}>
-        <Button title="Log Out" onPress={signOut} />
+        <Button title="Log Out" onPress={() => dispatch(signOut())} />
       </View>
     </DrawerContentScrollView>
   );
@@ -40,7 +39,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
 export default function Drawer() {
   const dispatch = useAppDispatch();
-  const { session } = useSession();
+  const session = useAppSelector(selectSession);
 
   const connectWebSocket = useCallback(
     (token: string) => {

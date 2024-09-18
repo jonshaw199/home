@@ -6,6 +6,7 @@ import {
   WS_DISCONNECT,
   WS_SEND_MESSAGE,
   WS_MESSAGE_RECEIVED,
+  WS_ERROR,
 } from "./websocketActionTypes";
 
 // Define the middleware
@@ -18,17 +19,23 @@ const websocketMiddleware: Middleware = (store) => {
     store.dispatch({ type: WS_MESSAGE_RECEIVED, payload: message });
   };
 
+  const handleError = (event: Event) => {
+    store.dispatch({ type: WS_ERROR, payload: JSON.stringify(event) });
+  };
+
+  const listener = { onMessage: handleWebSocketMessage, onError: handleError };
+
   return (next) => (action: any) => {
     switch (action.type) {
       case WS_CONNECT:
         // Connect to WebSocket using WebSocketManager
         wsManager.connect(action.payload.url);
-        wsManager.addMessageListener(handleWebSocketMessage);
+        wsManager.addListener(listener);
         break;
 
       case WS_DISCONNECT:
         // Disconnect from WebSocket using WebSocketManager
-        wsManager.removeMessageListener(handleWebSocketMessage);
+        wsManager.removeListener(listener);
         wsManager.disconnect();
         break;
 

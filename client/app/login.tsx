@@ -1,5 +1,6 @@
 import Login, { LoginProps } from "@/components/login/Login";
-import { useSession } from "@/context/SessionContext";
+import { useAppDispatch } from "@/store";
+import { signIn } from "@/store/slices/sessionSlice";
 import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, View, Text } from "react-native";
@@ -7,12 +8,12 @@ import { StyleSheet, View, Text } from "react-native";
 export default function LoginScreen() {
   const [error, setError] = React.useState("");
 
-  const { signIn } = useSession();
+  const dispatch = useAppDispatch();
 
   const handleLogin: LoginProps["onLogin"] = async ({ username, password }) => {
     try {
       setError("");
-      await signIn({ username, password });
+      await dispatch(signIn({ username, password }));
       router.replace("/");
     } catch (e) {
       console.error("Login failed;", e);
