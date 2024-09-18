@@ -5,7 +5,7 @@ import { Provider } from "react-redux";
 export default function Root() {
   return (
     <Provider store={store}>
-      <Slot />;
+      <Slot />
     </Provider>
   );
 }

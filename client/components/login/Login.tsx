@@ -45,7 +45,6 @@ const Login = ({ onLogin }: LoginProps) => {
         placeholder="Password"
         size="lg"
         secureTextEntry
-        // Submit on enter
         onSubmitEditing={handleLogin}
       />
       <Button

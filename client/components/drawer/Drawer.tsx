@@ -25,11 +25,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       contentContainerStyle={styles.drawerContainer}
     >
       <View style={styles.navItemsContainer}>
-        {/* Drawer Items */}
         <DrawerItemList {...props} />
       </View>
-
-      {/* Button at the bottom */}
       <View style={styles.buttonContainer}>
         <Button title="Log Out" onPress={() => dispatch(signOut())} />
       </View>

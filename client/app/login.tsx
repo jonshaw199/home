@@ -26,7 +26,7 @@ export default function LoginScreen() {
   return (
     <View style={style.container}>
       <Login onLogin={handleLogin} />
-      {error && <Text style={style.error}>{error}</Text>}
+      {error ? <Text style={style.error}>{error}</Text> : null}
     </View>
   );
 }
