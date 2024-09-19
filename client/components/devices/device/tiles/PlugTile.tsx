@@ -52,7 +52,7 @@ export default function PlugTile({ device }: PlugTileProps) {
       device={device}
       pressableProps={{
         onPress: handlePress,
-        onLongPress: () => router.push(`./${device.id}`),
+        onLongPress: () => router.push(`/devices/${device.id}`),
       }}
     >
       <Text>{plug?.isOn ? "On" : "Off"}</Text>

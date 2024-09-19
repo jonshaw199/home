@@ -14,6 +14,7 @@ import { plugSliceActions } from "@/store/slices/plugSlice";
 import { WS_CONNECT } from "@/ws/websocketActionTypes";
 import { environmentalSliceActions } from "@/store/slices/environmentalSlice";
 import { selectSession, signOut } from "@/store/slices/sessionSlice";
+import { useRouteInfo } from "expo-router/build/hooks";
 
 // Custom Drawer Content Component with TypeScript types
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
@@ -37,6 +38,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 export default function Drawer() {
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectSession);
+  const { segments } = useRouteInfo();
 
   const connectWebSocket = useCallback(
     (token: string) => {
@@ -64,12 +66,13 @@ export default function Drawer() {
   // This is the app layout
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ExpoDrawer drawerContent={(props) => <CustomDrawerContent {...props} />}>
+      <ExpoDrawer
+        // Only show drawer nav at top level
+        screenOptions={{ headerShown: segments.length < 3 }}
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
+      >
         <ExpoDrawer.Screen name="index" options={{ title: "Home" }} />
-        <ExpoDrawer.Screen
-          name="devices/index"
-          options={{ title: "Devices" }}
-        />
+        <ExpoDrawer.Screen name="devices" options={{ title: "Devices" }} />
       </ExpoDrawer>
     </GestureHandlerRootView>
   );
