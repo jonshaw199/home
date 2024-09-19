@@ -12,12 +12,7 @@ export type Theme = {
   dark: string;
   muted: string;
   white: string;
-  // Background colors
   black: string;
-  grey: string;
-  beige: string;
-  blue: string;
-  green: string;
 };
 
 const theme: Theme = {
@@ -31,12 +26,7 @@ const theme: Theme = {
   dark: "#2f4f4f", // Empire Dark Gray
   muted: "#778899", // Bespin Cloud Gray
   white: "#ffffff", // Stormtrooper White
-  // Background colors
   black: "#000000", // Galactic Black
-  grey: "#c0c0c0", // Coruscant Cityscape
-  beige: "#f5f5dc", // Naboo Beige
-  blue: "#e0f7fa", // Hoth Ice Blue
-  green: "#004d00", // Endor Forest Green
 };
 
 type ThemeContextType = typeof theme;
