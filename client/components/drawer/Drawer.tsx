@@ -66,7 +66,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             icon={
               options.drawerIcon &&
               options.drawerIcon({
-                color: theme.white,
+                color: props.state.index === index ? theme.light : theme.dark,
                 focused: props.state.index === index,
                 size: navIconSize,
               })
@@ -79,7 +79,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           onPress={() => dispatch(signOut())}
           active={false}
           icon={
-            <Feather name="log-out" color={theme.white} size={navIconSize} />
+            <Feather name="log-out" color={theme.dark} size={navIconSize} />
           }
         />
       </View>
@@ -88,6 +88,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 };
 
 export default function Drawer() {
+  const theme = useTheme();
+  const style = styles(theme);
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectSession);
   const { segments } = useRouteInfo();
@@ -120,7 +122,10 @@ export default function Drawer() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ExpoDrawer
         // Only show drawer nav at top level
-        screenOptions={{ headerShown: segments.length < 3 }}
+        screenOptions={{
+          headerShown: segments.length < 3,
+          headerStyle: style.drawerHeader,
+        }}
         drawerContent={(props) => <CustomDrawerContent {...props} />}
       >
         <ExpoDrawer.Screen
@@ -156,7 +161,10 @@ const styles = (theme: Theme) =>
     drawerContainer: {
       flex: 1,
       justifyContent: "space-between",
-      backgroundColor: theme.black,
+      backgroundColor: theme.light,
+    },
+    drawerHeader: {
+      backgroundColor: theme.light,
     },
     buttonContainer: {
       padding: 10,
@@ -173,7 +181,7 @@ const styles = (theme: Theme) =>
       gap: 15,
     },
     drawerItemText: {
-      color: theme.white, // Default text color
+      color: theme.dark, // Default text color
       fontSize: 18,
       marginTop: 4,
     },
@@ -181,6 +189,6 @@ const styles = (theme: Theme) =>
       backgroundColor: theme.primary, // Active item background color
     },
     drawerItemActiveText: {
-      color: theme.white, // Active item text color
+      color: theme.light, // Active item text color
     },
   });

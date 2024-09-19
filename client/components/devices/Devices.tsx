@@ -22,7 +22,7 @@ const styles = () =>
     container: {
       display: "flex",
       flexDirection: "row",
-      gap: 15,
+      gap: 10,
       flexWrap: "wrap",
       padding: 10,
     },

@@ -3,13 +3,15 @@ import { useAppSelector, useAppDispatch } from "@/store";
 import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { plugSliceActions } from "@/store/slices/plugSlice";
-import { Text } from "react-native";
+import { Octicons } from "@expo/vector-icons";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const HANDLER_SHELLY_PLUG = "shellyplug__set";
 
 export type PlugTileProps = BaseTileProps;
 
 export default function PlugTile({ device }: PlugTileProps) {
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const plugs = useAppSelector((state) => state.plugs.data);
 
@@ -51,9 +53,11 @@ export default function PlugTile({ device }: PlugTileProps) {
       device={device}
       pressableProps={{
         onLongPress: handleLongPress,
+        style: { backgroundColor: "rgba(220, 0, 0, 0.2)" },
       }}
-    >
-      <Text>{plug?.isOn ? "On" : "Off"}</Text>
-    </BaseTile>
+      icon={<Octicons name="plug" size={20} color="rgba(220, 0, 0, 0.8)" />}
+      status={plug?.isOn ? "On" : "Off"}
+      textProps={{ style: { color: "rgba(220, 0, 0, 0.7)" } }}
+    />
   );
 }

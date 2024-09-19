@@ -11,22 +11,18 @@ export type Theme = {
   light: string;
   dark: string;
   muted: string;
-  white: string;
-  black: string;
 };
 
 const theme: Theme = {
   primary: "#0c7b93", // Jedi Blue
-  secondary: "#8b0000", // Sith Red
+  secondary: "#d3d3d3", // Bespin Cloud Gray
+  light: "#f0f8ff", // Hoth White
+  danger: "#8b0000", // Sith Red
+  warning: "#f5de84", // (yellowish)
   success: "#228b22", // Endor Green
-  danger: "#000000", // Dark Side Black
-  warning: "#d2b48c", // Tatooine Sand
-  info: "#f0f8ff", // Hoth White
-  light: "#d3d3d3", // Rebel Light Gray
   dark: "#2f4f4f", // Empire Dark Gray
-  muted: "#778899", // Bespin Cloud Gray
-  white: "#ffffff", // Stormtrooper White
-  black: "#000000", // Galactic Black
+  muted: "#f5f5dc", // Naboo Beige
+  info: "#b0c4de", // Alderaan Blue
 };
 
 type ThemeContextType = typeof theme;
