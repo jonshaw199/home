@@ -12,6 +12,7 @@ class DeviceType(BaseModel):
 
 class Device(BaseModel):
     name = models.CharField(max_length=100)
+    last_status_update = models.DateTimeField(null=True, blank=True)
     device_type = models.ForeignKey(
         DeviceType, related_name="devices", on_delete=models.CASCADE
     )

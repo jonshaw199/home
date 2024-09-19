@@ -11,6 +11,7 @@ class DeviceSerializer(UUIDModelSerializer):
             "device_type",
             "location",
             "name",
+            "last_status_update",
         ]
 
 
