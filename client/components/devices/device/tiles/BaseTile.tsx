@@ -1,4 +1,5 @@
 import { Device } from "@/models";
+import { router } from "expo-router";
 import {
   StyleSheet,
   Text,
@@ -20,8 +21,13 @@ export default function BaseTile({
 }: BaseTileProps) {
   const style = styles();
 
+  const _pressableProps: PressableProps = {
+    onPress: () => router.push(`/devices/${device.id}`),
+    ...pressableProps,
+  };
+
   return (
-    <Pressable {...pressableProps} style={style.pressable}>
+    <Pressable {..._pressableProps} style={style.pressable}>
       <View style={style.container}>
         <Text>{device.name}</Text>
         {children}

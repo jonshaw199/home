@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { plugSliceActions } from "@/store/slices/plugSlice";
 import { Text } from "react-native";
-import { router } from "expo-router";
 
 const HANDLER_SHELLY_PLUG = "shellyplug__set";
 
@@ -20,7 +19,7 @@ export default function PlugTile({ device }: PlugTileProps) {
     }
   }, [device, plugs]);
 
-  const handlePress = () => {
+  const handleLongPress = () => {
     if (plug) {
       const message = {
         action: HANDLER_SHELLY_PLUG,
@@ -51,8 +50,7 @@ export default function PlugTile({ device }: PlugTileProps) {
     <BaseTile
       device={device}
       pressableProps={{
-        onPress: handlePress,
-        onLongPress: () => router.push(`/devices/${device.id}`),
+        onLongPress: handleLongPress,
       }}
     >
       <Text>{plug?.isOn ? "On" : "Off"}</Text>
