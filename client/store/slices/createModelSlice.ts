@@ -1,4 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  createAsyncThunk,
+  PayloadAction,
+  ActionReducerMapBuilder,
+} from "@reduxjs/toolkit";
 import { ID, Identifiable } from "@/models";
 import { QueryParams } from "@/services/createServiceApi";
 import { ServiceApis, ThunkExtraArgument } from "@/store/config";
@@ -25,7 +30,8 @@ export function createInitialModelState<
 // Generic function to create thunks and a slice for any model/resource
 export function createModelSlice<T extends Identifiable>(
   name: string, // Name of the slice
-  apiKey: keyof ServiceApis
+  apiKey: keyof ServiceApis,
+  extraReducers?: (builder: ActionReducerMapBuilder<ModelState<T>>) => void
 ) {
   // Thunks
 
@@ -218,6 +224,10 @@ export function createModelSlice<T extends Identifiable>(
           error: action.error.message || "Failed to delete resource",
         };
       });
+
+      if (extraReducers) {
+        extraReducers(builder);
+      }
     },
   });
 
