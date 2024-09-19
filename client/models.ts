@@ -30,6 +30,7 @@ export interface Device extends Identifiable {
   name: string;
   plug?: ID;
   system?: ID;
+  environmental?: ID;
 }
 
 export interface Plug extends Identifiable {
