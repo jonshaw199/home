@@ -1,4 +1,5 @@
 import { Device } from "@/models";
+import { Theme, useTheme } from "@/providers/ThemeProvider";
 import { router } from "expo-router";
 import {
   StyleSheet,
@@ -19,7 +20,8 @@ export default function BaseTile({
   pressableProps = {},
   children,
 }: BaseTileProps) {
-  const style = styles();
+  const theme = useTheme();
+  const style = styles(theme);
 
   const _pressableProps: PressableProps = {
     onPress: () => router.push(`/devices/${device.id}`),
@@ -29,14 +31,14 @@ export default function BaseTile({
   return (
     <Pressable {..._pressableProps} style={style.pressable}>
       <View style={style.container}>
-        <Text>{device.name}</Text>
+        <Text style={style.name}>{device.name}</Text>
         {children}
       </View>
     </Pressable>
   );
 }
 
-const styles = () => {
+const styles = (theme: Theme) => {
   const borderRadius = 30;
 
   return StyleSheet.create({
@@ -45,10 +47,14 @@ const styles = () => {
     },
     container: {
       borderRadius,
-      backgroundColor: "lightgrey",
-      padding: 15,
+      backgroundColor: theme.light,
+      padding: 12,
       height: 85,
       width: 200,
+    },
+    name: {
+      color: theme.primary,
+      fontWeight: 700,
     },
   });
 };
