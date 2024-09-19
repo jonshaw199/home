@@ -6,7 +6,8 @@ static const char *TAG = "MqttUtils";
 const std::map<Group, std::string> MqttUtils::groups = {
     {GROUP_ENVIRONMENTAL, "environmentals"},
     {GROUP_DIAL, "dials"},
-    {GROUP_SYSTEM, "systems"}
+    {GROUP_SYSTEM, "systems"},
+    {GROUP_PLUG, "plugs"}
 };
 
 const std::map<Subtopic, std::string> MqttUtils::subtopics = {
@@ -15,10 +16,15 @@ const std::map<Subtopic, std::string> MqttUtils::subtopics = {
 };
 
 const std::map<Action, std::string> MqttUtils::actions = {
+    {ACTION_REQUEST_STATUS, "request_status"},
     {ACTION_ENVIRONMENTAL_STATUS, "environmental__status"},
-    //{ACTION_DIAL_STATUS, "dial__status"},
+    {ACTION_ENVIRONMENTAL_REQUEST_STATUS, "environmental__request_status"},
+    {ACTION_DIAL_STATUS, "dial__status"},
+    {ACTION_DIAL_REQUEST_STATUS, "dial__request_status"},
     {ACTION_SYSTEM_STATUS, "system__status"},
-    //{ACTION_PLUG_STATUS, "plug__status"}
+    {ACTION_SYSTEM_REQUEST_STATUS, "system__request_status"},
+    {ACTION_PLUG_STATUS, "plug__status"},
+    {ACTION_PLUG_REQUEST_STATUS, "plug__request_status"}
 };
 
 std::string MqttUtils::get_root_command_subscribe_topic() {
@@ -102,4 +108,43 @@ std::string MqttUtils::get_subtopic_str(Subtopic subtopic) {
 
 std::string MqttUtils::get_action_str(Action action) {
     return MqttUtils::get_map_str<Action>(action, MqttUtils::actions);
+}
+
+// JSON-related utils
+
+// Function to parse a JSON string and return a cJSON object
+cJSON* MqttUtils::parse_json_string(const std::string& json_str) {
+    // Use cJSON_Parse to parse the JSON string
+    cJSON *json_obj = cJSON_Parse(json_str.c_str());
+
+    // If parsing failed, print an error and return nullptr
+    if (json_obj == nullptr) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != nullptr) {
+            ESP_LOGE(TAG, "Unable to parse JSON");
+        }
+        return nullptr;
+    }
+
+    // Return the cJSON object
+    return json_obj;
+}
+
+// Function to get the string value for a given key from a cJSON object
+std::string MqttUtils::get_json_string_value(cJSON* json_obj, const std::string& key) {
+    // Check if the json_obj is valid
+    if (json_obj == nullptr) {
+        return {}; // Return empty string if the JSON object is invalid
+    }
+
+    // Get the item corresponding to the key
+    cJSON* item = cJSON_GetObjectItemCaseSensitive(json_obj, key.c_str());
+
+    // Check if the item exists and is a string
+    if (item != nullptr && cJSON_IsString(item) && item->valuestring != nullptr) {
+        return item->valuestring; // Return the string value
+    }
+
+    // Return an empty string if the key doesn't exist or value is not a string
+    return {};
 }

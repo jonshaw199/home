@@ -20,8 +20,6 @@
 
 static const char *TAG = "main";
 
-Topics topics = MqttUtils::get_topics(GROUP_DIAL, CONFIG_DEVICE_ID);
-
 // Task handles
 TaskHandle_t mqtt_task_handle = nullptr;
 
@@ -36,6 +34,9 @@ BaseConfig default_config = {
 };
 BaseConfig config = ConfigUtils::get_or_init_base_config(default_config);
 
+Topics topics = MqttUtils::get_topics(GROUP_DIAL, config.device_id);
+std::string status_action = MqttUtils::get_action_str(ACTION_DIAL_STATUS);
+
 // Initialize NTPClient
 NTPClient ntp_client;
 
@@ -43,6 +44,7 @@ NTPClient ntp_client;
 WiFiConnector *wifi_connector;
 MqttClient *mqtt_client;
 
+// System status; listening for these messages for monitoring purposes
 struct DeviceStatus
 {
     float cpu_usage = -1.0;
@@ -54,12 +56,22 @@ struct DeviceStatus
     int64_t first_received_at = -1;   
 };
 
+// Incoming status messages
 struct DeviceStatusMessage
 {
     std::string src = "";
     std::string dest = "";
     std::string action = "";
     DeviceStatus body;
+};
+
+// Outgoing status messages
+struct StatusMessage
+{
+    std::string src = config.device_id;
+    std::string dest = topics.device_status_publish_topic;
+    std::string action = MqttUtils::get_action_str(ACTION_DIAL_STATUS);
+    // No body at this time; just saying "I'm online"
 };
 
 typedef std::map<std::string, DeviceStatusMessage> status_message_map_t;
@@ -70,6 +82,33 @@ std::mutex status_message_map_mutex; // Protects status_message_map
 
 int page_idx = 0;
 std::mutex page_idx_mutex;
+
+cJSON* build_json() {
+    // All defaults; no body yet
+    StatusMessage msg;
+
+    // Build the JSON message using cJSON
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "src", msg.src.c_str());
+    cJSON_AddStringToObject(root, "dest", msg.dest.c_str());
+    cJSON_AddStringToObject(root, "action", msg.action.c_str());
+
+    return root;
+}
+
+void publish_status() {
+    if (mqtt_client) {
+        ESP_LOGI(TAG, "Publishing status");
+        cJSON *json = build_json();
+        char *json_str = cJSON_Print(json);
+        mqtt_client->publish(topics.device_status_publish_topic, json_str);
+        // Important!
+        cJSON_Delete(json);
+        free(json_str);
+    } else {
+        ESP_LOGW(TAG, "MQTT is not initialized; not publishing status");
+    }
+}
 
 void handle_device_status_message(DeviceStatusMessage msg)
 {
@@ -149,10 +188,31 @@ void mqtt_task(void *pvParameter)
             handle_device_status_message(msg);
         };
 
-        auto subscribe = [&handle_msg]()
+        auto handle_command = [](const std::string &data)
+        {
+            ESP_LOGI(TAG, "Received MQTT command: %s", data.c_str());
+            cJSON* json = MqttUtils::parse_json_string(data);
+            std::string action = MqttUtils::get_json_string_value(json, "action");
+            if (
+                action == MqttUtils::get_action_str(ACTION_DIAL_REQUEST_STATUS)
+                    || action == MqttUtils::get_action_str(ACTION_REQUEST_STATUS)
+            ) {
+                publish_status();
+            } else {
+                ESP_LOGI(TAG, "Skipping msg with action: %s", action.c_str());
+            }
+            // Important!
+            cJSON_Delete(json);
+        };
+
+        auto subscribe = [&handle_msg, &handle_command]()
         {
             std::string topic = MqttUtils::get_device_publish_status_topic(GROUP_SYSTEM, "+");
             mqtt_client->subscribe(topic.c_str(), handle_msg);
+
+            mqtt_client->subscribe(topics.root_command_subscribe_topic.c_str(), handle_command);
+            mqtt_client->subscribe(topics.group_command_subscribe_topic.c_str(), handle_command);
+            mqtt_client->subscribe(topics.device_command_subscribe_topic.c_str(), handle_command);
         };
 
         auto onConnect = [&subscribe]()
@@ -416,6 +476,18 @@ void init_spiffs()
     ESP_LOGI("SPIFFS", "Total bytes: %u, Used bytes: %u", SPIFFS.totalBytes(), SPIFFS.usedBytes());
 }
 
+// Function to publish status updates on a regular interval
+void reporting_task(void *pvParameter)
+{
+    ESP_LOGI(TAG, "Reporting task started");
+
+    while (1) {
+        publish_status();
+
+        vTaskDelay(pdMS_TO_TICKS(10000));
+    }
+}
+
 extern "C" void app_main(void)
 {
     init_spiffs();
@@ -431,4 +503,5 @@ extern "C" void app_main(void)
     xTaskCreate(display_task, "display_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(m5dial_task, "m5dial_task", 4096, nullptr, 5, nullptr);
     xTaskCreate(ntp_task, "ntp_task", 4096, nullptr, 5, nullptr);
+    xTaskCreate(reporting_task, "reporting_task", 4096, nullptr, 5, nullptr);
 }

@@ -55,7 +55,7 @@ void set_sensor_state(KY015::Data data) {
     sensor_state = data;
 }
 
-cJSON* build_json(float temp, float humidity) {
+cJSON* build_json(KY015::Data& sensor_data) {
     // Build the JSON message using cJSON
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "src", config.device_id.c_str());
@@ -63,27 +63,26 @@ cJSON* build_json(float temp, float humidity) {
     cJSON_AddStringToObject(root, "action", status_action.c_str());
 
     cJSON *body = cJSON_CreateObject();
-    cJSON_AddNumberToObject(body, "temperature_c", temp);
-    cJSON_AddNumberToObject(body, "humidity", humidity);
+    cJSON_AddNumberToObject(body, "temperature_c", sensor_data.temperature);
+    cJSON_AddNumberToObject(body, "humidity", sensor_data.humidity);
+    cJSON_AddBoolToObject(body, "sensor_read_success", sensor_data.success);
     cJSON_AddItemToObject(root, "body", body);
 
     return root;
 }
 
 void publish_status() {
+    ESP_LOGI(TAG, "Publishing status");
     KY015::Data data = get_sensor_state();
-    if (data.success) {
-        if (mqtt_client) {
-            cJSON *json = build_json(data.temperature, data.humidity);
-            char *json_str = cJSON_Print(json);
-            mqtt_client->publish(topics.device_status_publish_topic, json_str);
-            cJSON_Delete(json);
-            free(json_str);
-        } else {
-            ESP_LOGW(TAG, "MQTT is not initialized; not publishing");
-        }
+    if (mqtt_client) {
+        cJSON *json = build_json(data);
+        char *json_str = cJSON_Print(json);
+        mqtt_client->publish(topics.device_status_publish_topic, json_str);
+        // Important!
+        cJSON_Delete(json);
+        free(json_str);
     } else {
-        ESP_LOGW(TAG, "Sensor failure; not publishing");
+        ESP_LOGW(TAG, "MQTT is not initialized; not publishing status");
     }
 }
 
@@ -99,16 +98,28 @@ void mqtt_task(void *pvParameter)
 
         std::string broker_host = config.mqtt_broker;
 
-        auto handle_msg = [](const std::string &data)
+        auto handle_command = [](const std::string &data)
         {
-            ESP_LOGI(TAG, "Received MQTT data: %s", data.c_str());
+            ESP_LOGI(TAG, "Received MQTT command: %s", data.c_str());
+            cJSON* json = MqttUtils::parse_json_string(data);
+            std::string action = MqttUtils::get_json_string_value(json, "action");
+            if (
+                action == MqttUtils::get_action_str(ACTION_ENVIRONMENTAL_REQUEST_STATUS)
+                    || action == MqttUtils::get_action_str(ACTION_REQUEST_STATUS)
+            ) {
+                publish_status();
+            } else {
+                ESP_LOGI(TAG, "Skipping msg with action: %s", action.c_str());
+            }
+            // Important!
+            cJSON_Delete(json);
         };
 
-        auto subscribe = [&handle_msg]()
+        auto subscribe = [&handle_command]()
         {   
-            mqtt_client->subscribe(topics.root_command_subscribe_topic.c_str(), handle_msg);
-            mqtt_client->subscribe(topics.group_command_subscribe_topic.c_str(), handle_msg);
-            mqtt_client->subscribe(topics.device_command_subscribe_topic.c_str(), handle_msg);
+            mqtt_client->subscribe(topics.root_command_subscribe_topic.c_str(), handle_command);
+            mqtt_client->subscribe(topics.group_command_subscribe_topic.c_str(), handle_command);
+            mqtt_client->subscribe(topics.device_command_subscribe_topic.c_str(), handle_command);
         };
 
         auto onConnect = [&subscribe]()
@@ -226,7 +237,7 @@ void m5atom_task(void *pvParameter)
 // Function to publish status updates on a regular interval
 void reporting_task(void *pvParameter)
 {
-    ESP_LOGI(TAG, "M5Atom task started");
+    ESP_LOGI(TAG, "Reporting task started");
 
     while (1) {
         publish_status();
