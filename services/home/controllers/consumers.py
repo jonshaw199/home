@@ -14,20 +14,16 @@ Expected message shape:
     "dest": string, // For WS<->MQTT, this is the topic
     "action": string, // i.e. "get-status", "set", etc.
     "body": {
-        <cpu_usage>,
-        <cpu_temperature>,
-        <memory_usage>,
-        <disk_usage>,
-        <network_sent>,
-        <network_received>
+        ... // Optional data to include with the action
     }
 }
 """
 
-SHELLY_PLUG_ID_PREFIX = "shellyplugus"
-
 HANDLER_SYSTEM_STATUS = "system__status"
 HANDLER_ENVIRONMENTAL_STATUS = "environmental__status"
+HANDLER_DIAL_STATUS = "dial__status"
+
+SHELLY_PLUG_ID_PREFIX = "shellyplugus"
 
 
 class BaseMessageHandler:
@@ -66,6 +62,26 @@ class EnvironmentalStatusMessageHandler(BaseMessageHandler):
     def handle(self, content, consumer):
         logging.info(f"Handling environmental status message: {content}")
         EnvironmentalStatusMessageHandler.update_environmental(content)
+        consumer.broadcast_to_location_group(content)
+
+
+@BaseMessageHandler.register(HANDLER_DIAL_STATUS)
+class DialStatusMessageHandler(BaseMessageHandler):
+    @staticmethod
+    def update_device(data):
+        try:
+            # Update fields with data from JSON object
+            src = data.get("src")
+            # body = data.get("body") # No body
+            device = Device.objects.get(uuid=src)
+            device.last_status_update = datetime.now()
+            device.save()
+        except Exception as e:
+            logging.error("An error occurred when processing message:", e)
+
+    def handle(self, content, consumer):
+        logging.info(f"Handling environmental status message: {content}")
+        DialStatusMessageHandler.update_device(content)
         consumer.broadcast_to_location_group(content)
 
 
