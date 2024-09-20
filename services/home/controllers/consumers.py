@@ -23,6 +23,7 @@ HANDLER_SYSTEM_STATUS = "system__status"
 HANDLER_ENVIRONMENTAL_STATUS = "environmental__status"
 HANDLER_DIAL_STATUS = "dial__status"
 
+HANDLER_SHELLY_PLUG_STATUS = "shellyplugs__NotifyStatus"
 SHELLY_PLUG_ID_PREFIX = "shellyplugus"
 
 
@@ -117,7 +118,7 @@ class SystemStatusMessageHandler(BaseMessageHandler):
         consumer.broadcast_to_location_group(content)
 
 
-@BaseMessageHandler.register("shellyplugs__NotifyStatus")
+@BaseMessageHandler.register(HANDLER_SHELLY_PLUG_STATUS)
 class ShellyPlugStatusMessageHandler(BaseMessageHandler):
     def handle(self, content, consumer):
         logging.info(f"Handling Shelly Plug status message: {content}")
