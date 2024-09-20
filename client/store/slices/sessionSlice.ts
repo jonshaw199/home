@@ -6,6 +6,7 @@ import {
   getStorageItemAsync,
   setStorageItemAsync,
 } from "@/hooks/useStorageState";
+import { WS_ERROR } from "@/ws/websocketActionTypes";
 
 const storageKey = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
 if (!storageKey) throw "EXPO_PUBLIC_SESSION_STORAGE_KEY must be defined";
@@ -103,6 +104,13 @@ const sessionSlice = createSlice({
       .addCase(signOut.fulfilled, (state) => {
         state.session = null;
         state.isLoading = false;
+      })
+      // Experimental: log out on error
+      .addCase(WS_ERROR, (state) => {
+        console.warn("Logging out due to websocket error");
+        state.session = null;
+        state.isLoading = false;
+        setStorageItemAsync(storageKey, null);
       });
   },
 });
