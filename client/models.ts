@@ -28,9 +28,10 @@ export interface Device extends Identifiable {
   deviceType: ID;
   location: ID;
   name: string;
-  plug?: ID;
-  system?: ID;
-  environmental?: ID;
+  lastStatusUpdate?: string | null;
+  plug?: ID | null;
+  system?: ID | null;
+  environmental?: ID | null;
 }
 
 export interface Plug extends Identifiable {
@@ -38,7 +39,7 @@ export interface Plug extends Identifiable {
 }
 
 export interface Environmental extends Identifiable {
-  humidity?: number;
-  temperatureC?: number;
-  temperatureF?: number;
+  humidity?: number | null;
+  temperatureC?: number | null;
+  temperatureF?: number | null;
 }
