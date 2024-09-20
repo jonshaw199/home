@@ -36,17 +36,20 @@ export interface Device extends Identifiable {
 
 export interface Plug extends Identifiable {
   isOn: boolean;
+  device?: ID | null;
 }
 
 export interface Environmental extends Identifiable {
   humidity?: number | null;
   temperatureC?: number | null;
   temperatureF?: number | null;
+  device?: ID | null;
 }
 
 export interface System extends Identifiable {
   cpuUsage?: number | null;
   memUsage?: number | null;
+  device?: ID | null;
 }
 
 export enum Action {
