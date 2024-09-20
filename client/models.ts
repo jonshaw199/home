@@ -48,3 +48,7 @@ export interface System extends Identifiable {
   cpuUsage?: number | null;
   memUsage?: number | null;
 }
+
+export enum Action {
+  STATUS_SYSTEM = "system__status",
+}
