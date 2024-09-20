@@ -3,6 +3,8 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
+from datetime import datetime
+from django.db import transaction
 
 """
 Expected message shape:
@@ -24,6 +26,9 @@ Expected message shape:
 
 SHELLY_PLUG_ID_PREFIX = "shellyplugus"
 
+HANDLER_SYSTEM_STATUS = "system__status"
+HANDLER_ENVIRONMENTAL_STATUS = "environmental__status"
+
 
 class BaseMessageHandler:
     handlers = {}
@@ -40,10 +45,34 @@ class BaseMessageHandler:
         raise NotImplementedError("Handle method not implemented.")
 
 
-@BaseMessageHandler.register("system__status")
-class DeviceStatusMessageHandler(BaseMessageHandler):
+@BaseMessageHandler.register(HANDLER_ENVIRONMENTAL_STATUS)
+class EnvironmentalStatusMessageHandler(BaseMessageHandler):
     @staticmethod
-    def update_device(data):
+    def update_environmental(data):
+        try:
+            # Update fields with data from JSON object
+            src = data.get("src")
+            body = data.get("body")
+            device = Device.objects.get(uuid=src)
+            device.last_status_update = datetime.now()
+            device.environmental.temperature_c = body.get("temperature_c")
+            device.environmental.humidity = body.get("humidity")
+            with transaction.atomic():
+                device.save()
+                device.environmental.save()
+        except Exception as e:
+            logging.error("An error occurred when processing message:", e)
+
+    def handle(self, content, consumer):
+        logging.info(f"Handling environmental status message: {content}")
+        EnvironmentalStatusMessageHandler.update_environmental(content)
+        consumer.broadcast_to_location_group(content)
+
+
+@BaseMessageHandler.register(HANDLER_SYSTEM_STATUS)
+class SystemStatusMessageHandler(BaseMessageHandler):
+    @staticmethod
+    def update_system(data):
         src = data.get("src")
         if src is None:
             raise ValueError("src is required")
@@ -81,8 +110,8 @@ class DeviceStatusMessageHandler(BaseMessageHandler):
         device.system.save()
 
     def handle(self, content, consumer):
-        logging.info(f"Handling device status message: {content}")
-        DeviceStatusMessageHandler.update_device(content)
+        logging.info(f"Handling system status message: {content}")
+        SystemStatusMessageHandler.update_system(content)
         consumer.broadcast_to_location_group(content)
 
 
