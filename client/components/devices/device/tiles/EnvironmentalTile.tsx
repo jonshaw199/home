@@ -19,7 +19,7 @@ export default function EnvironmentalTile({ device }: EnvironmentalTileProps) {
 
   const temp = useMemo(() => {
     if (environmental?.temperatureF != undefined) {
-      return `${environmental.temperatureF}°F`;
+      return `${Math.floor(environmental.temperatureF)}°F`;
     }
   }, [environmental]);
 
