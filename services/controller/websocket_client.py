@@ -79,6 +79,9 @@ class WebsocketClient:
                 except:
                     pass
 
+            logging.warn("Closing connection...")
+            if self.ws:
+                self.ws.close()
             logging.warn("Attempting to reconnect to websocket...")
             self.connect()
             if not self.ws:
