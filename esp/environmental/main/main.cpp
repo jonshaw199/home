@@ -195,7 +195,7 @@ void draw(M5Canvas &canvas, KY015::Data &data) {
 
     canvas.setFont(&fonts::FreeMono24pt7b);
     canvas.setTextColor(GREEN);
-    float temp_f = data.temperature * (9/5) + 32;
+    float temp_f = (data.temperature * 9.0 / 5.0) + 32.0;
     std::string temp_str = float_to_str(temp_f, "F");
     canvas.drawString(temp_str.c_str(), 2, 22);
 
