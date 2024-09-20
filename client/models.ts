@@ -43,3 +43,8 @@ export interface Environmental extends Identifiable {
   temperatureC?: number | null;
   temperatureF?: number | null;
 }
+
+export interface System extends Identifiable {
+  cpuUsage?: number | null;
+  memUsage?: number | null;
+}

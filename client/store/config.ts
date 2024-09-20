@@ -1,4 +1,4 @@
-import { Device, DeviceType, Environmental, Plug } from "../models";
+import { Device, DeviceType, Environmental, Plug, System } from "../models";
 import { ServiceApi } from "../services/createServiceApi";
 import { deviceService } from "../services/deviceService";
 import {
@@ -16,6 +16,8 @@ import { environmentalService } from "@/services/environmentalService";
 import { environmentalSliceReducer } from "./slices/environmentalSlice";
 import { SessionState, sessionSliceReducer } from "./slices/sessionSlice";
 import { getStorageItemAsync } from "@/hooks/useStorageState";
+import { systemService } from "@/services/systemService";
+import { systemSliceReducer } from "./slices/systemSlice";
 
 const storageKey = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
 if (!storageKey) throw "EXPO_PUBLIC_SESSION_STORAGE_KEY must be defined";
@@ -28,6 +30,7 @@ export type ServiceApis = {
   deviceTypes: ServiceApi<DeviceType>;
   plugs: ServiceApi<Plug>;
   environmentals: ServiceApi<Environmental>;
+  systems: ServiceApi<System>;
 };
 
 export const serviceApis: ServiceApis = {
@@ -35,6 +38,7 @@ export const serviceApis: ServiceApis = {
   deviceTypes: deviceTypeService,
   plugs: plugService,
   environmentals: environmentalService,
+  systems: systemService,
 };
 
 /*
@@ -45,6 +49,7 @@ type RootReducer = {
   deviceTypes: Reducer<ModelState<DeviceType>>;
   plugs: Reducer<ModelState<Plug>>;
   environmentals: Reducer<ModelState<Environmental>>;
+  systems: Reducer<ModelState<System>>;
   session: Reducer<SessionState>;
 };
 
@@ -53,6 +58,7 @@ const rootReducer: RootReducer = {
   deviceTypes: deviceTypeSliceReducer,
   plugs: plugSliceReducer,
   environmentals: environmentalSliceReducer,
+  systems: systemSliceReducer,
   session: sessionSliceReducer,
 };
 

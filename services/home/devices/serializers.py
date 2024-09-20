@@ -24,7 +24,7 @@ class DeviceTypeSerializer(UUIDModelSerializer):
 class SystemSerializer(UUIDModelSerializer):
     class Meta:
         model = System
-        fields = UUIDModelSerializer.Meta.fields + ["device", "cpu_usage"]
+        fields = UUIDModelSerializer.Meta.fields + ["device", "cpu_usage", "mem_usage"]
 
 
 class PlugSerializer(UUIDModelSerializer):
