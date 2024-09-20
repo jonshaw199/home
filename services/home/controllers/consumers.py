@@ -89,41 +89,27 @@ class DialStatusMessageHandler(BaseMessageHandler):
 class SystemStatusMessageHandler(BaseMessageHandler):
     @staticmethod
     def update_system(data):
-        src = data.get("src")
-        if src is None:
-            raise ValueError("src is required")
-
-        # Retrieve the device instance
         try:
+            # Update fields with data from JSON object
+            src = data.get("src")
+            body = data.get("body")
             device = Device.objects.get(uuid=src)
-        except Device.DoesNotExist:
-            raise ValueError(f"Device with UUID {src} does not exist")
-
-        if not hasattr(device, "system"):
-            logging.warn(f"System not found for Device UUID {src}")
-            return
-
-        body = data.get("body")
-
-        if body is None:
-            logging.warn("Status not provided")
-            return
-
-        # Update fields with data from JSON object
-        device.system.cpu_usage = body.get("cpu_usage", device.system.cpu_usage)
-        device.system.cpu_temp = body.get("cpu_temperature", device.system.cpu_temp)
-        device.system.mem_usage = body.get("memory_usage", device.system.mem_usage)
-        device.system.disk_usage = body.get("disk_usage", device.system.disk_usage)
-        device.system.network_sent = body.get(
-            "network_sent", device.system.network_sent
-        )
-        device.system.network_received = body.get(
-            "network_received", device.system.network_received
-        )
-        # device.system.status_updated_at = datetime.now()  # Update the status_updated_at field
-
-        # Save the updated device instance
-        device.system.save()
+            device.last_status_update = datetime.now()
+            device.system.cpu_usage = body.get("cpu_usage", device.system.cpu_usage)
+            device.system.cpu_temp = body.get("cpu_temperature", device.system.cpu_temp)
+            device.system.mem_usage = body.get("memory_usage", device.system.mem_usage)
+            device.system.disk_usage = body.get("disk_usage", device.system.disk_usage)
+            device.system.network_sent = body.get(
+                "network_sent", device.system.network_sent
+            )
+            device.system.network_received = body.get(
+                "network_received", device.system.network_received
+            )
+            with transaction.atomic():
+                device.save()
+                device.system.save()
+        except Exception as e:
+            logging.error("An error occurred when processing message:", e)
 
     def handle(self, content, consumer):
         logging.info(f"Handling system status message: {content}")
