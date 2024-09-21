@@ -2,6 +2,8 @@ import json
 import re
 import logging
 
+ACTION_PLUG_SET = "plug__set"
+
 
 class WebsocketTransformerRegistry:
     transformers = {}
@@ -48,8 +50,8 @@ class WebsocketTransformerRegistry:
             logging.info("No transformer found; returning")
             return message, dest
 
-        except json.JSONDecodeError:
-            logging.error("Invalid JSON in message")
+        except Exception as e:
+            logging.error(f"Error transforming message: {e}")
             return (
                 message,
                 "invalid_topic",
@@ -58,7 +60,16 @@ class WebsocketTransformerRegistry:
 
 @WebsocketTransformerRegistry.register(r"^plugs/[0-9a-fA-F-]{36}/command$")
 def transform_plug_message(message):
-    # Example transformation for plug messages
-    message["transformed"] = True  # Add a field for demonstration
-    logging.info("Transformed plug message")
+    action = message["action"]
+    body = message["body"]
+    is_on = body["is_on"]
+    device_id = body["device_id"]
+
+    if action == ACTION_PLUG_SET:
+        logging.info(f"Transforming plug set message {is_on}")
+        transformed = is_on
+        topic = f"{device_id}/command"
+        return (transformed, topic)
+
+    logging.warn(f"Unrecognized action: {action}")
     return (message, message["dest"])
