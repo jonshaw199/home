@@ -68,7 +68,7 @@ def transform_plug_message(message):
     if action == ACTION_PLUG_SET:
         logging.info(f"Transforming plug set message {is_on}")
         transformed = "on" if is_on else "off"
-        topic = f"{device_id}/command/switch:0"
+        topic = f"plugs/{device_id}/command/switch:0"
         return (transformed, topic)
 
     logging.warn(f"Unrecognized action: {action}")
