@@ -8,7 +8,7 @@ from webocket_transformer import WebsocketTransformerRegistry
 from mqtt_transformer import MqttTransformerRegistry
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(threadName)s] [%(filename)s:%(lineno)d] %(levelname)s: %(message)s",
     handlers=[logging.StreamHandler()],
 )
