@@ -35,7 +35,7 @@ class MqttTransformerRegistry:
         return message
 
 
-# Example: `{'src': 'shellyplugus-a0dd6c27a4dc', 'dst': 'cf7d8486-18ad-4064-b757-e671a4749a3e/events', 'method': 'NotifyFullStatus', 'params': {'ts': 1726900602.35, 'ble': {}, 'cloud': {'connected': False}, 'mqtt': {'connected': True}, 'switch:0': {'id': 0, 'source': 'init', 'output': False, 'apower': 0.0, 'voltage': 124.1, 'current': 0.0, 'aenergy': {'total': 0.0, 'by_minute': [0.0, 0.0, 0.0], 'minute_ts': 1726900600}, 'temperature': {'tC': 47.7, 'tF': 117.8}}, 'sys': {'mac': 'A0DD6C27A4DC', 'restart_required': False, 'time': '23:36', 'unixtime': 1726900602, 'uptime': 79378, 'ram_size': 261220, 'ram_free': 124584, 'fs_size': 458752, 'fs_free': 151552, 'cfg_rev': 6, 'kvs_rev': 0, 'schedule_rev': 0, 'webhook_rev': 0, 'available_updates': {'stable': {'version': '1.3.3'}}, 'reset_reason': 3}, 'wifi': {'sta_ip': '10.199.1.13', 'status': 'got ip', 'ssid': 'Shaw Family', 'rssi': -37}, 'ws': {'connected': False}}}`
+# Example: {"id":0, "source":"init", "output":false, "apower":0.0, "voltage":122.9, "current":0.000, "aenergy":{"total":0.000,"by_minute":[0.000,0.000,0.000],"minute_ts":1726942679},"temperature":{"tC":45.9, "tF":114.7}}
 @MqttTransformerRegistry.register(r"^plugs/[0-9a-fA-F-]{36}/status/switch:0$")
 def transform_plug_status_message(message, topic):
     logging.info(f"Transforming plug status message {message}")
