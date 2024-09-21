@@ -6,7 +6,7 @@ import { plugSliceActions } from "@/store/slices/plugSlice";
 import { Octicons } from "@expo/vector-icons";
 import { useTheme } from "@/providers/ThemeProvider";
 
-const HANDLER_SHELLY_PLUG = "shellyplug__set";
+const HANDLER_SHELLY_PLUG = "plug__set";
 
 export type PlugTileProps = BaseTileProps;
 
