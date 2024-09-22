@@ -39,12 +39,14 @@ class WebsocketTransformerRegistry:
             for pattern, transformer in cls.transformers.items():
                 if re.match(pattern, dest):
                     logging.info(f"Applying transformer for pattern: {pattern}")
-                    # Apply the transformer and return the transformed message
+                    # Apply the transformer and get the transformed message and destination
                     transformed_message, transformed_dest = transformer(message_json)
-                    return (
-                        json.dumps(transformed_message),
-                        transformed_dest,
-                    )  # Return transformed message as a string
+
+                    # Check if the transformed message is a dictionary (i.e., it needs to be JSON serialized)
+                    if isinstance(transformed_message, (dict, list)):
+                        transformed_message = json.dumps(transformed_message)
+
+                    return transformed_message, transformed_dest
 
             # If no transformer is found, return the original message and topic
             logging.info("No transformer found; returning")
@@ -52,10 +54,7 @@ class WebsocketTransformerRegistry:
 
         except Exception as e:
             logging.error(f"Error transforming message: {e}")
-            return (
-                message,
-                "invalid_topic",
-            )  # Return original message with invalid topic if parsing fails
+            return message, "invalid_topic"
 
 
 @WebsocketTransformerRegistry.register(r"^plugs/[0-9a-fA-F-]{36}/command$")
