@@ -180,7 +180,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
                 raise ValueError(f"JSON content is not a dict: {content}")
         except json.JSONDecodeError:
             logging.error("Invalid JSON")
-            self.send_json({"error": "Invalid JSON"})
+            # self.send_json({"error": "Invalid JSON"})
             # self.close()
         except ValueError as e:
             logging.error(f"Invalid message; unable to process; error: {e}")
