@@ -1,7 +1,16 @@
-FROM python:3.9.19-alpine3.20
+FROM python:3.10
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /code
-RUN apk --no-cache add mosquitto-clients
-COPY requirements.txt /code/
-RUN pip install -r requirements.txt
+
 COPY . /code/
-ENTRYPOINT python controller.py
+
+RUN pip install pipenv
+
+RUN pipenv install --deploy --ignore-pipfile
+
+ENTRYPOINT ["pipenv", "run", "python", "controller.py"]
+
