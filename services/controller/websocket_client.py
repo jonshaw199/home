@@ -38,6 +38,7 @@ class WebsocketClient:
             logging.error("Failed to connect to websocket server")
 
     def on_message(self, ws, message):
+        logging.info(f"Received WebSocket msg: {message}")
         self.message_handler(message)
 
     def on_error(self, ws, error):
@@ -65,27 +66,9 @@ class WebsocketClient:
             logging.warn("Unable to send; not connected")
 
     def start(self):
-        while 1:
-            while self.ws:
-                try:
-                    self.ws.run_forever(
-                        dispatcher=rel,
-                        ping_interval=30,
-                        ping_timeout=10,
-                        ping_payload="keepalive",
-                        # https://github.com/websocket-client/websocket-client/issues/863#issuecomment-1261353428
-                        reconnect=5,
-                    )
-                except:
-                    pass
-
-            logging.warn("Closing connection...")
-            if self.ws:
-                self.ws.close()
-            logging.warn("Attempting to reconnect to websocket...")
-            self.connect()
-            if not self.ws:
-                logging.error(
-                    "Failed to connect to websocket; sleeping then trying again..."
-                )
-                time.sleep(5)
+        self.ws.run_forever(
+            dispatcher=rel,
+            reconnect=5,
+        )
+        rel.signal(2, rel.abort)
+        rel.dispatch()

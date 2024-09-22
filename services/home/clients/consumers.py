@@ -4,6 +4,8 @@ import logging
 import json
 from devices.models import Device
 from copy import copy
+from django.db import transaction
+from datetime import datetime
 
 """
 Expected message shape:
@@ -14,9 +16,7 @@ Expected message shape:
 }
 """
 
-ACTION_INTEGRATION = "integration"
-
-HANDLER_SHELLY_PLUG = "shellyplug__set"
+HANDLER_PLUG_SET = "plug__set"
 
 
 class BaseMessageHandler:
@@ -42,45 +42,31 @@ body: {
 """
 
 
-@BaseMessageHandler.register(HANDLER_SHELLY_PLUG)
-class ShellyPlugSetMessageHandler(BaseMessageHandler):
+@BaseMessageHandler.register(HANDLER_PLUG_SET)
+class PlugSetMessageHandler(BaseMessageHandler):
     def handle(self, content, consumer):
         logging.info(f"Handling Shelly Plug set message: {content}")
 
-        body = content.get("body")
-        if body is None:
-            raise ValueError("body is required")
-
-        device_id = body.get("device_id")
-        if device_id is None:
-            raise ValueError("device_id is required")
-
-        is_on = body.get("is_on")
-        if is_on is None:
-            raise ValueError("is_on is required")
-
-        # Retrieve the device instance
         try:
+            body = content["body"]
+            device_id = body["device_id"]
+            is_on = body["is_on"]
             device = Device.objects.get(uuid=device_id)
-        except Device.DoesNotExist:
-            raise ValueError(f"Device with uuid {device_id} does not exist")
-
-        if not hasattr(device, "plug"):
-            raise ValueError(f"Plug not found for Device ID {device.id}")
-
-        # Set values
-        logging.info(f"Setting is_on to {is_on} for Device ID {device.id}")
-        device.plug.is_on = is_on
-        device.plug.save()
-
-        # Broadcast
-        outbound = {
-            "src": "client",
-            "dest": f"{device.vendor_id}/command/switch:0",
-            "action": ACTION_INTEGRATION,
-            "body": "on" if is_on else "off",
-        }
-        consumer.broadcast_to_location_group(outbound, device.location.id)
+            device.last_status_update = datetime.now()
+            device.plug.is_on = is_on
+            with transaction.atomic():
+                device.plug.save()
+                device.save()
+            # Broadcast
+            outbound = {
+                "src": "client",
+                "dest": f"plugs/{device_id}/command",
+                "action": HANDLER_PLUG_SET,
+                "body": body,
+            }
+            consumer.broadcast_to_location_group(outbound, device.location.id)
+        except Exception as e:
+            logging.error(f"Error processing {HANDLER_PLUG_SET} msg:", e)
 
 
 class ClientConsumer(JsonWebsocketConsumer):
@@ -134,9 +120,7 @@ class ClientConsumer(JsonWebsocketConsumer):
     def group_message(self, event):
         message = event["message"]
 
-        # Skip sending the message to the sender
-        if message.get("sender") != self.channel_name:
-            self.send_json(message)
+        self.send_json(message)
 
     def get_accessible_location_ids(self, user):
         # Ensure the user has a profile and locations associated with it
@@ -177,7 +161,6 @@ class ClientConsumer(JsonWebsocketConsumer):
             logging.info(
                 f"Broadcasting message to group; message: {content}; group: {group_name}"
             )
-            content["sender"] = self.channel_name
             async_to_sync(self.channel_layer.group_send)(
                 group_name, {"type": "group_message", "message": content}
             )

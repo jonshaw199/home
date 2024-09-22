@@ -22,9 +22,7 @@ Expected message shape:
 HANDLER_SYSTEM_STATUS = "system__status"
 HANDLER_ENVIRONMENTAL_STATUS = "environmental__status"
 HANDLER_DIAL_STATUS = "dial__status"
-
-HANDLER_SHELLY_PLUG_STATUS = "shellyplugs__NotifyStatus"
-SHELLY_PLUG_ID_PREFIX = "shellyplugus"
+HANDLER_PLUG_STATUS = "plug__status"
 
 
 class BaseMessageHandler:
@@ -58,7 +56,9 @@ class EnvironmentalStatusMessageHandler(BaseMessageHandler):
                 device.save()
                 device.environmental.save()
         except Exception as e:
-            logging.error("An error occurred when processing message:", e)
+            logging.error(
+                f"An error occurred when processing environmental status message: {e}"
+            )
 
     def handle(self, content, consumer):
         logging.info(f"Handling environmental status message: {content}")
@@ -78,7 +78,7 @@ class DialStatusMessageHandler(BaseMessageHandler):
             device.last_status_update = datetime.now()
             device.save()
         except Exception as e:
-            logging.error("An error occurred when processing message:", e)
+            logging.error(f"An error occurred when processing dial status message: {e}")
 
     def handle(self, content, consumer):
         logging.info(f"Handling environmental status message: {content}")
@@ -110,7 +110,9 @@ class SystemStatusMessageHandler(BaseMessageHandler):
                 device.save()
                 device.system.save()
         except Exception as e:
-            logging.error("An error occurred when processing message:", e)
+            logging.error(
+                f"An error occurred when processing system status message: {e}"
+            )
 
     def handle(self, content, consumer):
         logging.info(f"Handling system status message: {content}")
@@ -118,11 +120,26 @@ class SystemStatusMessageHandler(BaseMessageHandler):
         consumer.broadcast_to_location_group(content)
 
 
-@BaseMessageHandler.register(HANDLER_SHELLY_PLUG_STATUS)
-class ShellyPlugStatusMessageHandler(BaseMessageHandler):
+@BaseMessageHandler.register(HANDLER_PLUG_STATUS)
+class PlugStatusMessageHandler(BaseMessageHandler):
+    @staticmethod
+    def update_plug(data):
+        try:
+            src = data.get("src")
+            body = data.get("body")
+            device = Device.objects.get(uuid=src)
+            device.last_status_update = datetime.now()
+            device.plug.is_on = body.get("is_on")
+            with transaction.atomic():
+                device.save()
+                device.plug.save()
+        except Exception as e:
+            logging.error(f"An error occurred when processing plug status message: {e}")
+
     def handle(self, content, consumer):
-        logging.info(f"Handling Shelly Plug status message: {content}")
-        # TODO: adapt message content, then call `broadcast` with it
+        logging.info(f"Handling plug status message: {content}")
+        PlugStatusMessageHandler.update_plug(content)
+        consumer.broadcast_to_location_group(content)
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
@@ -163,7 +180,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
                 raise ValueError(f"JSON content is not a dict: {content}")
         except json.JSONDecodeError:
             logging.error("Invalid JSON")
-            self.send_json({"error": "Invalid JSON"})
+            # self.send_json({"error": "Invalid JSON"})
             # self.close()
         except ValueError as e:
             logging.error(f"Invalid message; unable to process; error: {e}")
@@ -211,17 +228,6 @@ class ControllerConsumer(JsonWebsocketConsumer):
             logging.warning(f"No handler found for ID: {handler_id}")
 
     def get_handler_id(self, content):
-        # Shelly
-        if (
-            "src" in content
-            and "method" in content
-            and content.get("src").startswith(SHELLY_PLUG_ID_PREFIX)
-        ):
-            return f'shellyplugs__{content.get("method")}'
-
-        # Other integrations...
-
-        # Internal
         return content.get("action")
 
     def broadcast_to_location_group(self, content):

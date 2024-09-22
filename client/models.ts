@@ -55,4 +55,5 @@ export interface System extends Identifiable {
 export enum Action {
   STATUS_SYSTEM = "system__status",
   STATUS_ENVIRONMENTAL = "environmental__status",
+  STATUS_PLUG = "plug__status",
 }
