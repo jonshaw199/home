@@ -2,24 +2,20 @@
 
 import logging
 from websocket_client import WebsocketClient
-from mqtt_client import MqttClient
+from mqtt_client import AsyncMqttClient
 from threading import Thread
 from webocket_transformer import WebsocketTransformerRegistry
 from mqtt_transformer import MqttTransformerRegistry
+import asyncio
+from auth import get_token
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(threadName)s] [%(filename)s:%(lineno)d] %(levelname)s: %(message)s",
-    handlers=[logging.StreamHandler()],
-)
+logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
 
 
 class Controller:
     def __init__(self):
         self.websocket_client = WebsocketClient(self.handle_message_ws)
-        self.mqtt_client = MqttClient(
-            self.handle_connect_mqtt, self.handle_message_mqtt
-        )
+        self.mqtt_client = AsyncMqttClient(self.handle_message_mqtt)
 
     def handle_message_ws(self, message):
         logging.info("Handle message: %s", message)
@@ -29,30 +25,38 @@ class Controller:
             logging.info(
                 f"Publishing transformed message {transformed_message} to topic {topic}"
             )
-            self.mqtt_client.publish(topic, transformed_message)
+            asyncio.create_task(
+                self.mqtt_client.publish(topic, transformed_message)
+            )  # Schedule the MQTT publish
         except Exception as e:
             logging.error(f"Error handling WS message: {e}")
 
-    def handle_connect_mqtt(self):
-        # Subscribe to everything
-        self.mqtt_client.subscribe("#")
-
     def handle_message_mqtt(self, topic, message):
-        logging.info("Handle message: %s", message)
+        logging.info("Handle message: %s (topic: %s)", message, topic)
 
         try:
             transformed_message = MqttTransformerRegistry.transform(message, topic)
             logging.info(f"Sending transformed message {transformed_message}")
-            self.websocket_client.send(transformed_message)
+            asyncio.create_task(
+                self.websocket_client.send(transformed_message)
+            )  # Schedule the WebSocket send
+
         except Exception as e:
             logging.error(f"Error handling MQTT message: {e}")
 
-    def start(self):
-        mqtt_thread = Thread(target=self.mqtt_client.start)
-        mqtt_thread.name = "MQTT Client Thread"
-        mqtt_thread.start()
-        self.websocket_client.start()
+    async def start(self):
+        # Start both MQTT and WebSocket clients concurrently
+        token = await get_token()
+        await asyncio.gather(
+            self.mqtt_client.subscribe("#"),  # Start subscribing to MQTT topics
+            self.websocket_client.connect(token),  # Connect to the WebSocket server
+        )
+
+
+async def main():
+    controller = Controller()
+    await controller.start()
 
 
 if __name__ == "__main__":
-    Controller().start()
+    asyncio.run(main())
