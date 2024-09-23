@@ -32,7 +32,7 @@ class MqttTransformerRegistry:
                     return transformed_message
 
             # If no transformer is found, return the original message
-            logging.info("No transformer found; returning")
+            logging.info("No transformer found; returning as-is")
             return message
         except Exception as e:
             logging.error(f"Transformation error: {e}")
