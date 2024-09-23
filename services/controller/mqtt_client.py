@@ -16,6 +16,9 @@ url = f"{MQTT_BROKER_HOST}/{MQTT_BROKER_PORT}"
 class AsyncMqttClient:
     def __init__(self, on_message):
         self.on_message = on_message
+        self.connect()
+
+    def connect(self):
         self.client = Client(
             MQTT_BROKER_HOST,
             port=MQTT_BROKER_PORT,
@@ -26,14 +29,6 @@ class AsyncMqttClient:
     async def handle_message(self, message):
         logging.info(f"Received message on topic {message.topic}")
         try:
-            if message.payload is None:
-                logging.error("Received message with no payload.")
-                return  # Exit early if no payload
-
-            if not isinstance(message.payload, bytes):
-                logging.error("Message payload is not a valid bytes object.")
-                return  # Exit if payload is not bytes
-
             decoded_payload = message.payload.decode("utf-8")
             self.on_message(message.topic, decoded_payload)
         except Exception as e:
@@ -41,15 +36,27 @@ class AsyncMqttClient:
 
     async def publish(self, topic, message):
         logging.info(f"Publishing message to topic {topic}: {message}")
-        await self.client.publish(topic, message)
+
+        try:
+            await self.client.publish(topic, message)
+        except Exception as e:
+            logging.error(f"Unable to publish; error: {e}")
 
     async def subscribe(self, topic):
+        while 1:
+            try:
+                await self._subscribe(topic)
+            except Exception as e:
+                logging.error(f"Subscribe error: {e}")
+                await asyncio.sleep(1)
+                logging.warn("Attempting to reconnect to MQTT broker")
+                self.connect()
+
+    async def _subscribe(self, topic):
         logging.info(f"Subscribing to topic: {topic}")
-        try:
-            async with self.client as client:
-                options = SubscribeOptions(noLocal=True)
-                await client.subscribe(topic, options=options)
-                async for message in client.messages:
-                    await self.handle_message(message)
-        except Exception as e:
-            logging.error(f"Subscribe error: {e}")
+
+        async with self.client as client:
+            options = SubscribeOptions(noLocal=True)
+            await client.subscribe(topic, options=options)
+            async for message in client.messages:
+                await self.handle_message(message)
