@@ -6,5 +6,21 @@
       "device": 3,
       "is_on": false
     }
+  },
+  {
+    "model": "devices.plug",
+    "pk": 2,
+    "fields": {
+      "device": 6,
+      "is_on": false
+    }
+  },
+  {
+    "model": "devices.plug",
+    "pk": 3,
+    "fields": {
+      "device": 7,
+      "is_on": false
+    }
   }
 ]
