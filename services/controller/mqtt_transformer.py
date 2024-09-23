@@ -20,19 +20,23 @@ class MqttTransformerRegistry:
 
     @classmethod
     def transform(cls, message, topic):
-        dest = topic
+        try:
+            dest = str(topic)  # Be careful; in aiomqtt, this is a Topic obj
 
-        # Check if a transformer exists by matching regex patterns against 'dest'
-        for pattern, transformer in cls.transformers.items():
-            if re.match(pattern, dest):
-                logging.info(f"Applying transformer for pattern: {pattern}")
-                # Apply the transformer and return the transformed message
-                transformed_message = transformer(message, topic)
-                return transformed_message
+            # Check if a transformer exists by matching regex patterns against 'dest'
+            for pattern, transformer in cls.transformers.items():
+                if re.match(pattern, dest):
+                    logging.info(f"Applying transformer for pattern: {pattern}")
+                    # Apply the transformer and return the transformed message
+                    transformed_message = transformer(message, dest)
+                    return transformed_message
 
-        # If no transformer is found, return the original message
-        logging.info("No transformer found; returning")
-        return message
+            # If no transformer is found, return the original message
+            logging.info("No transformer found; returning as-is")
+            return message
+        except Exception as e:
+            logging.error(f"Transformation error: {e}")
+            raise e
 
 
 # Example: {"id":0, "source":"init", "output":false, "apower":0.0, "voltage":122.9, "current":0.000, "aenergy":{"total":0.000,"by_minute":[0.000,0.000,0.000],"minute_ts":1726942679},"temperature":{"tC":45.9, "tF":114.7}}

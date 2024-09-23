@@ -1,74 +1,57 @@
 import os
-import websocket
-import rel
 from dotenv import load_dotenv
-from auth import Auth
 import logging
-import time
+import asyncio
+import websockets
 
 load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
+logging.basicConfig(level=logging.INFO)
+
 
 class WebsocketClient:
-    def __init__(self, message_handler):
-        self.message_handler = message_handler
-        self.ws = None
-        self.connect()
+    def __init__(self, on_message):
+        self.token = ""
+        self.on_message = on_message
+        self.websocket = None
 
-    def connect(self):
-        try:
-            token = Auth().get_token()
-        except Exception as e:
-            logging.error("Failed to get auth token")
-            return
-
-        websocket.enableTrace(True)
-
-        try:
-            self.ws = websocket.WebSocketApp(
-                f"ws://{HOME_HOST}:{HOME_PORT}/ws/controllers?token={token}",
-                on_open=self.on_open,
-                on_message=self.on_message,
-                on_error=self.on_error,
-                on_close=self.on_close,
-            )
-        except Exception as e:
-            logging.error("Failed to connect to websocket server")
-
-    def on_message(self, ws, message):
-        logging.info(f"Received WebSocket msg: {message}")
-        self.message_handler(message)
-
-    def on_error(self, ws, error):
-        logging.error(f"WebSocket error: {error}")
-
-    def on_close(self, ws, close_status_code, close_msg):
-        logging.info(
-            f"### Connection closed (status: {close_status_code}, message: {close_msg}). ###"
-        )
-        self.ws = None
-
-    def on_open(self, ws):
-        logging.info("Opened connection")
-
-    def send(self, message):
-        logging.info(f"Sending websocket message: {message}")
-        if self.ws:
+    async def connect(self, token=""):
+        while 1:
             try:
-                self.ws.send(message)
+                await self._connect(token)
             except Exception as e:
-                logging.error(f"Send failed: {e}")
-                self.ws.close()
-                self.ws = None
-        else:
-            logging.warn("Unable to send; not connected")
+                logging.error(f"Websocket connect error: {e}")
+                await asyncio.sleep(1)
+                logging.warn("Attempting to reconnect to WebSocket server...")
 
-    def start(self):
-        self.ws.run_forever(
-            dispatcher=rel,
-            reconnect=5,
-        )
-        rel.signal(2, rel.abort)
-        rel.dispatch()
+    async def _connect(self, token):
+        if token:
+            self.token = token
+        uri = f"ws://{HOME_HOST}:{HOME_PORT}/ws/controllers?token={self.token}"
+        headers = {
+            "Origin": f"http://{HOME_HOST}:{HOME_PORT}",
+        }
+
+        logging.info(f"Connecting to uri: {uri}")
+
+        self.websocket = await websockets.connect(uri, extra_headers=headers)
+        logging.info(f"Connected to WebSocket server: {uri}")
+        await self.receive_messages()  # Start receiving messages
+
+    async def receive_messages(self):
+        try:
+            async for message in self.websocket:
+                logging.info(f"Received message: {message}")
+                self.on_message(message)  # Call the provided callback
+        except Exception as e:
+            logging.error(f"Error receiving message: {e}")
+            raise e
+
+    async def send(self, message):
+        logging.info(f"Sending websocket message: {message}")
+        try:
+            await self.websocket.send(message)
+        except Exception as e:
+            logging.error(f"Error sending websocket message: {e}")

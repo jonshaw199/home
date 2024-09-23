@@ -4,10 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-websocket-client = "==1.8.0"
-rel = "==0.4.9.19"
 python-dotenv = "==1.0.1"
-paho-mqtt = "==2.1.0"
+websockets = "*"
+aiohttp = {extras = ["speedups"], version = "*"}
+aiomqtt = "*"
 
 [dev-packages]
 

@@ -39,5 +39,15 @@
       "location": 2,
       "device_type": 4
     }
+  },
+  {
+    "model": "devices.device",
+    "pk": 5,
+    "fields": {
+      "uuid": "a7317942-954a-4f2d-b582-9ef39d9efe6e",
+      "name": "Jon's Pi 4",
+      "location": 1,
+      "device_type": 5
+    }
   }
 ]

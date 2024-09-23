@@ -49,7 +49,7 @@ class WebsocketTransformerRegistry:
                     return transformed_message, transformed_dest
 
             # If no transformer is found, return the original message and topic
-            logging.info("No transformer found; returning")
+            logging.info("No transformer found; returning as-is")
             return message, dest
 
         except Exception as e:
