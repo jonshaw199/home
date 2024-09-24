@@ -9,7 +9,7 @@ services:
       resources:
         limits:
           cpus: "0.25"
-    cpuset: "1"
+    cpuset: "0"
 
   redis:
     image: "redis:7"
@@ -19,7 +19,7 @@ services:
       resources:
         limits:
           cpus: "0.25"
-    cpuset: "2"
+    cpuset: "1"
 
   home:
     build: ./services/home
@@ -42,7 +42,7 @@ services:
       resources:
         limits:
           cpus: "0.33"
-    cpuset: "3"
+    cpuset: "2"
 
   mqtt-broker:
     build: ./services/mqtt-broker
@@ -52,7 +52,7 @@ services:
       resources:
         limits:
           cpus: "0.25"
-    cpuset: "4"
+    cpuset: "3"
 
   controller:
     build: ./services/controller
@@ -67,7 +67,7 @@ services:
       resources:
         limits:
           cpus: "0.25"
-    cpuset: "5"
+    cpuset: "0"
 
   system-reporter:
     build: ./services/system-reporter
@@ -80,4 +80,4 @@ services:
       resources:
         limits:
           cpus: "0.25"
-    cpuset: "6"
+    cpuset: "1"
