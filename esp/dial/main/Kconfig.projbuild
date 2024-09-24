@@ -19,7 +19,7 @@ config WIFI_PASSWORD
 
 config MQTT_BROKER
     string "MQTT Broker Host"
-    default "mqtt://localhost"
+    default "mqtt://home.com"
     help
       Set the MQTT broker host.
 endmenu
