@@ -10,6 +10,8 @@ services:
         limits:
           cpus: "0.25"
     cpuset: "0"
+    networks:
+      - home_network
 
   redis:
     image: "redis:7"
@@ -20,6 +22,8 @@ services:
         limits:
           cpus: "0.25"
     cpuset: "1"
+    networks:
+      - home_network
 
   home:
     build: ./services/home
@@ -43,6 +47,8 @@ services:
         limits:
           cpus: "0.33"
     cpuset: "2"
+    networks:
+      - home_network
 
   mqtt-broker:
     build: ./services/mqtt-broker
@@ -53,6 +59,8 @@ services:
         limits:
           cpus: "0.25"
     cpuset: "3"
+    networks:
+      - home_network
 
   controller:
     build: ./services/controller
@@ -68,6 +76,8 @@ services:
         limits:
           cpus: "0.25"
     cpuset: "0"
+    networks:
+      - home_network
 
   system-reporter:
     build: ./services/system-reporter
@@ -81,3 +91,9 @@ services:
         limits:
           cpus: "0.25"
     cpuset: "1"
+    networks:
+      - home_network
+
+networks:
+  home_network:
+    driver: bridge
