@@ -94,6 +94,18 @@ services:
     networks:
       - home_network
 
+  home-client:
+    image: home-client
+    container_name: home-client
+    build: ./client
+    networks:
+      - home_network
+    ports:
+      - "3002:80"
+    expose:
+      - "80"
+    restart: always
+
 networks:
   home_network:
     driver: bridge
