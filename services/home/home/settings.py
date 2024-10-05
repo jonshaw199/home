@@ -189,8 +189,7 @@ LOGGING = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8081",
-    "http://10.199.1.4:8081",
-    "http://10.199.1.15:8081",
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",  # Allow localhost on any port
+    r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
 ]
