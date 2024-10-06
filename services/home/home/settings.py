@@ -194,3 +194,5 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",  # Allow localhost on any port
     r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
 ]
+
+SECURE_SSL_REDIRECT = True
