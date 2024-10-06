@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "build:web": "PUBLIC_URL=/home expo export --platform web"
+    "build:web": "expo export --platform web"
   },
   "jest": {
     "preset": "jest-expo"
