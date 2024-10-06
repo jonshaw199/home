@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
     "10.199.1.4",
     "10.199.1.15",
     "home.com",
+    "jonshaw199.com",
 ]
 
 
