@@ -3,7 +3,6 @@
     "name": "home",
     "slug": "home",
     "version": "1.0.0",
-    "publicUrl": "/home",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -29,7 +28,8 @@
     },
     "plugins": ["expo-router", "expo-secure-store"],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "baseUrl": "/home"
     },
     "sdkVersion": "51.0.0"
   },
