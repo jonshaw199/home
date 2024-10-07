@@ -6,9 +6,7 @@
 
 ### Web/mobile clients
 
-#### Android
-
-``` sh
+```sh
 cd client
 npm i
 npm run <android | ios | web>
@@ -28,7 +26,18 @@ idf.py build flash monitor
 
 #### Lights
 
-``` sh
+```sh
 cd esp/lights
 idf.py build flash monitor
 ```
+
+#### Environmental
+
+```sh
+cd esp/environmental
+idf.py build flash monitor
+```
+
+### Misc Notes
+
+- For convenience, add a record to DNS server for home.com that points to MQTT broker; all devices can then point to home.com and the underlying IP can be changed easily
