@@ -104,7 +104,6 @@ services:
       - "3002:80"
     expose:
       - "80"
-    restart: always
 
 networks:
   home_network:
