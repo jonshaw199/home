@@ -85,7 +85,6 @@ services:
       - ./services/system-reporter:/app
     env_file:
       - ./services/system-reporter/.env
-    restart: unless-stopped
     deploy:
       resources:
         limits:
