@@ -30,7 +30,7 @@ from devices.views import (
     EnvironmentalViewSet,
 )
 
-router = routers.DefaultRouter()
+router = routers.DefaultRouter(trailing_slash=False)
 router.register(r"users", UserViewSet)
 router.register(r"profiles", ProfileViewSet)
 router.register(r"groups", GroupViewSet)
