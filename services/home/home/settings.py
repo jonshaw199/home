@@ -195,4 +195,9 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "https://jonshaw199.com",
+    "https://www.jonshaw199.com",
+]
+
 APPEND_SLASH = False
