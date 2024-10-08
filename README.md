@@ -2,7 +2,7 @@
 
 ### Web server, controller, MQTT broker, and system reporter
 
-`docker compose up -d`
+`HOME_ENV=development docker compose up -d`
 
 ### Web/mobile clients
 
