@@ -12,6 +12,7 @@ services:
     cpuset: "0"
     networks:
       - home_network
+    restart: unless-stopped
 
   redis:
     image: "redis:7"
@@ -24,6 +25,7 @@ services:
     cpuset: "1"
     networks:
       - home_network
+    restart: unless-stopped
 
   home:
     build: ./services/home
@@ -49,6 +51,7 @@ services:
     cpuset: "2"
     networks:
       - home_network
+    restart: unless-stopped
 
   mqtt-broker:
     build: ./services/mqtt-broker
@@ -61,6 +64,7 @@ services:
     cpuset: "3"
     networks:
       - home_network
+    restart: unless-stopped
 
   controller:
     build: ./services/controller
@@ -78,6 +82,7 @@ services:
     cpuset: "0"
     networks:
       - home_network
+    restart: unless-stopped
 
   system-reporter:
     build: ./services/system-reporter
@@ -92,6 +97,9 @@ services:
     cpuset: "1"
     networks:
       - home_network
+    restart: unless-stopped
+    profiles:
+      - optional
 
   home-client:
     image: home-client
@@ -103,6 +111,7 @@ services:
       - "3002:80"
     expose:
       - "80"
+    restart: unless-stopped
 
 networks:
   home_network:
