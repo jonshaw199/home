@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "build:web:dev": "expo export --platform web",
+    "build:web:dev": "NODE_ENV=development expo export --platform web",
     "build:web:prod": "NODE_ENV=production expo export --platform web"
   },
   "jest": {
