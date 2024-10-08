@@ -5,12 +5,9 @@ WORKDIR /app
 
 COPY ./ /app
 
-# Replace .env with .env.prod in the container
-COPY .env.prod /app/.env
-
 RUN npm install
 
-RUN npm run build:web
+RUN npm run build:web:prod
 
 # Stage 2: Serve the React app using nginx
 FROM nginx:alpine
