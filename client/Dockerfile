@@ -7,7 +7,7 @@ COPY ./ /app
 
 RUN npm install
 
-RUN npm run build:web:prod
+RUN npm run build:web
 
 # Stage 2: Serve the React app using nginx
 FROM nginx:alpine
