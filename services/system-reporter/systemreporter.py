@@ -45,6 +45,8 @@ def on_disconnect(client, userdata, rc):
 # Set the callback function
 client.on_disconnect = on_disconnect
 
+logging.info(f"Connecting to MQTT broker at {mqtt_broker_host} ({mqtt_broker_port})")
+
 # Connect to MQTT broker and start the network loop
 client.connect(mqtt_broker_host, mqtt_broker_port, 60)
 client.loop_start()  # Start the loop in a separate thread
