@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "core",
     "devices",
     "lights",
+    "routines",
 ]
 
 REST_FRAMEWORK = {
