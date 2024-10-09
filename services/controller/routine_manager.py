@@ -30,8 +30,9 @@ async def fetch_routines(token):
 
 
 class RoutineManager:
-    def __init__(self):
+    def __init__(self, routine_msg_handler):
         self.action_type_map = {}
+        self.routine_msg_handler = routine_msg_handler
 
     async def handle_action(self, routine):
         """Executes actions in the routine if the eval_condition evaluates to True."""
@@ -50,8 +51,12 @@ class RoutineManager:
                 params = eval(
                     action.get("eval_params") or "{}"
                 )  # Handle None and empty string
-                logging.info(f"Executing action: {action_type} with params: {params}")
-                # Here you'd send the action to the relevant device/service
+
+                logging.info(
+                    f"Sending routine message for action {action_type} with params: {params}"
+                )
+
+                self.routine_msg_handler(routine, action_type, params)
 
     async def schedule_routine(self, routine, trigger_time):
         """Schedules the routine at the specified trigger_time, respecting the repeat_interval if provided."""

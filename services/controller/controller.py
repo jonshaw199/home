@@ -2,6 +2,7 @@
 
 import logging
 import asyncio
+import json
 from websocket_client import WebsocketClient
 from mqtt_client import AsyncMqttClient
 from websocket_transformer import WebsocketTransformerRegistry
@@ -16,7 +17,20 @@ class Controller:
     def __init__(self):
         self.websocket_client = WebsocketClient(self.handle_message_ws)
         self.mqtt_client = AsyncMqttClient(self.handle_message_mqtt)
-        self.routine_manager = RoutineManager()
+        self.routine_manager = RoutineManager(self.handle_routine_msg)
+
+    def handle_routine_msg(self, routine, action, eval_data):
+        outMsg = {
+            "src": routine.get("name"),
+            "dest": eval_data.get("dest"),
+            "action": action,
+            "body": eval_data.get("body"),
+        }
+        outMsgStr = json.dumps(outMsg)
+        topic = outMsg["dest"]
+        # Send to both websocket server and mqtt broker
+        asyncio.create_task(self.mqtt_client.publish(topic, outMsgStr))
+        asyncio.create_task(self.websocket_client.send(outMsgStr))
 
     def handle_message_ws(self, message):
         logging.info("Handle WebSocket message: %s", message)
