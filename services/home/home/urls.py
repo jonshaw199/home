@@ -29,6 +29,7 @@ from devices.views import (
     PlugViewSet,
     EnvironmentalViewSet,
 )
+from routines.views import RoutineViewSet, ActionViewSet
 
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r"users", UserViewSet)
@@ -41,6 +42,8 @@ router.register(r"device_types", DeviceTypeViewSet)
 router.register(r"systems", SystemViewSet)
 router.register(r"plugs", PlugViewSet)
 router.register(r"environmentals", EnvironmentalViewSet)
+router.register(r"routines", RoutineViewSet)
+router.register(r"actions", ActionViewSet)
 
 urlpatterns = [
     path("api/", include(router.urls)),

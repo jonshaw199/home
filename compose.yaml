@@ -85,11 +85,13 @@ services:
     restart: unless-stopped
 
   system-reporter:
-    build: ./services/system-reporter
+    build:
+      context: ./services/system-reporter
+      dockerfile: Dockerfile.${HOME_ENV:-production}
     volumes:
       - ./services/system-reporter:/app
     env_file:
-      - ./services/system-reporter/.env
+      - ./services/system-reporter/.env.${HOME_ENV:-production}
     deploy:
       resources:
         limits:

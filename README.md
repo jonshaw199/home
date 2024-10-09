@@ -1,8 +1,12 @@
 ## Local dev
 
+First steps:
+
+- Rename `.env.template` in root directory to `.env`
+
 ### Web server, controller, MQTT broker, and system reporter
 
-`HOME_ENV=development docker compose up -d`
+`docker compose --optional system-reporter up -d`
 
 ### Web/mobile clients
 
