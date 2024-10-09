@@ -153,4 +153,4 @@ class RoutineManager:
             for routine in self.action_type_map[action_type]:
                 await self.handle_action(routine)
         else:
-            logging.warning(f"No routines registered for action type '{action_type}'")
+            logging.info(f"No routines registered for action type '{action_type}'")
