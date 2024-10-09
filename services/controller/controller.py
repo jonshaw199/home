@@ -22,16 +22,17 @@ class Controller:
         logging.info("Handle WebSocket message: %s", message)
 
         try:
+            # Pass the message type to RoutineManager to trigger any related routines
+            # Do this before transforming as the message should be in the expected format
+            asyncio.create_task(
+                self.routine_manager.handle_message(transformed_message)
+            )
+
             transformed_message, topic = WebsocketTransformerRegistry.transform(message)
             logging.info(
                 f"Publishing transformed message {transformed_message} to topic {topic}"
             )
             asyncio.create_task(self.mqtt_client.publish(topic, transformed_message))
-
-            # Pass the message type to RoutineManager to trigger any related routines
-            asyncio.create_task(
-                self.routine_manager.handle_message(transformed_message)
-            )
         except Exception as e:
             logging.error(f"Error handling WS message: {e}")
 
