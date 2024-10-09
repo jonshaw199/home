@@ -112,18 +112,26 @@ class RoutineManager:
 
             for trigger in trigger_list:
                 try:
-                    # Check if the trigger is in ISO format or HH:MM:SS.MS format
+                    # Check if the trigger is in ISO format or HH:MM[:SS] format
                     trigger = trigger.strip()  # Strip any extra whitespace
                     if "T" in trigger:  # ISO datetime
                         trigger_time = datetime.datetime.fromisoformat(trigger)
-                    else:  # Time format HH:MM:SS.MS
+                    else:  # Time format HH:MM[:SS]
                         now = datetime.datetime.now()
                         time_parts = list(map(float, trigger.split(":")))
+
+                        # Handle case where only HH:MM is provided
+                        if len(time_parts) == 2:
+                            hours, minutes = time_parts
+                            seconds = 0
+                        else:
+                            hours, minutes, seconds = time_parts
+
                         trigger_time = now.replace(
-                            hour=int(time_parts[0]),
-                            minute=int(time_parts[1]),
-                            second=int(time_parts[2]),
-                            microsecond=int((time_parts[2] % 1) * 1_000_000),
+                            hour=int(hours),
+                            minute=int(minutes),
+                            second=int(seconds),
+                            microsecond=int((seconds % 1) * 1_000_000),
                         )
 
                         if (
