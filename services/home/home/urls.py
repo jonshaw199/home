@@ -21,7 +21,6 @@ from rest_framework import routers
 from rest_framework.authtoken import views
 
 from core.views import UserViewSet, GroupViewSet, LocationViewSet, ProfileViewSet
-from lights.views import LightViewSet
 from devices.views import (
     DeviceViewSet,
     DeviceTypeViewSet,
@@ -36,7 +35,6 @@ router.register(r"users", UserViewSet)
 router.register(r"profiles", ProfileViewSet)
 router.register(r"groups", GroupViewSet)
 router.register(r"locations", LocationViewSet)
-router.register(r"lights", LightViewSet)
 router.register(r"devices", DeviceViewSet)
 router.register(r"device_types", DeviceTypeViewSet)
 router.register(r"systems", SystemViewSet)

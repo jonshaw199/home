@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     "controllers",
     "core",
     "devices",
-    "lights",
     "routines",
 ]
 
