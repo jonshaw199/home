@@ -46,6 +46,7 @@ class RoutineManager:
             condition = False
 
         if condition:
+            # Do routine!
             for action in routine["actions"]:
                 action_type = action["type"]
                 params = eval(
@@ -57,6 +58,8 @@ class RoutineManager:
                 )
 
                 self.routine_msg_handler(routine, action_type, params)
+
+            routine["run_count"] += 1
 
     async def schedule_routine(self, routine, trigger_time):
         """Schedules the routine at the specified trigger_time, respecting the repeat_interval if provided."""
@@ -95,6 +98,7 @@ class RoutineManager:
         logging.info("Registering routines")
 
         for routine in routines:
+            routine["run_count"] = 0
             triggers = routine.get("triggers", "")
             repeat_interval = routine.get("repeat_interval")
 
