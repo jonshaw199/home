@@ -45,9 +45,7 @@ class Controller:
         try:
             # Pass the message type to RoutineManager to trigger any related routines
             # Do this before transforming as the message should be in the expected format
-            asyncio.create_task(
-                self.routine_manager.handle_message(transformed_message)
-            )
+            asyncio.create_task(self.routine_manager.handle_message(message))
 
             transformed_message, topic = WebsocketTransformerRegistry.transform(message)
             logging.info(
