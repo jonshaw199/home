@@ -5,6 +5,8 @@ services:
       - "5432:5432"
     env_file:
       - ./services/db/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Mount volume for DB data persistence
     deploy:
       resources:
         limits:
@@ -120,3 +122,6 @@ services:
 networks:
   home_network:
     driver: bridge
+
+volumes:
+  postgres_data: # Define the postgres_data volume
