@@ -16,7 +16,7 @@ from controllers.routing import websocket_urlPatterns as controller_ws_urlPatter
 from clients.routing import websocket_urlPatterns as client_ws_urlPatterns
 from .middleware import TokenAuthMiddleware
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "home.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "home.settings.production")
 
 application = ProtocolTypeRouter(
     {

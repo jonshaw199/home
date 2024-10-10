@@ -37,6 +37,8 @@ services:
       - "8000:8000"
     env_file:
       - ./services/home/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=home.settings.${HOME_ENV:-production}
     depends_on:
       - db
       - redis
