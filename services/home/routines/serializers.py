@@ -6,7 +6,6 @@ class ActionSerializer(UUIDModelSerializer):
     class Meta:
         model = Action
         fields = UUIDModelSerializer.Meta.fields + [
-            "id",
             "type",
             "eval_params",
             "routine",
@@ -19,7 +18,6 @@ class RoutineSerializer(UUIDModelSerializer):
     class Meta:
         model = Routine
         fields = UUIDModelSerializer.Meta.fields + [
-            "id",
             "name",
             "triggers",
             "repeat_interval",
