@@ -10,9 +10,22 @@ HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
 
+def transform_routines(routines):
+    filtered_routines = []
+    for routine in routines:
+        # Filter actions where active is True
+        routine["actions"] = [
+            action for action in routine["actions"] if action.get("active")
+        ]
+        # Only keep the routine if it has any active actions
+        if routine["actions"]:
+            filtered_routines.append(routine)
+    return filtered_routines
+
+
 async def fetch_routines(token):
     """Fetch routines from the API."""
-    url = f"http://{HOME_HOST}:{HOME_PORT}/api/routines"
+    url = f"http://{HOME_HOST}:{HOME_PORT}/api/routines?active=true"
     headers = {
         "Authorization": f"Token {token}",
         "Content-Type": "application/json",
@@ -23,7 +36,9 @@ async def fetch_routines(token):
             if response.status == 200:
                 routines = await response.json()
                 logging.info(f"Fetched routines: {routines}")
-                return routines
+                transformed = transform_routines(routines)
+                logging.info(f"Transformed routines: {transformed}")
+                return transformed
             else:
                 logging.error(f"Failed to fetch routines. Status: {response.status}")
                 return []
