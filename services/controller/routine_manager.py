@@ -10,7 +10,6 @@ HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
 
-# TODO: Handle as much of this as possible on the server using query params
 def transform_routines(routines):
     filtered_routines = []
     for routine in routines:
@@ -53,14 +52,14 @@ class RoutineManager:
     def __init__(self, routine_msg_handler):
         self.action_type_map = {}
         self.routine_msg_handler = routine_msg_handler
-        self.scheduled_tasks = []  # Track scheduled tasks
+        self.scheduled_tasks = set()  # Use set to track scheduled tasks
 
     async def cancel_scheduled_tasks(self):
         """Cancel all currently scheduled routines."""
         for task in self.scheduled_tasks:
             if not task.cancelled():
                 task.cancel()
-        self.scheduled_tasks = []  # Clear the list after cancellation
+        self.scheduled_tasks.clear()  # Clear the set after cancellation
 
     async def handle_action(self, routine):
         logging.info(f"Handling action for routine {routine['name']}")
@@ -125,7 +124,7 @@ class RoutineManager:
                     break  # Stop repeating if the interval is invalid
             else:
                 logging.info(
-                    f"Routine '{routine['name']} nas no repeat interval; routine complete."
+                    f"Routine '{routine['name']}' has no repeat interval; routine complete."
                 )
                 break  # Exit loop if no repeat interval
 
@@ -148,7 +147,10 @@ class RoutineManager:
 
                 trigger_time = datetime.datetime.now()
                 task = asyncio.create_task(self.schedule_routine(routine, trigger_time))
-                self.scheduled_tasks.append(task)
+                task.add_done_callback(
+                    self.scheduled_tasks.discard
+                )  # Discard task when done
+                self.scheduled_tasks.add(task)
                 continue
 
             trigger_list = triggers.split(",") if triggers else []
@@ -179,7 +181,10 @@ class RoutineManager:
                     task = asyncio.create_task(
                         self.schedule_routine(routine, trigger_time)
                     )
-                    self.scheduled_tasks.append(task)
+                    task.add_done_callback(
+                        self.scheduled_tasks.discard
+                    )  # Discard task when done
+                    self.scheduled_tasks.add(task)
 
                 except ValueError:
                     action_type = trigger
