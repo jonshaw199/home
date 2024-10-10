@@ -5,7 +5,7 @@
     "fields": {
       "name": "Set plug state",
       "type": "plug__set",
-      "eval_params": "{\"dest\": \"plugs/cf7d8486-18ad-4064-b757-e671a4749a3e/command\", \"body\": {\"is_on\": routine[\"run_count\"] % 2, \"device_id\": \"cf7d8486-18ad-4064-b757-e671a4749a3e\"}}",
+      "eval_params": "{\"dest\": \"plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command\", \"body\": {\"is_on\": routine[\"run_count\"] % 2, \"device_id\": \"47b41ba3-9710-4cd3-a94e-ad8beb2923d0\"}}",
       "routine": 1
     }
   }
