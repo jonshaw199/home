@@ -9,4 +9,6 @@ python manage.py loaddata devices/fixtures/devices.json
 python manage.py loaddata devices/fixtures/systems.json
 python manage.py loaddata devices/fixtures/plugs.json
 python manage.py loaddata devices/fixtures/environmentals.json
+python manage.py loaddata routines/fixtures/routines.json
+python manage.py loaddata routines/fixtures/actions.json
 python manage.py runserver 0.0.0.0:8000

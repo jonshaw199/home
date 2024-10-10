@@ -1,0 +1,11 @@
+[
+  {
+    "model": "routines.routine",
+    "pk": 1,
+    "fields": {
+      "name": "Turn plug on and off",
+      "repeat_interval": "15",
+      "location": 1
+    }
+  }
+]

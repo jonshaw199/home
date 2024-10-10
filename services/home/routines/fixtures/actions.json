@@ -1,0 +1,12 @@
+[
+  {
+    "model": "routines.action",
+    "pk": 1,
+    "fields": {
+      "name": "Set plug state",
+      "type": "plug__set",
+      "eval_params": "{\"dest\": \"plugs/cf7d8486-18ad-4064-b757-e671a4749a3e/command\", \"body\": {\"is_on\": routine[\"run_count\"] % 2, \"device_id\": \"cf7d8486-18ad-4064-b757-e671a4749a3e\"}}",
+      "routine": 1
+    }
+  }
+]
