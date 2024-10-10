@@ -1,1 +1,2 @@
 - [CLIENT] [BUG]: May need to compose actions like deleting a device type should trigger a refetch of devices (bad example) otherwise things could break
+- [HOME] [FEATURE]: Production builds

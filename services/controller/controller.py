@@ -76,6 +76,7 @@ class Controller:
         await self.routine_manager.register_routines(routines)
 
         # Periodically update routines
+        # TODO: use realtime  updates for this
         async def periodic_routine_updates():
             while True:
                 await asyncio.sleep(180)
