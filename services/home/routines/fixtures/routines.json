@@ -14,7 +14,7 @@
     "pk": 2,
     "fields": {
       "name": "Every Morning at 8 AM",
-      "triggers": "08:00",
+      "triggers": "15:00",
       "repeat_interval": "24:00",
       "location": 1
     }
@@ -24,7 +24,7 @@
     "pk": 3,
     "fields": {
       "name": "Every Night at 9 PM",
-      "triggers": "21:00",
+      "triggers": "04:00",
       "repeat_interval": "24:00",
       "location": 1
     }

@@ -145,7 +145,7 @@ class RoutineManager:
                     trigger = trigger.strip()  # Strip any extra whitespace
                     if "T" in trigger:  # ISO datetime
                         trigger_time = datetime.datetime.fromisoformat(trigger)
-                    else:  # Time format HH:MM[:SS]
+                    else:  # Time format HH:MM[:SS] (UTC)
                         now = datetime.datetime.now()
                         time_parts = list(map(float, trigger.split(":")))
 
