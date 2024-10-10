@@ -53,8 +53,17 @@ class RoutineManager:
     def __init__(self, routine_msg_handler):
         self.action_type_map = {}
         self.routine_msg_handler = routine_msg_handler
+        self.scheduled_tasks = []  # Track scheduled tasks
+
+    async def cancel_scheduled_tasks(self):
+        """Cancel all currently scheduled routines."""
+        for task in self.scheduled_tasks:
+            if not task.cancelled():
+                task.cancel()
+        self.scheduled_tasks = []  # Clear the list after cancellation
 
     async def handle_action(self, routine):
+        logging.info(f"Handling action for routine {routine['name']}")
         """Executes actions in the routine if the eval_condition evaluates to True."""
         eval_condition = (
             routine.get("eval_condition") or "True"
@@ -86,11 +95,14 @@ class RoutineManager:
         while True:
             now = datetime.datetime.now()
             delay = (trigger_time - now).total_seconds()
+            logging.info(f"Delay: {delay}")
             if delay > 0:
                 logging.info(
                     f"Scheduling routine '{routine['name']}' in {delay} seconds."
                 )
                 await asyncio.sleep(delay)
+            else:
+                logging.info(f"Executing routine '{routine['name']} immediately")
 
             await self.handle_action(routine)
 
@@ -112,50 +124,45 @@ class RoutineManager:
                     logging.error(f"Invalid repeat interval: {repeat_interval}, {e}")
                     break  # Stop repeating if the interval is invalid
             else:
+                logging.info(
+                    f"Routine '{routine['name']} nas no repeat interval; routine complete."
+                )
                 break  # Exit loop if no repeat interval
 
-    def register_routines(self, routines):
+    async def register_routines(self, routines):
         logging.info("Registering routines")
+
+        # Clear the action_type_map and cancel all existing scheduled tasks
+        self.action_type_map.clear()
+        await self.cancel_scheduled_tasks()
 
         for routine in routines:
             routine["run_count"] = 0
             triggers = routine.get("triggers", "")
             repeat_interval = routine.get("repeat_interval")
 
-            # Handle case where no triggers are defined but repeat_interval is provided (immediate execution)
             if not triggers and repeat_interval:
                 logging.info(
                     f"Executing routine '{routine['name']}' immediately with repeat interval {repeat_interval}"
                 )
-                # Immediately run the routine's action without any initial delay
-                asyncio.create_task(self.handle_action(routine))
-                # Now schedule subsequent executions with the repeat interval
-                trigger_time = datetime.datetime.now() + datetime.timedelta(
-                    seconds=1
-                )  # 1 second buffer
-                asyncio.create_task(self.schedule_routine(routine, trigger_time))
+
+                trigger_time = datetime.datetime.now()
+                task = asyncio.create_task(self.schedule_routine(routine, trigger_time))
+                self.scheduled_tasks.append(task)
                 continue
 
-            # Split triggers into individual trigger entries if it's a comma-separated string
             trigger_list = triggers.split(",") if triggers else []
 
             for trigger in trigger_list:
                 try:
-                    # Check if the trigger is in ISO format or HH:MM[:SS] format
-                    trigger = trigger.strip()  # Strip any extra whitespace
+                    trigger = trigger.strip()
                     if "T" in trigger:  # ISO datetime
                         trigger_time = datetime.datetime.fromisoformat(trigger)
                     else:  # Time format HH:MM[:SS] (UTC)
                         now = datetime.datetime.now()
                         time_parts = list(map(float, trigger.split(":")))
-
-                        # Handle case where only HH:MM is provided
-                        if len(time_parts) == 2:
-                            hours, minutes = time_parts
-                            seconds = 0
-                        else:
-                            hours, minutes, seconds = time_parts
-
+                        hours, minutes = time_parts[0], time_parts[1]
+                        seconds = time_parts[2] if len(time_parts) > 2 else 0
                         trigger_time = now.replace(
                             hour=int(hours),
                             minute=int(minutes),
@@ -163,19 +170,18 @@ class RoutineManager:
                             microsecond=int((seconds % 1) * 1_000_000),
                         )
 
-                        if (
-                            trigger_time <= now
-                        ):  # If the time is in the past, schedule for the next day
+                        if trigger_time <= now:
                             trigger_time += datetime.timedelta(days=1)
 
-                    # Schedule the routine if trigger_time is a valid datetime
                     logging.info(
                         f"Scheduling routine '{routine['name']}' at {trigger_time}"
                     )
-                    asyncio.create_task(self.schedule_routine(routine, trigger_time))
+                    task = asyncio.create_task(
+                        self.schedule_routine(routine, trigger_time)
+                    )
+                    self.scheduled_tasks.append(task)
 
                 except ValueError:
-                    # If not a valid datetime, assume it's an action type string
                     action_type = trigger
                     if action_type not in self.action_type_map:
                         self.action_type_map[action_type] = []

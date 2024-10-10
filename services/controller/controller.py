@@ -71,13 +71,22 @@ class Controller:
     async def start(self):
         token = await get_token()
 
+        # Initially fetch and register routines
         routines = await fetch_routines(token)
-        self.routine_manager.register_routines(routines)
+        await self.routine_manager.register_routines(routines)
 
-        # Start both MQTT and WebSocket clients concurrently
+        # Periodically update routines
+        async def periodic_routine_updates():
+            while True:
+                await asyncio.sleep(180)
+                routines = await fetch_routines(token)
+                await self.routine_manager.register_routines(routines)
+
+        # Start all tasks concurrently
         await asyncio.gather(
-            self.mqtt_client.subscribe("#"),  # Start subscribing to MQTT topics
-            self.websocket_client.connect(token),  # Connect to the WebSocket server
+            self.mqtt_client.subscribe("#"),  # Long-running task
+            self.websocket_client.connect(token),  # Long-running task
+            periodic_routine_updates(),  # Periodic updates as a separate task
         )
 
 
