@@ -26,12 +26,15 @@ class Controller:
             "action": action,
             "body": eval_data.get("body"),
         }
+        outMsgStr = json.dumps(outMsg)
 
         # Send to websocket server
-        asyncio.create_task(self.websocket_client.send(json.dumps(outMsg)))
+        asyncio.create_task(self.websocket_client.send(outMsgStr))
 
         # Send to mqtt broker; websocket transformer should be perfect here (prepares and transforms websocket messages for mqtt transmission; we expect the same format)
-        transformed_mqtt_message, topic = WebsocketTransformerRegistry.transform(outMsg)
+        transformed_mqtt_message, topic = WebsocketTransformerRegistry.transform(
+            outMsgStr
+        )
         asyncio.create_task(
             self.mqtt_client.publish(topic, json.dumps(transformed_mqtt_message))
         )
