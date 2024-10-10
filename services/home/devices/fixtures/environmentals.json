@@ -1,9 +1,0 @@
-[
-  {
-    "model": "devices.environmental",
-    "pk": 1,
-    "fields": {
-      "device": 4
-    }
-  }
-]
