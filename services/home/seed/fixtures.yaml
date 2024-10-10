@@ -1,0 +1,270 @@
+- model: auth.user
+  pk: 1
+  fields:
+    password: pbkdf2_sha256$600000$quy84fZFl7xikncIiZjRIS$VCu2Pzm+c4uHEW5/69+vu3ufnz0B1oQQMtPBmGnFPrg=
+    last_login: null
+    is_superuser: false
+    username: controller
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: false
+    is_active: true
+    date_joined: 2024-10-10 17:11:21.747212+00:00
+    groups: []
+    user_permissions: []
+- model: auth.user
+  pk: 2
+  fields:
+    password: pbkdf2_sha256$600000$OXTczzhQr2lg3luTYVcTNk$FeDydn5sy2mlOHRVmO/UN8pRsP6Jo/Fa1XvdP+tBzU4=
+    last_login: null
+    is_superuser: true
+    username: adminuser
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: true
+    is_active: true
+    date_joined: 2024-10-10 17:11:21.750786+00:00
+    groups: []
+    user_permissions: []
+- model: auth.user
+  pk: 3
+  fields:
+    password: pbkdf2_sha256$600000$quy84fZFl7xikncIiZjRIS$VCu2Pzm+c4uHEW5/69+vu3ufnz0B1oQQMtPBmGnFPrg=
+    last_login: null
+    is_superuser: false
+    username: restrictedlocationuser
+    first_name: ''
+    last_name: ''
+    email: ''
+    is_staff: false
+    is_active: true
+    date_joined: 2024-10-10 17:11:21.752030+00:00
+    groups: []
+    user_permissions: []
+- model: core.location
+  pk: 1
+  fields:
+    uuid: ac5c0b2c-259e-4d19-85a0-6bbc9b675553
+    name: Jon's House
+    parent: null
+    lft: 1
+    rght: 4
+    tree_id: 1
+    level: 0
+- model: core.location
+  pk: 2
+  fields:
+    uuid: 0c6ec98c-03df-49d4-90be-09ec88e99996
+    name: Jon's Office
+    parent: 1
+    lft: 2
+    rght: 3
+    tree_id: 1
+    level: 1
+- model: core.profile
+  pk: 1
+  fields:
+    uuid: 51f37d7d-df0d-4f4d-a924-520973c7cd85
+    user: 1
+    locations:
+    - 1
+- model: core.profile
+  pk: 2
+  fields:
+    uuid: f33f3f29-d565-4d80-b9ce-cfd7be74a5d8
+    user: 2
+    locations:
+    - 1
+- model: core.profile
+  pk: 3
+  fields:
+    uuid: d7fb1839-7233-49e1-b010-f9ae63097372
+    user: 3
+    locations:
+    - 2
+- model: devices.devicetype
+  pk: 1
+  fields:
+    uuid: 18014960-6d98-412c-a62d-e400c647112e
+    name: Dial
+- model: devices.devicetype
+  pk: 2
+  fields:
+    uuid: 7d69fa8c-c969-427d-836f-f45523e5dbb5
+    name: PC
+- model: devices.devicetype
+  pk: 3
+  fields:
+    uuid: f8773a6b-f0f0-489c-aa0a-fca087020069
+    name: Plug
+- model: devices.devicetype
+  pk: 4
+  fields:
+    uuid: 973f049b-64dc-442c-838e-b7fae7270fe2
+    name: Environmental
+- model: devices.devicetype
+  pk: 5
+  fields:
+    uuid: 8be44b10-d79c-4800-bd1f-78a7570f459d
+    name: Controller
+- model: devices.device
+  pk: 1
+  fields:
+    uuid: c614b958-9a78-4b0f-8c2f-727a36e40b1c
+    name: Jon's M5 Dial
+    last_status_update: null
+    device_type: 1
+    location: 2
+    vendor_id: null
+- model: devices.device
+  pk: 2
+  fields:
+    uuid: 380d7a59-f957-41f3-9d51-def726b9e52a
+    name: Jon's ThinkPad
+    last_status_update: null
+    device_type: 2
+    location: 2
+    vendor_id: null
+- model: devices.device
+  pk: 3
+  fields:
+    uuid: cf7d8486-18ad-4064-b757-e671a4749a3e
+    name: Jon's Shelly Plug
+    last_status_update: null
+    device_type: 3
+    location: 2
+    vendor_id: A0DD6C27A4DC
+- model: devices.device
+  pk: 4
+  fields:
+    uuid: ae84ac05-0d32-40b0-9703-a12e479764bd
+    name: Jon's M5 Atom
+    last_status_update: null
+    device_type: 4
+    location: 2
+    vendor_id: null
+- model: devices.device
+  pk: 5
+  fields:
+    uuid: a7317942-954a-4f2d-b582-9ef39d9efe6e
+    name: Jon's Pi 4
+    last_status_update: null
+    device_type: 5
+    location: 1
+    vendor_id: null
+- model: devices.device
+  pk: 6
+  fields:
+    uuid: 47b41ba3-9710-4cd3-a94e-ad8beb2923d0
+    name: Jon's Shelly Plug 2
+    last_status_update: 2024-10-10 17:17:00.354020+00:00
+    device_type: 3
+    location: 1
+    vendor_id: A0DD6C27C4E4
+- model: devices.device
+  pk: 7
+  fields:
+    uuid: 1bd6262a-08c6-4f4b-97b8-3cb7ec9cf97e
+    name: Jon's Shelly Plug 3
+    last_status_update: null
+    device_type: 3
+    location: 2
+    vendor_id: D48AFC781D54
+- model: devices.system
+  pk: 1
+  fields:
+    uuid: 2c690d64-8901-473c-8220-695dd03d171f
+    device: 2
+    cpu_usage: null
+    cpu_temp: null
+    mem_usage: null
+    disk_usage: null
+    network_sent: null
+    network_received: null
+- model: devices.plug
+  pk: 1
+  fields:
+    uuid: 87a9f604-af62-4230-aa28-db66885e3425
+    device: 3
+    is_on: false
+- model: devices.plug
+  pk: 2
+  fields:
+    uuid: b48df3c5-c08c-4881-bdd7-da65867c328e
+    device: 6
+    is_on: true
+- model: devices.plug
+  pk: 3
+  fields:
+    uuid: 443f3e19-9bb8-4535-8dbe-9a1e5e97346e
+    device: 7
+    is_on: false
+- model: devices.environmental
+  pk: 1
+  fields:
+    uuid: 2d780311-0d75-49c0-8c15-cc3faaf2ddee
+    device: 4
+    temperature_c: null
+    humidity: null
+- model: routines.routine
+  pk: 1
+  fields:
+    uuid: ef232981-3206-4639-a10a-cc436ec51d88
+    name: Every 15 seconds
+    active: false
+    triggers: null
+    repeat_interval: 00:00:15
+    eval_condition: null
+    location: 1
+- model: routines.routine
+  pk: 2
+  fields:
+    uuid: 973fc5f4-f57f-4c7c-af49-80c9f98f289b
+    name: Every Morning at 8 AM
+    active: true
+    triggers: '15:00'
+    repeat_interval: 00:24:00
+    eval_condition: null
+    location: 1
+- model: routines.routine
+  pk: 3
+  fields:
+    uuid: eb0660d9-6f20-4895-87d3-84b5c909dd7a
+    name: Every Night at 9 PM
+    active: true
+    triggers: 04:00
+    repeat_interval: 00:24:00
+    eval_condition: null
+    location: 1
+- model: routines.action
+  pk: 1
+  fields:
+    uuid: 9420e518-9825-4c15-b0df-436c2dbce301
+    name: Toggle plug on/off
+    active: true
+    type: plug__set
+    eval_params: '{"dest": "plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command", "body":
+      {"is_on": routine["run_count"] % 2, "device_id": "47b41ba3-9710-4cd3-a94e-ad8beb2923d0"}}'
+    routine: 1
+- model: routines.action
+  pk: 2
+  fields:
+    uuid: 01c61755-4201-4811-a8c8-db429488aa0b
+    name: Turn on living room wax burner
+    active: true
+    type: plug__set
+    eval_params: '{"dest": "plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command", "body":
+      {"is_on": True, "device_id": "47b41ba3-9710-4cd3-a94e-ad8beb2923d0"}}'
+    routine: 2
+- model: routines.action
+  pk: 3
+  fields:
+    uuid: dfef83d2-568f-498b-8894-cf120f5430eb
+    name: Turn off living room wax burner
+    active: true
+    type: plug__set
+    eval_params: '{"dest": "plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command", "body":
+      {"is_on": False, "device_id": "47b41ba3-9710-4cd3-a94e-ad8beb2923d0"}}'
+    routine: 3
