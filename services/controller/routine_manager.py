@@ -10,13 +10,18 @@ HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
 
+# TODO: Handle as much of this as possible on the server using query params
 def transform_routines(routines):
     filtered_routines = []
     for routine in routines:
+        if not routine["active"]:
+            continue
+
         # Filter actions where active is True
         routine["actions"] = [
             action for action in routine["actions"] if action.get("active")
         ]
+
         # Only keep the routine if it has any active actions
         if routine["actions"]:
             filtered_routines.append(routine)
@@ -25,7 +30,7 @@ def transform_routines(routines):
 
 async def fetch_routines(token):
     """Fetch routines from the API."""
-    url = f"http://{HOME_HOST}:{HOME_PORT}/api/routines?active=true"
+    url = f"http://{HOME_HOST}:{HOME_PORT}/api/routines"
     headers = {
         "Authorization": f"Token {token}",
         "Content-Type": "application/json",

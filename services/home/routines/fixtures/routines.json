@@ -5,7 +5,8 @@
     "fields": {
       "name": "Every 15 seconds",
       "repeat_interval": "15",
-      "location": 1
+      "location": 1,
+      "active": false
     }
   },
   {
