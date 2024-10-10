@@ -50,5 +50,4 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls", namespace="rest-framework")),
     path("api-token-auth/", views.obtain_auth_token),
     path("admin/", admin.site.urls),
-    path("chat/", include("chat.urls")),
 ]
