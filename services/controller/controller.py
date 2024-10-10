@@ -35,9 +35,7 @@ class Controller:
         transformed_mqtt_message, topic = WebsocketTransformerRegistry.transform(
             outMsgStr
         )
-        asyncio.create_task(
-            self.mqtt_client.publish(topic, json.dumps(transformed_mqtt_message))
-        )
+        asyncio.create_task(self.mqtt_client.publish(topic, transformed_mqtt_message))
 
     def handle_message_ws(self, message):
         logging.info("Handle WebSocket message: %s", message)
