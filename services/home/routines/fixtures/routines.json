@@ -3,8 +3,28 @@
     "model": "routines.routine",
     "pk": 1,
     "fields": {
-      "name": "Turn plug on and off",
+      "name": "Every 15 seconds",
       "repeat_interval": "15",
+      "location": 1
+    }
+  },
+  {
+    "model": "routines.routine",
+    "pk": 2,
+    "fields": {
+      "name": "Every Morning at 8 AM",
+      "triggers": "08:00",
+      "repeat_interval": "24:00",
+      "location": 1
+    }
+  },
+  {
+    "model": "routines.routine",
+    "pk": 3,
+    "fields": {
+      "name": "Every Night at 9 PM",
+      "triggers": "21:00",
+      "repeat_interval": "24:00",
       "location": 1
     }
   }

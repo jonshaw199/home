@@ -27,7 +27,7 @@
       "name": "Jon's Shelly Plug",
       "location": 2,
       "device_type": 3,
-      "vendor_id": "shellyplugus-a0dd6c27a4dc"
+      "vendor_id": "A0DD6C27A4DC"
     }
   },
   {
@@ -58,7 +58,7 @@
       "name": "Jon's Shelly Plug 2",
       "location": 1,
       "device_type": 3,
-      "vendor_id": "shellyplugus-a0a3b3b8eaa4"
+      "vendor_id": "A0DD6C27C4E4"
     }
   },
   {
@@ -68,7 +68,8 @@
       "uuid": "1bd6262a-08c6-4f4b-97b8-3cb7ec9cf97e",
       "name": "Jon's Shelly Plug 3",
       "location": 2,
-      "device_type": 3
+      "device_type": 3,
+      "vendor_id": "D48AFC781D54"
     }
   }
 ]

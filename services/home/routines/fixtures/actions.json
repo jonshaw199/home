@@ -3,10 +3,30 @@
     "model": "routines.action",
     "pk": 1,
     "fields": {
-      "name": "Set plug state",
+      "name": "Toggle plug on/off",
       "type": "plug__set",
       "eval_params": "{\"dest\": \"plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command\", \"body\": {\"is_on\": routine[\"run_count\"] % 2, \"device_id\": \"47b41ba3-9710-4cd3-a94e-ad8beb2923d0\"}}",
       "routine": 1
+    }
+  },
+  {
+    "model": "routines.action",
+    "pk": 2,
+    "fields": {
+      "name": "Turn on living room wax burner",
+      "type": "plug__set",
+      "eval_params": "{\"dest\": \"plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command\", \"body\": {\"is_on\": True, \"device_id\": \"47b41ba3-9710-4cd3-a94e-ad8beb2923d0\"}}",
+      "routine": 2
+    }
+  },
+  {
+    "model": "routines.action",
+    "pk": 3,
+    "fields": {
+      "name": "Turn off living room wax burner",
+      "type": "plug__set",
+      "eval_params": "{\"dest\": \"plugs/47b41ba3-9710-4cd3-a94e-ad8beb2923d0/command\", \"body\": {\"is_on\": False, \"device_id\": \"47b41ba3-9710-4cd3-a94e-ad8beb2923d0\"}}",
+      "routine": 3
     }
   }
 ]
