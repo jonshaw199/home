@@ -5,6 +5,7 @@ import PlugTile from "./tiles/PlugTile";
 import EnvironmentalTile from "./tiles/EnvironmentalTile";
 import PcTile from "./tiles/PcTile";
 import { useMemo } from "react";
+import LightTile from "./tiles/LightTile";
 
 type DeviceTileProps = {
   device: Device;
@@ -15,6 +16,7 @@ const tileMap = {
   [DeviceTypes.PC]: PcTile,
   [DeviceTypes.ENVIRONMENTAL]: EnvironmentalTile,
   [DeviceTypes.PLUG]: PlugTile,
+  [DeviceTypes.LIGHT]: LightTile,
 };
 
 const getDeviceTile = ({ device }: { device: Device }) => {

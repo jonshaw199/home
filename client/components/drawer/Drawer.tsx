@@ -18,6 +18,7 @@ import { useRouteInfo } from "expo-router/build/hooks";
 import { Theme, useTheme } from "@/providers/ThemeProvider";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { systemSliceActions } from "@/store/slices/systemSlice";
+import { lightSliceActions } from "@/store/slices/lightSlice";
 
 // Custom drawer item component
 const CustomDrawerItem: React.FC<{
@@ -113,6 +114,7 @@ export default function Drawer() {
       dispatch(plugSliceActions.fetchAll());
       dispatch(environmentalSliceActions.fetchAll());
       dispatch(systemSliceActions.fetchAll());
+      dispatch(lightSliceActions.fetchAll());
       connectWebSocket(session);
     } else {
       console.error("Session is null; unable to load");

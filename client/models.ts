@@ -18,6 +18,7 @@ export enum DeviceTypes {
   PC = "7d69fa8c-c969-427d-836f-f45523e5dbb5",
   PLUG = "f8773a6b-f0f0-489c-aa0a-fca087020069",
   ENVIRONMENTAL = "973f049b-64dc-442c-838e-b7fae7270fe2",
+  LIGHT = "b75f9730-d073-400c-ac85-27512f190460",
 }
 
 export interface DeviceType extends Identifiable {
@@ -32,6 +33,7 @@ export interface Device extends Identifiable {
   plug?: ID | null;
   system?: ID | null;
   environmental?: ID | null;
+  light?: ID | null;
 }
 
 export interface Plug extends Identifiable {
@@ -52,8 +54,11 @@ export interface System extends Identifiable {
   device?: ID | null;
 }
 
+export interface Light extends Identifiable {}
+
 export enum Action {
   STATUS_SYSTEM = "system__status",
   STATUS_ENVIRONMENTAL = "environmental__status",
   STATUS_PLUG = "plug__status",
+  STATUS_LIGHT = "light__status",
 }

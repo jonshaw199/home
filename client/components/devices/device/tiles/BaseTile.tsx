@@ -84,6 +84,7 @@ const styles = (theme: Theme) => {
       display: "flex",
       flexDirection: "column",
       gap: 1,
+      width: "100%",
     },
     name: {
       fontWeight: 700,
