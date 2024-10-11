@@ -67,3 +67,12 @@ class Environmental(BaseModel):
     def temperature_f(self):
         if self.temperature_c is not None:
             return (self.temperature_c * 9 / 5) + 32
+
+
+class Light(BaseModel):
+    device = models.OneToOneField(
+        Device, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    def __str__(self):
+        return f"{self.device.name}: Environmental"

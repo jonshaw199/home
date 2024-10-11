@@ -27,6 +27,7 @@ from devices.views import (
     SystemViewSet,
     PlugViewSet,
     EnvironmentalViewSet,
+    LightViewSet,
 )
 from routines.views import RoutineViewSet, ActionViewSet
 
@@ -40,6 +41,7 @@ router.register(r"device_types", DeviceTypeViewSet)
 router.register(r"systems", SystemViewSet)
 router.register(r"plugs", PlugViewSet)
 router.register(r"environmentals", EnvironmentalViewSet)
+router.register(r"lights", LightViewSet)
 router.register(r"routines", RoutineViewSet)
 router.register(r"actions", ActionViewSet)
 
