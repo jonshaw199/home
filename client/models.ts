@@ -54,7 +54,11 @@ export interface System extends Identifiable {
   device?: ID | null;
 }
 
-export interface Light extends Identifiable {}
+export interface Light extends Identifiable {
+  isOn?: boolean | null;
+  brightness?: number | null;
+  color?: string | null;
+}
 
 export enum Action {
   STATUS_SYSTEM = "system__status",

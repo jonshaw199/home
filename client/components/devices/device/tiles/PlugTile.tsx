@@ -55,7 +55,7 @@ export default function PlugTile({ device }: PlugTileProps) {
         onLongPress: handleLongPress,
         style: { backgroundColor: "rgba(220, 0, 0, 0.2)" },
       }}
-      icon={<Octicons name="plug" size={20} color="rgba(220, 0, 0, 0.8)" />}
+      icon={<Octicons name="plug" size={20} color="rgba(220, 0, 0, 0.7)" />}
       status={plug?.isOn ? "On" : "Off"}
       textProps={{ style: { color: "rgba(220, 0, 0, 0.7)" } }}
     />

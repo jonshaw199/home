@@ -17,6 +17,7 @@ Expected message shape:
 """
 
 HANDLER_PLUG_SET = "plug__set"
+HANDLER_LIGHT_SET = "light__set"
 
 
 class BaseMessageHandler:
@@ -52,11 +53,8 @@ class PlugSetMessageHandler(BaseMessageHandler):
             device_id = body["device_id"]
             is_on = body["is_on"]
             device = Device.objects.get(uuid=device_id)
-            device.last_status_update = datetime.now()
             device.plug.is_on = is_on
-            with transaction.atomic():
-                device.plug.save()
-                device.save()
+            device.plug.save()
             # Broadcast
             outbound = {
                 "src": "client",
@@ -67,6 +65,44 @@ class PlugSetMessageHandler(BaseMessageHandler):
             consumer.broadcast_to_location_group(outbound, device.location.id)
         except Exception as e:
             logging.error(f"Error processing {HANDLER_PLUG_SET} msg:", e)
+
+
+"""
+body: {
+    "device_id": string, // UUID
+    "is_on"?: boolean,
+    "brightness"?: number,
+    "color"?: string
+}
+"""
+
+
+@BaseMessageHandler.register(HANDLER_LIGHT_SET)
+class LightSetMessageHandler(BaseMessageHandler):
+    def handle(self, content, consumer):
+        logging.info(f"Handling light set message: {content}")
+
+        try:
+            body = content["body"]
+            device_id = body["device_id"]
+            device = Device.objects.get(uuid=device_id)
+            if "is_on" in body:
+                device.light.is_on = body["is_on"]
+            if "brightness" in body:
+                device.light.brightness = body["brightness"]
+            if "color" in body:
+                device.light.color = body["color"]
+            device.light.save()
+            # Broadcast
+            outbound = {
+                "src": "client",
+                "dest": f"lights/{device_id}/command",
+                "action": HANDLER_LIGHT_SET,
+                "body": body,
+            }
+            consumer.broadcast_to_location_group(outbound, device.location.id)
+        except Exception as e:
+            logging.error(f"Error processing {HANDLER_LIGHT_SET} msg:", e)
 
 
 class ClientConsumer(JsonWebsocketConsumer):

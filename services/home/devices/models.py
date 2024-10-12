@@ -74,5 +74,9 @@ class Light(BaseModel):
         Device, on_delete=models.CASCADE, null=True, blank=True
     )
 
+    is_on = models.BooleanField(null=True, blank=True)
+    brightness = models.IntegerField(null=True, blank=True)
+    color = models.CharField(null=True, blank=True)  # Hex
+
     def __str__(self):
         return f"{self.device.name}: Environmental"

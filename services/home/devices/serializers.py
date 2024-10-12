@@ -12,6 +12,7 @@ class DeviceSerializer(UUIDModelSerializer):
             "location",
             "name",
             "last_status_update",
+            "vendor_id",
         ]
 
 

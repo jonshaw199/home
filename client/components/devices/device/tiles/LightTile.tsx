@@ -2,11 +2,10 @@ import BaseTile, { BaseTileProps } from "./BaseTile";
 import { useAppSelector, useAppDispatch } from "@/store";
 import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
-import { plugSliceActions } from "@/store/slices/plugSlice";
 import { Octicons } from "@expo/vector-icons";
+import { lightSliceActions } from "@/store/slices/lightSlice";
 
-const ACTION_LIGHT_SET_COLOR = "light__set_color";
-const ACTION_LIGHT_SET_BRIGHTNESS = "light__set_brightness";
+const ACTION_LIGHT_SET = "light__set";
 
 export type LightTileProps = BaseTileProps;
 
@@ -22,12 +21,11 @@ export default function LightTile({ device }: LightTileProps) {
 
   const handleLongPress = () => {
     if (light) {
-      /*
       const message = {
-        action: HANDLER_SHELLY_PLUG,
+        action: ACTION_LIGHT_SET,
         body: {
           device_id: device.id,
-          is_on: !plug.isOn,
+          is_on: !light.isOn,
         },
       };
       // Send message
@@ -37,13 +35,12 @@ export default function LightTile({ device }: LightTileProps) {
       });
       // Update state optimistically
       dispatch(
-        plugSliceActions.updateResourceField({
-          id: plug.id,
+        lightSliceActions.updateResourceField({
+          id: light.id,
           field: "isOn",
           value: message.body.is_on,
         })
       );
-      */
     } else {
       console.warn(`Light not found for device ${device.id}`);
     }
@@ -54,13 +51,13 @@ export default function LightTile({ device }: LightTileProps) {
       device={device}
       pressableProps={{
         onLongPress: handleLongPress,
-        style: { backgroundColor: "rgba(220, 0, 0, 0.2)" },
+        style: { backgroundColor: "rgba(0, 250, 250, 0.3)" },
       }}
       icon={
-        <Octicons name="light-bulb" size={20} color="rgba(220, 0, 0, 0.8)" />
+        <Octicons name="light-bulb" size={20} color="rgba(0, 125, 125, 0.8)" />
       }
-      //status={light?.isOn ? "On" : "Off"}
-      textProps={{ style: { color: "rgba(220, 0, 0, 0.7)" } }}
+      status={light?.isOn ? "On" : "Off"}
+      textProps={{ style: { color: "rgba(0, 125, 125, 0.8)" } }}
     />
   );
 }
