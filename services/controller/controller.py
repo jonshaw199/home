@@ -20,51 +20,54 @@ class Controller:
         self.routine_manager = RoutineManager(self.handle_routine_msg)
 
     def handle_routine_msg(self, routine, action, eval_data):
-        outMsg = {
-            "src": routine.get("name"),
-            "dest": eval_data.get("dest"),
-            "action": action,
-            "body": eval_data.get("body"),
-        }
-        outMsgStr = json.dumps(outMsg)
+        logging.info("Handle routine message")
 
-        # Send to websocket server
-        asyncio.create_task(self.websocket_client.send(outMsgStr))
+        try:
+            outMsg = {
+                "src": routine.get("name"),
+                "dest": eval_data.get("dest"),
+                "action": action,
+                "body": eval_data.get("body"),
+            }
+            outMsgStr = json.dumps(outMsg)
 
-        # Send to mqtt broker; websocket transformer should be perfect here (prepares and transforms websocket messages for mqtt transmission; we expect the same format)
-        transformed_mqtt_message, topic = WebsocketTransformerRegistry.transform(
-            outMsgStr
-        )
-        asyncio.create_task(self.mqtt_client.publish(topic, transformed_mqtt_message))
+            # Send to websocket server as-is
+            asyncio.create_task(self.websocket_client.send(outMsgStr))
+
+            def handle_transformed_msg(msg, topic):
+                asyncio.create_task(self.mqtt_client.publish(topic, msg))
+
+            # Transform and send to mqtt broker
+            WebsocketTransformerRegistry.transform(outMsgStr, handle_transformed_msg)
+        except Exception as e:
+            logging.error(f"Error handling routine message: {e}")
 
     def handle_message_ws(self, message):
         logging.info("Handle WebSocket message: %s", message)
 
         try:
-            # Pass the message type to RoutineManager to trigger any related routines
-            # Do this before transforming as the message should be in the expected format
+            # Trigger any related routines; no need to transform this msg
             asyncio.create_task(self.routine_manager.handle_message(message))
 
-            transformed_message, topic = WebsocketTransformerRegistry.transform(message)
-            logging.info(
-                f"Publishing transformed message {transformed_message} to topic {topic}"
-            )
-            asyncio.create_task(self.mqtt_client.publish(topic, transformed_message))
+            def handle_transformed_msg(msg, topic):
+                asyncio.create_task(self.mqtt_client.publish(topic, msg))
+
+            # Transform and send to mqtt broker
+            WebsocketTransformerRegistry.transform(message, handle_transformed_msg)
         except Exception as e:
-            logging.error(f"Error handling WS message: {e}")
+            logging.error(f"Error handling websocket message: {e}")
 
     def handle_message_mqtt(self, topic, message):
         logging.info("Handle MQTT message: %s (topic: %s)", message, topic)
 
         try:
-            transformed_message = MqttTransformerRegistry.transform(message, topic)
-            logging.info(f"Sending transformed message {transformed_message}")
-            asyncio.create_task(self.websocket_client.send(transformed_message))
 
-            # Pass the message type to RoutineManager to trigger any related routines
-            asyncio.create_task(
-                self.routine_manager.handle_message(transformed_message)
-            )
+            def handle_transformed_msg(msg):
+                asyncio.create_task(self.websocket_client.send(msg))
+                asyncio.create_task(self.routine_manager.handle_message(msg))
+
+            # Transform and send to websocket server as well as routine manager for triggering related routines, if any
+            MqttTransformerRegistry.transform(message, topic, handle_transformed_msg)
         except Exception as e:
             logging.error(f"Error handling MQTT message: {e}")
 
