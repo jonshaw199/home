@@ -29,35 +29,35 @@ export interface Device extends Identifiable {
   deviceType: ID;
   location: ID;
   name: string;
-  lastStatusUpdate?: string | null;
-  plug?: ID | null;
-  system?: ID | null;
-  environmental?: ID | null;
-  light?: ID | null;
+  lastStatusUpdate?: string;
+  plug?: ID;
+  system?: ID;
+  environmental?: ID;
+  light?: ID;
 }
 
 export interface Plug extends Identifiable {
   isOn: boolean;
-  device?: ID | null;
+  device?: ID;
 }
 
 export interface Environmental extends Identifiable {
-  humidity?: number | null;
-  temperatureC?: number | null;
-  temperatureF?: number | null;
-  device?: ID | null;
+  humidity?: number;
+  temperatureC?: number;
+  temperatureF?: number;
+  device?: ID;
 }
 
 export interface System extends Identifiable {
-  cpuUsage?: number | null;
-  memUsage?: number | null;
-  device?: ID | null;
+  cpuUsage?: number;
+  memUsage?: number;
+  device?: ID;
 }
 
 export interface Light extends Identifiable {
-  isOn?: boolean | null;
-  brightness?: number | null;
-  color?: string | null;
+  isOn?: boolean;
+  brightness?: number;
+  color?: string;
 }
 
 export enum Action {
