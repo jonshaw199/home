@@ -79,6 +79,7 @@ const styles = (theme: Theme) => {
       gap: 10,
       alignItems: "center",
       padding: 20,
+      userSelect: "none",
     },
     body: {
       display: "flex",
