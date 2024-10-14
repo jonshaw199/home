@@ -12,7 +12,9 @@ export default function DeviceDetails({ device }: DeviceDetailsProps) {
     <>
       <Card>
         <Card.Title>General Settings</Card.Title>
+        <Text>ID: {device.id}</Text>
         <Text>Name: {device.name}</Text>
+        <Text>Last Status Update: {device.lastStatusUpdate || "Never"}</Text>
       </Card>
 
       {device.light && (
