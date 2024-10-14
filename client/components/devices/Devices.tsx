@@ -24,6 +24,5 @@ const styles = () =>
       flexDirection: "row",
       gap: 10,
       flexWrap: "wrap",
-      padding: 10,
     },
   });

@@ -1,16 +1,22 @@
-// ScreenWrapper.js
-import React, { ReactNode } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { ReactNode } from "react";
+import { SafeAreaView, ScrollView, StyleSheet } from "react-native";
 
-// TODO: add ScrollView
-const ScreenWrapper = ({ children }: { children: ReactNode }) => {
-  return <SafeAreaView style={styles.container}>{children}</SafeAreaView>;
-};
+export default function ScreenWrapper({ children }: { children: ReactNode }) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        {children}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollView: {
+    flexGrow: 1,
+    padding: 10,
+  },
 });
-
-export default ScreenWrapper;

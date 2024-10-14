@@ -1,13 +1,10 @@
 import DeviceDetails from "@/components/devices/device/DeviceDetails";
-import { Theme, useTheme } from "@/providers/ThemeProvider";
+import ScreenWrapper from "@/components/lib/ScreenWrapper";
 import { useAppSelector } from "@/store";
 import { Redirect, useLocalSearchParams } from "expo-router";
 import React, { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
 
 const DeviceDetailsScreen = () => {
-  const theme = useTheme();
-  const style = styles(theme);
   const { id } = useLocalSearchParams();
   const devices = useAppSelector((state) => state.devices.data);
 
@@ -22,18 +19,10 @@ const DeviceDetailsScreen = () => {
   }
 
   return (
-    <View style={style.container}>
+    <ScreenWrapper>
       <DeviceDetails device={device} />
-    </View>
+    </ScreenWrapper>
   );
 };
-
-const styles = (theme: Theme) =>
-  StyleSheet.create({
-    container: {
-      backgroundColor: "white",
-      flex: 1,
-    },
-  });
 
 export default DeviceDetailsScreen;
