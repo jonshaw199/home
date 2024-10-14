@@ -25,7 +25,9 @@ const plugSlice = createModelSlice<Plug>("plugs", "plugs", (builder) => {
           };
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error(`Error handling websocket message: ${e}`);
+    }
 
     return state;
   });

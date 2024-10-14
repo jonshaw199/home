@@ -46,7 +46,7 @@ export default function BaseTile({
       //style: [style.pressable, pressableStyleProp],
       ...pressableProps,
     }),
-    [device, style, pressableStyleProp, theme, pressableProps]
+    [device, pressableProps]
   );
 
   return (

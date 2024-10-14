@@ -24,6 +24,7 @@ const Login = ({ onLogin }: LoginProps) => {
       setLoggingIn(true);
       await promised;
     } catch (e) {
+      console.error(`Error logging in: ${e}`);
     } finally {
       setLoggingIn(false);
     }

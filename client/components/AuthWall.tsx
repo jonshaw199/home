@@ -6,7 +6,6 @@ import {
   loadFromStorage,
   selectIsLoading,
   selectSession,
-  setSession,
 } from "@/store/slices/sessionSlice";
 
 type AuthWallProps = {

@@ -4,14 +4,12 @@ import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { plugSliceActions } from "@/store/slices/plugSlice";
 import { Octicons } from "@expo/vector-icons";
-import { useTheme } from "@/providers/ThemeProvider";
 
 const HANDLER_SHELLY_PLUG = "plug__set";
 
 export type PlugTileProps = BaseTileProps;
 
 export default function PlugTile({ device }: PlugTileProps) {
-  const theme = useTheme();
   const dispatch = useAppDispatch();
   const plugs = useAppSelector((state) => state.plugs.data);
 

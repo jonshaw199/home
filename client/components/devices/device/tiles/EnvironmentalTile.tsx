@@ -18,12 +18,16 @@ export default function EnvironmentalTile({ device }: EnvironmentalTileProps) {
   }, [device, environmentals]);
 
   const temp = useMemo(() => {
+    // No strict comparison
+    // eslint-disable-next-line no-use-before-define
     if (environmental?.temperatureF != undefined) {
       return `${Math.floor(environmental.temperatureF)}°F`;
     }
   }, [environmental]);
 
   const humidity = useMemo(() => {
+    // No strict comparison
+    // eslint-disable-next-line no-use-before-define
     if (environmental?.humidity != undefined) {
       return `${environmental.humidity}%`;
     }

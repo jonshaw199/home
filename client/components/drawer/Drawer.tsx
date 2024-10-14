@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect } from "react";
-import { View, Button, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import {
   DrawerContentScrollView,
-  DrawerItemList,
   DrawerContentComponentProps,
 } from "@react-navigation/drawer";
 import { Drawer as ExpoDrawer } from "expo-router/drawer";
@@ -119,7 +118,7 @@ export default function Drawer() {
     } else {
       console.error("Session is null; unable to load");
     }
-  }, [session, dispatch]);
+  }, [session, connectWebSocket, dispatch]);
 
   // This is the app layout
   return (

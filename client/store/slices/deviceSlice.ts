@@ -1,4 +1,4 @@
-import { Action, Device } from "@/models";
+import { Device } from "@/models";
 import { createModelSlice } from "./createModelSlice";
 import { websocketMsgReceivedAction } from "@/ws/websocketActions";
 
@@ -23,7 +23,9 @@ const deviceSlice = createModelSlice<Device>(
             },
           };
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(`Error handling websocket message: ${e}`);
+      }
 
       return state;
     });
