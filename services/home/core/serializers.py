@@ -67,9 +67,31 @@ class UUIDModelSerializer(serializers.ModelSerializer):
                 representation[field_name] = uuid_list
 
         for related_object in instance._meta.related_objects:
-            if isinstance(related_object, models.OneToOneRel):
-                related_field_name = related_object.related_name or related_object.name
-                related_instance = getattr(instance, related_field_name, None)
+            related_field_name = related_object.related_name or related_object.name
+            related_instance = getattr(instance, related_field_name, None)
+
+            # Handle ManyToOne (ForeignKey) and OneToOne relationships
+            # NOTE: Can be a `OneToOneField` here, not just ManyToOne/ForeignKey as it seems!
+            if isinstance(related_object, models.ManyToOneRel):
+                # Check if it's actually a reverse OneToOneField relationship
+                if related_object.one_to_one:
+                    # Handle OneToOne relationships
+                    if related_instance and hasattr(related_instance, "uuid"):
+                        representation[related_field_name] = related_instance.uuid
+                else:
+                    # Handle ManyToOne (ForeignKey) relationships
+                    if related_instance:
+                        related_instances = (
+                            related_instance.all()
+                        )  # `.all()` is valid here
+                        representation[related_field_name] = [
+                            related_instance.uuid
+                            for related_instance in related_instances
+                            if hasattr(related_instance, "uuid")
+                        ]
+
+            # Handle OneToOne relationships directly defined (e.g., System -> Device)
+            elif isinstance(related_object, models.OneToOneRel):
                 if related_instance and hasattr(related_instance, "uuid"):
                     representation[related_field_name] = related_instance.uuid
 
