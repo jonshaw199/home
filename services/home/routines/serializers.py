@@ -25,6 +25,6 @@ class RoutineSerializer(UUIDModelSerializer):
             "triggers",
             "repeat_interval",
             "eval_condition",
-            "actions",
             "location",
+            "actions",
         ]
