@@ -1,4 +1,4 @@
-import { Action, Environmental } from "@/models";
+import { ActionType, Environmental } from "@/models";
 import { createModelSlice } from "./createModelSlice";
 import { websocketMsgReceivedAction } from "@/ws/websocketActions";
 
@@ -10,7 +10,7 @@ const environmentalSlice = createModelSlice<Environmental>(
       // If this is a `system__status` message, update state
       try {
         const json = JSON.parse(payload || "");
-        if (json.action === Action.STATUS_ENVIRONMENTAL) {
+        if (json.action === ActionType.STATUS_ENVIRONMENTAL) {
           const environmental = Object.values(state.data).find(
             ({ device }) => device === json.src
           );

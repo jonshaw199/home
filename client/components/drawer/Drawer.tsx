@@ -18,6 +18,8 @@ import { Theme, useTheme } from "@/providers/ThemeProvider";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { systemSliceActions } from "@/store/slices/systemSlice";
 import { lightSliceActions } from "@/store/slices/lightSlice";
+import { routineSliceActions } from "@/store/slices/routineSlice";
+import { routineActionSliceActions } from "@/store/slices/routineActionSlice";
 
 // Custom drawer item component
 const CustomDrawerItem: React.FC<{
@@ -114,6 +116,8 @@ export default function Drawer() {
       dispatch(environmentalSliceActions.fetchAll());
       dispatch(systemSliceActions.fetchAll());
       dispatch(lightSliceActions.fetchAll());
+      dispatch(routineSliceActions.fetchAll());
+      dispatch(routineActionSliceActions.fetchAll());
       connectWebSocket(session);
     } else {
       console.error("Session is null; unable to load");
@@ -144,6 +148,19 @@ export default function Drawer() {
           name="devices"
           options={{
             title: "Devices",
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="devices"
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
+        <ExpoDrawer.Screen
+          name="routines"
+          options={{
+            title: "Automations",
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons
                 name="devices"

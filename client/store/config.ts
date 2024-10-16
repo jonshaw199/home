@@ -4,6 +4,8 @@ import {
   Environmental,
   Light,
   Plug,
+  Routine,
+  RoutineAction,
   System,
 } from "../models";
 import { ServiceApi } from "../services/createServiceApi";
@@ -27,6 +29,10 @@ import { systemService } from "@/services/systemService";
 import { systemSliceReducer } from "./slices/systemSlice";
 import { lightService } from "@/services/lightService";
 import { lightSliceReducer } from "./slices/lightSlice";
+import { routineService } from "@/services/routineService";
+import { routineActionService } from "@/services/routineActionService";
+import { routineSliceReducer } from "./slices/routineSlice";
+import { routineActionSliceReducer } from "./slices/routineActionSlice";
 
 const storageKey = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
 if (!storageKey) throw "EXPO_PUBLIC_SESSION_STORAGE_KEY must be defined";
@@ -41,6 +47,8 @@ export type ServiceApis = {
   environmentals: ServiceApi<Environmental>;
   systems: ServiceApi<System>;
   lights: ServiceApi<Light>;
+  routines: ServiceApi<Routine>;
+  routineActions: ServiceApi<RoutineAction>;
 };
 
 export const serviceApis: ServiceApis = {
@@ -50,6 +58,8 @@ export const serviceApis: ServiceApis = {
   environmentals: environmentalService,
   systems: systemService,
   lights: lightService,
+  routines: routineService,
+  routineActions: routineActionService,
 };
 
 /*
@@ -63,6 +73,8 @@ type RootReducer = {
   systems: Reducer<ModelState<System>>;
   lights: Reducer<ModelState<Light>>;
   session: Reducer<SessionState>;
+  routines: Reducer<ModelState<Routine>>;
+  routineActions: Reducer<ModelState<RoutineAction>>;
 };
 
 const rootReducer: RootReducer = {
@@ -73,6 +85,8 @@ const rootReducer: RootReducer = {
   systems: systemSliceReducer,
   lights: lightSliceReducer,
   session: sessionSliceReducer,
+  routines: routineSliceReducer,
+  routineActions: routineActionSliceReducer,
 };
 
 export type ThunkExtraArgument = {

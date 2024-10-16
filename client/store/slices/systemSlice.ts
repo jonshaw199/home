@@ -1,4 +1,4 @@
-import { Action, System } from "@/models";
+import { ActionType, System } from "@/models";
 import { createModelSlice } from "./createModelSlice";
 import { websocketMsgReceivedAction } from "@/ws/websocketActions";
 
@@ -10,7 +10,7 @@ const systemSlice = createModelSlice<System>(
       // If this is a `system__status` message, update state
       try {
         const json = JSON.parse(payload || "");
-        if (json.action === Action.STATUS_SYSTEM) {
+        if (json.action === ActionType.STATUS_SYSTEM) {
           const system = Object.values(state.data).find(
             ({ device }) => device === json.src
           );

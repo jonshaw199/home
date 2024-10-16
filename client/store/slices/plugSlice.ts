@@ -1,4 +1,4 @@
-import { Action, Plug } from "@/models";
+import { ActionType, Plug } from "@/models";
 import { createModelSlice } from "./createModelSlice";
 import { websocketMsgReceivedAction } from "@/ws/websocketActions";
 
@@ -7,7 +7,7 @@ const plugSlice = createModelSlice<Plug>("plugs", "plugs", (builder) => {
     // If this is a `plug__status` message, update state
     try {
       const json = JSON.parse(payload || "");
-      if (json.action === Action.STATUS_PLUG) {
+      if (json.action === ActionType.STATUS_PLUG) {
         const plug = Object.values(state.data).find(
           ({ device }) => device === json.src
         );
