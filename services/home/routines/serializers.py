@@ -15,8 +15,6 @@ class ActionSerializer(UUIDModelSerializer):
 
 
 class RoutineSerializer(UUIDModelSerializer):
-    actions = ActionSerializer(many=True, read_only=True)
-
     class Meta:
         model = Routine
         fields = UUIDModelSerializer.Meta.fields + [
