@@ -156,9 +156,7 @@ class ClientConsumer(JsonWebsocketConsumer):
     def group_message(self, event):
         message = event["message"]
 
-        # Skip sending the message to the sender
-        if message.get("sender") != self.channel_name:
-            self.send_json(message)
+        self.send_json(message)
 
     def get_accessible_location_ids(self, user):
         # Ensure the user has a profile and locations associated with it
@@ -199,7 +197,6 @@ class ClientConsumer(JsonWebsocketConsumer):
             logging.info(
                 f"Broadcasting message to group; message: {content}; group: {group_name}"
             )
-            content["sender"] = self.channel_name
             async_to_sync(self.channel_layer.group_send)(
                 group_name, {"type": "group_message", "message": content}
             )
