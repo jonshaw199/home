@@ -4,7 +4,7 @@ from core.models import Location, BaseModel
 
 # Create your models here.
 class DeviceType(BaseModel):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
