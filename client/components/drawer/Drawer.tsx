@@ -160,7 +160,7 @@ export default function Drawer() {
         <ExpoDrawer.Screen
           name="routines"
           options={{
-            title: "Automations",
+            title: "Routines",
             drawerIcon: ({ color, size }) => (
               <MaterialCommunityIcons
                 name="devices"
