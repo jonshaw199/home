@@ -14,11 +14,11 @@ export interface User extends Identifiable {
 }
 
 export enum DeviceTypes {
-  DIAL = "18014960-6d98-412c-a62d-e400c647112e",
-  PC = "7d69fa8c-c969-427d-836f-f45523e5dbb5",
-  PLUG = "f8773a6b-f0f0-489c-aa0a-fca087020069",
-  ENVIRONMENTAL = "973f049b-64dc-442c-838e-b7fae7270fe2",
-  LIGHT = "b75f9730-d073-400c-ac85-27512f190460",
+  DIAL = "Dial",
+  PC = "PC",
+  PLUG = "Plug",
+  ENVIRONMENTAL = "Environmental",
+  LIGHT = "Light",
 }
 
 export interface DeviceType extends Identifiable {

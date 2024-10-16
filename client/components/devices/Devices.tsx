@@ -5,6 +5,7 @@ import DeviceTile from "./device/DeviceTile";
 
 export default function Devices() {
   const devices = useAppSelector((state) => state.devices.data);
+  console.log(devices);
 
   const style = styles();
 
