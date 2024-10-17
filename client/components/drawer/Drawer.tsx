@@ -162,11 +162,7 @@ export default function Drawer() {
           options={{
             title: "Routines",
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons
-                name="devices"
-                color={color}
-                size={size}
-              />
+              <MaterialCommunityIcons name="clock" color={color} size={size} />
             ),
           }}
         />
