@@ -1,22 +1,19 @@
 import ColorPicker from "@/components/lib/ColorPicker";
-import { Device } from "@/models";
-import { useAppDispatch } from "@/store";
+import { Device, Light } from "@/models";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { lightSliceActions } from "@/store/slices/lightSlice";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { Slider, Switch, Text } from "@rneui/themed";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { View } from "react-native";
 
 const ACTION_LIGHT_SET = "light__set";
 
-type LightDetailsProps = {
-  device: Device;
-};
+function _LightDetails({ device, light }: { device: Device; light: Light }) {
+  const [isOn, setIsOn] = useState(!!light.isOn);
+  const [color, setColor] = useState(light.color || "#000000");
+  const [brightness, setBrightness] = useState(light.brightness || 0);
 
-export default function LightDetails({ device }: LightDetailsProps) {
-  const [isOn, setIsOn] = useState<boolean>();
-  const [color, setColor] = useState<string>();
-  const [brightness, setBrightness] = useState<number>();
   const dispatch = useAppDispatch();
 
   const sendIsOnMsg = (isOn: boolean) => {
@@ -146,4 +143,20 @@ export default function LightDetails({ device }: LightDetailsProps) {
       </View>
     </View>
   );
+}
+
+type LightDetailsProps = {
+  device: Device;
+};
+
+export default function LightDetails({ device }: LightDetailsProps) {
+  const lights = useAppSelector((state) => state.lights.data);
+
+  const light = useMemo(() => {
+    if (device.light && device.light in lights) {
+      return lights[device.light];
+    }
+  }, [device, lights]);
+
+  return light ? <_LightDetails device={device} light={light} /> : null;
 }
