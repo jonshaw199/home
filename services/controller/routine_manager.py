@@ -10,41 +10,58 @@ HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
 
-def transform_routines(routines):
+def transform_routines_with_actions(routines, actions_map):
     filtered_routines = []
     for routine in routines:
         if not routine["active"]:
             continue
 
-        # Filter actions where active is True
+        # Replace action UUIDs with actual action objects from actions_map
         routine["actions"] = [
-            action for action in routine["actions"] if action.get("active")
+            actions_map.get(action_uuid)
+            for action_uuid in routine["actions"]
+            if actions_map.get(action_uuid) and actions_map[action_uuid].get("active")
         ]
 
         # Only keep the routine if it has any active actions
         if routine["actions"]:
             filtered_routines.append(routine)
+
     return filtered_routines
 
 
 async def fetch_routines(token):
-    """Fetch routines from the API."""
-    url = f"http://{HOME_HOST}:{HOME_PORT}/api/routines"
+    """Fetch routines and actions from the API and assemble them."""
+    routine_url = f"http://{HOME_HOST}:{HOME_PORT}/api/routines"
+    actions_url = f"http://{HOME_HOST}:{HOME_PORT}/api/actions"
     headers = {
         "Authorization": f"Token {token}",
         "Content-Type": "application/json",
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            if response.status == 200:
-                routines = await response.json()
+        async with session.get(
+            routine_url, headers=headers
+        ) as routine_response, session.get(
+            actions_url, headers=headers
+        ) as actions_response:
+            if routine_response.status == 200 and actions_response.status == 200:
+                routines = await routine_response.json()
+                actions = await actions_response.json()
+
                 logging.info(f"Fetched routines: {routines}")
-                transformed = transform_routines(routines)
+                logging.info(f"Fetched actions: {actions}")
+
+                # Create a map of action UUIDs to action data
+                actions_map = {action["uuid"]: action for action in actions}
+
+                transformed = transform_routines_with_actions(routines, actions_map)
                 logging.info(f"Transformed routines: {transformed}")
                 return transformed
             else:
-                logging.error(f"Failed to fetch routines. Status: {response.status}")
+                logging.error(
+                    f"Failed to fetch routines or actions. Status: Routines={routine_response.status}, Actions={actions_response.status}"
+                )
                 return []
 
 
