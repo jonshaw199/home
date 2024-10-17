@@ -52,4 +52,9 @@ class EnvironmentalSerializer(UUIDModelSerializer):
 class LightSerializer(UUIDModelSerializer):
     class Meta:
         model = Light
-        fields = UUIDModelSerializer.Meta.fields + ["device"]
+        fields = UUIDModelSerializer.Meta.fields + [
+            "device",
+            "is_on",
+            "brightness",
+            "color",
+        ]
