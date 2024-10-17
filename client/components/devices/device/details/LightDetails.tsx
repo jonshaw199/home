@@ -3,9 +3,9 @@ import { Device, Light } from "@/models";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { lightSliceActions } from "@/store/slices/lightSlice";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
-import { Slider, Switch, Text } from "@rneui/themed";
+import { Button, Slider, Switch, Text } from "@rneui/themed";
 import { useMemo, useState } from "react";
-import { View } from "react-native";
+import { Linking, View } from "react-native";
 
 const ACTION_LIGHT_SET = "light__set";
 
@@ -114,6 +114,24 @@ function _LightDetails({ device, light }: { device: Device; light: Light }) {
     sendBrightnessMsg(brightness);
   };
 
+  const goToWled = async () => {
+    if (device.vendorId) {
+      try {
+        const url = `http://wled-${device.vendorId}.local/`;
+        const canGo = await Linking.canOpenURL(url);
+        if (canGo) {
+          Linking.openURL(url);
+        } else {
+          console.error(`Cannot go to url ${url}`);
+        }
+      } catch (e) {
+        console.error("Error going to WLED:", e);
+      }
+    } else {
+      console.error("Vendor ID not found; cannot go to WLED");
+    }
+  };
+
   return (
     <View style={{ display: "flex", gap: 15 }}>
       <View
@@ -140,6 +158,15 @@ function _LightDetails({ device, light }: { device: Device; light: Light }) {
           onSlidingComplete={handleBrightnessChange}
           thumbStyle={{ width: 25, height: 25 }}
         />
+      </View>
+      <View
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "flex-end",
+        }}
+      >
+        <Button onPress={goToWled}>Go To WLED</Button>
       </View>
     </View>
   );

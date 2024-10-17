@@ -32,6 +32,7 @@ export interface Device extends Identifiable {
   location: ID;
   name: string;
   lastStatusUpdate: Nullable<string>;
+  vendorId: Nullable<ID>;
   plug: Nullable<ID>;
   system: Nullable<ID>;
   environmental: Nullable<ID>;
