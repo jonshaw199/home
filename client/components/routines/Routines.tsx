@@ -3,7 +3,7 @@ import { FlatList } from "react-native";
 import { Routine } from "@/models";
 import { ListItem, Icon } from "@rneui/themed"; // Import Icon from @rneui/themed
 import { useMemo } from "react";
-import { router, useNavigation } from "expo-router"; // Import useNavigation from expo-router
+import { router } from "expo-router"; // Import useNavigation from expo-router
 
 export default function Routines() {
   const routines = useAppSelector((state) => state.routines.data);
