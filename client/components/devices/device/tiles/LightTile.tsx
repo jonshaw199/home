@@ -7,6 +7,8 @@ import { lightSliceActions } from "@/store/slices/lightSlice";
 
 const ACTION_LIGHT_SET = "light__set";
 
+const maxBrightness = 255;
+
 export type LightTileProps = BaseTileProps;
 
 export default function LightTile({ device }: LightTileProps) {
@@ -46,6 +48,14 @@ export default function LightTile({ device }: LightTileProps) {
     }
   };
 
+  const status = useMemo(() => {
+    let bStr = "";
+    if (light?.brightness !== null && light?.brightness !== undefined) {
+      bStr = `${Math.floor((light.brightness / maxBrightness) * 100)}%`;
+    }
+    return [light?.isOn ? "On" : "Off", bStr, light?.color].join(" - ");
+  }, [light]);
+
   return (
     <BaseTile
       device={device}
@@ -56,7 +66,7 @@ export default function LightTile({ device }: LightTileProps) {
       icon={
         <Octicons name="light-bulb" size={20} color="rgba(0, 125, 125, 0.8)" />
       }
-      status={light?.isOn ? "On" : "Off"}
+      status={status}
       textProps={{ style: { color: "rgba(0, 125, 125, 0.8)" } }}
     />
   );
