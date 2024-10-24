@@ -12,6 +12,7 @@ from websocket_transformer import WebsocketTransformerRegistry
 from mqtt_transformer import MqttTransformerRegistry
 from auth import get_token
 from routine_manager import RoutineManager, fetch_routines
+from websocket_server import WebsocketServer
 
 logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
 
@@ -25,7 +26,7 @@ def transform_devices(devices):
 
 
 async def fetch_devices(token):
-    """Fetch routines from the API."""
+    """Fetch devices from the API."""
     url = f"http://{HOME_HOST}:{HOME_PORT}/api/devices"
     headers = {
         "Authorization": f"Token {token}",
@@ -47,7 +48,8 @@ async def fetch_devices(token):
 
 class Controller:
     def __init__(self):
-        self.websocket_client = WebsocketClient(self.handle_message_ws)
+        self.websocket_server = WebsocketServer(self.handle_ws_server_msg)
+        self.websocket_client = WebsocketClient(self.handle_ws_client_msg)
         self.mqtt_client = AsyncMqttClient(self.handle_message_mqtt)
         self.routine_manager = RoutineManager(self.handle_routine_msg)
         self.devices = {}
@@ -64,8 +66,11 @@ class Controller:
             }
             outMsgStr = json.dumps(outMsg)
 
-            # Send to websocket server as-is
+            # Send to django server
             asyncio.create_task(self.websocket_client.send(outMsgStr))
+
+            # Send to local clients
+            asyncio.create_task(self.websocket_server.send(outMsgStr))
 
             def handle_transformed_msg(msg, topic):
                 asyncio.create_task(self.mqtt_client.publish(topic, msg))
@@ -77,12 +82,40 @@ class Controller:
         except Exception as e:
             logging.error(f"Error handling routine message: {e}")
 
-    def handle_message_ws(self, message):
-        logging.info("Handle WebSocket message: %s", message)
+    def handle_ws_server_msg(self, message):
+        logging.info("Handle WebSocket server message: %s", message)
 
         try:
             # Trigger any related routines; no need to transform this msg
             asyncio.create_task(self.routine_manager.handle_message(message))
+
+            # Send back to local clients
+            asyncio.create_task(self.websocket_server.send(message))
+
+            # Send to django server
+            asyncio.create_task(self.websocket_client.send(message))
+
+            def handle_transformed_msg(msg, topic):
+                asyncio.create_task(self.mqtt_client.publish(topic, msg))
+
+            # Transform and send to mqtt broker
+            WebsocketTransformerRegistry.transform(
+                message, handle_transformed_msg, devices=self.devices
+            )
+        except Exception as e:
+            logging.error(f"Error handling websocket message: {e}")
+
+    def handle_ws_client_msg(self, message):
+        logging.info("Handle WebSocket client message: %s", message)
+
+        try:
+            # Trigger any related routines; no need to transform this msg
+            asyncio.create_task(self.routine_manager.handle_message(message))
+
+            # Send to local clients
+            asyncio.create_task(self.websocket_server.send(message))
+
+            # Do not need to send back to django server; it should have distributed this message to everyone that needs it
 
             def handle_transformed_msg(msg, topic):
                 asyncio.create_task(self.mqtt_client.publish(topic, msg))
@@ -101,9 +134,10 @@ class Controller:
 
             def handle_transformed_msg(msg):
                 asyncio.create_task(self.websocket_client.send(msg))
+                asyncio.create_task(self.websocket_server.send(msg))
                 asyncio.create_task(self.routine_manager.handle_message(msg))
 
-            # Transform and send to websocket server as well as routine manager for triggering related routines, if any
+            # Transform and send to websocket server, websocket clients,and routine manager for triggering related routines, if any
             MqttTransformerRegistry.transform(
                 message, topic, handle_transformed_msg, devices=self.devices
             )
@@ -139,6 +173,7 @@ class Controller:
         await asyncio.gather(
             self.mqtt_client.subscribe("#"),
             self.websocket_client.connect(token),
+            self.websocket_server.start_server(),
             periodic_device_updates(),
             periodic_routine_updates(),
         )
