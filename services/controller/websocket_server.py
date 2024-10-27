@@ -1,8 +1,13 @@
 import logging
 import asyncio
 import websockets
+import os
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
+
+load_dotenv()
+WEBSOCKET_SERVER_PORT = os.getenv("WEBSOCKET_SERVER_PORT")
 
 
 class WebsocketServer:
@@ -11,7 +16,7 @@ class WebsocketServer:
         self.websocket = None
         self.clients = set()
 
-    async def start_server(self, host="0.0.0.0", port=8080):
+    async def start_server(self, host="0.0.0.0", port=WEBSOCKET_SERVER_PORT):
         logging.info(f"Starting WebSocket server on {host}:{port}")
         server = await websockets.serve(self._handle_client, host, port)
         await server.wait_closed()

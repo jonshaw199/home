@@ -70,6 +70,8 @@ services:
 
   controller:
     build: ./services/controller
+    ports:
+      - "8080:8080"
     volumes:
       - ./services/controller:/code
     depends_on:

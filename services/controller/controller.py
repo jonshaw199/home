@@ -4,15 +4,17 @@ import logging
 import asyncio
 import json
 import os
-from aiohttp import ClientSession
+from aiohttp import web
 from dotenv import load_dotenv
 from websocket_client import WebsocketClient
 from mqtt_client import AsyncMqttClient
 from websocket_transformer import WebsocketTransformerRegistry
 from mqtt_transformer import MqttTransformerRegistry
 from auth import get_token
-from routine_manager import RoutineManager, fetch_routines
-from websocket_server import WebsocketServer
+from routine_manager import RoutineManager
+from cache import Cache
+from request_handler import RequestHandler
+from local_server import LocalServer
 
 logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
 
@@ -20,39 +22,29 @@ load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
-
-def transform_devices(devices):
-    return {device["uuid"]: device for device in devices}
+# TODO: When status message (for example) received via websocket, send PUT request to update
 
 
-async def fetch_devices(token):
-    """Fetch devices from the API."""
-    url = f"http://{HOME_HOST}:{HOME_PORT}/api/devices"
-    headers = {
-        "Authorization": f"Token {token}",
-        "Content-Type": "application/json",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            if response.status == 200:
-                devices = await response.json()
-                logging.info(f"Fetched devices: {devices}")
-                transformed = transform_devices(devices)
-                logging.info(f"Transformed devices: {transformed}")
-                return transformed
-            else:
-                logging.error(f"Failed to fetch devices. Status: {response.status}")
-                return {}
+def transform_index_response(items):
+    return {item["uuid"]: item for item in items}
 
 
 class Controller:
     def __init__(self):
-        self.websocket_server = WebsocketServer(self.handle_ws_server_msg)
         self.websocket_client = WebsocketClient(self.handle_ws_client_msg)
         self.mqtt_client = AsyncMqttClient(self.handle_message_mqtt)
         self.routine_manager = RoutineManager(self.handle_routine_msg)
+        self.cache = Cache()
+        self.request_handler = RequestHandler(
+            self.cache, f"http://{HOME_HOST}:{HOME_PORT}"
+        )
         self.devices = {}
+        self.routines = {}
+        self.actions = {}
+        self.local_server = LocalServer(
+            handle_http_request=self.handle_http_request,
+            handle_ws_message=self.handle_ws_server_msg,
+        )
 
     def handle_routine_msg(self, routine, action, eval_data):
         logging.info("Handle routine message")
@@ -144,38 +136,44 @@ class Controller:
         except Exception as e:
             logging.error(f"Error handling MQTT message: {e}")
 
+    async def handle_http_request(self, request):
+        path = request.path
+        method = request.method
+        data = await request.json() if method in ["POST", "PUT", "PATCH"] else None
+
+        logging.info(
+            f"Handling HTTP request; path: {path}; method: {method}; data: {data}"
+        )
+
+        token = await get_token()
+
+        # Proxy or cache the request through the request handler
+        response_data = await self.request_handler.handle_request(
+            method, path, data, token
+        )
+
+        return web.json_response(response_data)
+
+    def setup_routes(self, app):
+        app.router.add_route("*", "/api/{tail:.*}", self.handle_http_request)
+
     async def start(self):
         token = await get_token()
 
-        # Initially fetch devices
-        self.devices = await fetch_devices(token)
-
-        # Periodically update devices
-        # TODO: use realtime  updates for this
-        async def periodic_device_updates():
-            while True:
-                await asyncio.sleep(300)
-                self.devices = await fetch_devices(token)
+        # Fetch devices
+        devices = await self.request_handler.fetch("devices", token=token)
+        self.devices = transform_index_response(devices)
 
         # Initially fetch and register routines
-        routines = await fetch_routines(token)
-        await self.routine_manager.register_routines(routines)
-
-        # Periodically update routines
-        # TODO: use realtime  updates for this
-        async def periodic_routine_updates():
-            while True:
-                await asyncio.sleep(300)
-                routines = await fetch_routines(token)
-                await self.routine_manager.register_routines(routines)
+        routines = await self.request_handler.fetch("routines", token=token)
+        actions = await self.request_handler.fetch("actions", token=token)
+        await self.routine_manager.register_routines(routines, actions)
 
         # Start all tasks concurrently
         await asyncio.gather(
+            self.local_server.start(),
             self.mqtt_client.subscribe("#"),
             self.websocket_client.connect(token),
-            self.websocket_server.start_server(),
-            periodic_device_updates(),
-            periodic_routine_updates(),
         )
 
 
