@@ -10,10 +10,10 @@ from websocket_client import WebsocketClient
 from mqtt_client import AsyncMqttClient
 from websocket_transformer import WebsocketTransformerRegistry
 from mqtt_transformer import MqttTransformerRegistry
-from auth import get_token
+from auth import Auth
 from routine_manager import RoutineManager
 from cache import Cache
-from request_handler import RequestHandler
+from resource_handler import ResourceHandler
 from local_server import LocalServer
 
 logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
@@ -31,12 +31,15 @@ def transform_index_response(items):
 
 class Controller:
     def __init__(self):
-        self.websocket_client = WebsocketClient(self.handle_ws_client_msg)
+        self.auth = Auth()
+        self.websocket_client = WebsocketClient(
+            self.handle_ws_client_msg, self.auth.get_token
+        )
         self.mqtt_client = AsyncMqttClient(self.handle_message_mqtt)
         self.routine_manager = RoutineManager(self.handle_routine_msg)
         self.cache = Cache()
-        self.request_handler = RequestHandler(
-            self.cache, f"http://{HOME_HOST}:{HOME_PORT}"
+        self.resource_handler = ResourceHandler(
+            self.cache, f"http://{HOME_HOST}:{HOME_PORT}", self.auth.get_token
         )
         self.devices = {}
         self.routines = {}
@@ -45,6 +48,8 @@ class Controller:
             handle_http_request=self.handle_http_request,
             handle_ws_message=self.handle_ws_server_msg,
         )
+        self.online = True  # Optimistic
+        self.token = None
 
     def handle_routine_msg(self, routine, action, eval_data):
         logging.info("Handle routine message")
@@ -62,7 +67,7 @@ class Controller:
             asyncio.create_task(self.websocket_client.send(outMsgStr))
 
             # Send to local clients
-            asyncio.create_task(self.websocket_server.send(outMsgStr))
+            asyncio.create_task(self.local_server.broadcast_ws(outMsgStr))
 
             def handle_transformed_msg(msg, topic):
                 asyncio.create_task(self.mqtt_client.publish(topic, msg))
@@ -82,7 +87,7 @@ class Controller:
             asyncio.create_task(self.routine_manager.handle_message(message))
 
             # Send back to local clients
-            asyncio.create_task(self.websocket_server.send(message))
+            asyncio.create_task(self.local_server.broadcast_ws(message))
 
             # Send to django server
             asyncio.create_task(self.websocket_client.send(message))
@@ -105,7 +110,7 @@ class Controller:
             asyncio.create_task(self.routine_manager.handle_message(message))
 
             # Send to local clients
-            asyncio.create_task(self.websocket_server.send(message))
+            asyncio.create_task(self.local_server.broadcast_ws(message))
 
             # Do not need to send back to django server; it should have distributed this message to everyone that needs it
 
@@ -126,7 +131,7 @@ class Controller:
 
             def handle_transformed_msg(msg):
                 asyncio.create_task(self.websocket_client.send(msg))
-                asyncio.create_task(self.websocket_server.send(msg))
+                asyncio.create_task(self.local_server.broadcast_ws(msg))
                 asyncio.create_task(self.routine_manager.handle_message(msg))
 
             # Transform and send to websocket server, websocket clients,and routine manager for triggering related routines, if any
@@ -145,11 +150,9 @@ class Controller:
             f"Handling HTTP request; path: {path}; method: {method}; data: {data}"
         )
 
-        token = await get_token()
-
         # Proxy or cache the request through the request handler
-        response_data = await self.request_handler.handle_request(
-            method, path, data, token
+        response_data = await self.resource_handler.handle_request(
+            method, path, data, self.online
         )
 
         return web.json_response(response_data)
@@ -157,23 +160,35 @@ class Controller:
     def setup_routes(self, app):
         app.router.add_route("*", "/api/{tail:.*}", self.handle_http_request)
 
-    async def start(self):
-        token = await get_token()
+    async def do_if_online(self, online_func, offline_func=None):
+        try:
+            return await online_func()
+        except Exception:
+            self.online = False
+            if offline_func:
+                return offline_func()
 
-        # Fetch devices
-        devices = await self.request_handler.fetch("devices", token=token)
+    async def initialize_resources(self):
+        devices = await self.resource_handler.fetch("devices", online=self.online)
+        routines = await self.resource_handler.fetch("routines", online=self.online)
+        actions = await self.resource_handler.fetch("actions", online=self.online)
+
         self.devices = transform_index_response(devices)
+        self.routines = transform_index_response(routines)
+        self.actions = transform_index_response(actions)
 
-        # Initially fetch and register routines
-        routines = await self.request_handler.fetch("routines", token=token)
-        actions = await self.request_handler.fetch("actions", token=token)
         await self.routine_manager.register_routines(routines, actions)
+
+    async def start(self):
+        self.token = await self.auth.get_token()
+
+        await self.initialize_resources()
 
         # Start all tasks concurrently
         await asyncio.gather(
             self.local_server.start(),
             self.mqtt_client.subscribe("#"),
-            self.websocket_client.connect(token),
+            self.websocket_client.connect(),
         )
 
 
