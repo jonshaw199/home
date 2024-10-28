@@ -4,7 +4,7 @@ import logging
 import asyncio
 import json
 import os
-from aiohttp import web
+from aiohttp import web, ClientSession
 from dotenv import load_dotenv
 from websocket_client import WebsocketClient
 from mqtt_client import AsyncMqttClient
@@ -21,6 +21,9 @@ logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
 load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
+
+HEALTH_CHECK_URL = f"http://{HOME_HOST}:{HOME_PORT}/api/"
+HEALTH_CHECK_INTERVAL_S = 60
 
 # TODO: When status message (for example) received via websocket, send PUT request to update
 
@@ -179,6 +182,25 @@ class Controller:
 
         await self.routine_manager.register_routines(routines, actions)
 
+    async def check_server_availability(self):
+        """Background task to check if the Django server is reachable."""
+        while True:
+            logging.info("Checking remote server availability")
+
+            try:
+                async with ClientSession() as session:
+                    async with session.get(HEALTH_CHECK_URL) as resp:
+                        self.online = resp.status == 200
+                        logging.info(f"Server online status: {self.online}")
+            except Exception as e:
+                logging.error(f"Server check failed: {e}")
+                self.online = False
+
+            # Wait for the next check interval
+            await asyncio.sleep(
+                HEALTH_CHECK_INTERVAL_S
+            )  # Check every HEALTH_CHECK_INTERVAL_S seconds
+
     async def start(self):
         self.token = await self.auth.get_token()
 
@@ -189,6 +211,7 @@ class Controller:
             self.local_server.start(),
             self.mqtt_client.subscribe("#"),
             self.websocket_client.connect(),
+            self.check_server_availability(),  # Start server availability check
         )
 
 
