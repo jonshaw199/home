@@ -18,7 +18,7 @@ class LocalServer:
     # HTTP and WebSocket setup and route handling
     def setup_routes(self, app):
         app.router.add_route("*", "/api/{tail:.*}", self.handle_http_request)
-        app.router.add_get("/ws", self.websocket_handler)
+        app.router.add_get("/ws/clients", self.websocket_handler)
 
     async def websocket_handler(self, request):
         ws = web.WebSocketResponse()

@@ -106,7 +106,7 @@ class RoutineManager:
         self.action_type_map.clear()
         await self.cancel_scheduled_tasks()
 
-        for routine in routines:
+        for routine in routines.values():
             routine["run_count"] = 0
             triggers = routine.get("triggers", "")
             repeat_interval = routine.get("repeat_interval")

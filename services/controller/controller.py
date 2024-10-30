@@ -180,7 +180,7 @@ class Controller:
         self.routines = transform_index_response(routines)
         self.actions = transform_index_response(actions)
 
-        await self.routine_manager.register_routines(routines, actions)
+        await self.routine_manager.register_routines(self.routines, self.actions)
 
     async def check_server_availability(self):
         """Background task to check if the Django server is reachable."""
