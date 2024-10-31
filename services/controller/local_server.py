@@ -2,6 +2,7 @@
 
 import logging
 from aiohttp import web, WSCloseCode
+from aiohttp_cors import setup, ResourceOptions
 import os
 from dotenv import load_dotenv
 
@@ -17,8 +18,21 @@ class LocalServer:
 
     # HTTP and WebSocket setup and route handling
     def setup_routes(self, app):
-        app.router.add_route("*", "/api/{tail:.*}", self.handle_http_request)
+        # Define specific HTTP methods for /api route to avoid CORS conflict
+        app.router.add_route("GET", "/api/{tail:.*}", self.handle_http_request)
+        app.router.add_route("POST", "/api/{tail:.*}", self.handle_http_request)
+        app.router.add_route("PUT", "/api/{tail:.*}", self.handle_http_request)
+        app.router.add_route("DELETE", "/api/{tail:.*}", self.handle_http_request)
+
+        # Status
+        app.router.add_get("/status/", self.status_handler)
+
+        # WebSocket route
         app.router.add_get("/ws/clients", self.websocket_handler)
+
+    async def status_handler(self, request):
+        """Simple health check handler for the /api/ endpoint"""
+        return web.Response(status=200, text="API is reachable")
 
     async def websocket_handler(self, request):
         ws = web.WebSocketResponse()
@@ -50,6 +64,23 @@ class LocalServer:
     async def start(self):
         app = web.Application()
         self.setup_routes(app)
+
+        # Configure CORS settings
+        cors = setup(
+            app,
+            defaults={
+                "*": ResourceOptions(
+                    allow_credentials=True,
+                    expose_headers="*",
+                    allow_headers="*",
+                )
+            },
+        )
+
+        # Apply CORS to each route
+        for route in list(app.router.routes()):
+            cors.add(route)
+
         runner = web.AppRunner(app)
         await runner.setup()
         site = web.TCPSite(runner, "0.0.0.0", LOCAL_SERVER_PORT)

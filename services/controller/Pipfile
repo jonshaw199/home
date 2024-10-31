@@ -8,6 +8,7 @@ python-dotenv = "==1.0.1"
 websockets = "*"
 aiohttp = {extras = ["speedups"], version = "*"}
 aiomqtt = "*"
+aiohttp-cors = "*"
 
 [dev-packages]
 
