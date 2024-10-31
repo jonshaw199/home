@@ -41,7 +41,7 @@ services:
       - db
       - redis
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://home:8000/api/"]
+      test: ["CMD", "curl", "-f", "http://home:8000/status/"]
       interval: 5s
       timeout: 2s
       retries: 40
