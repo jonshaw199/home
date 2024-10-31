@@ -31,6 +31,7 @@ class ResourceHandler:
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
                     data = await response.json()
+                    logging.info(f"Response data: {data}")
                     if resource_id:
                         self.cache.add(resource_type, data)
                     else:

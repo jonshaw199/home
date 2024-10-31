@@ -1,11 +1,12 @@
 export const getToken = async ({
   username,
   password,
+  url,
 }: {
   username: string;
   password: string;
+  url: string;
 }) => {
-  const url = process.env.EXPO_PUBLIC_HOME_API_URL;
   const response = await fetch(`${url}/api-token-auth/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
