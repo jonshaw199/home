@@ -15,6 +15,7 @@ from routine_manager import RoutineManager
 from cache import Cache
 from resource_handler import ResourceHandler
 from local_server import LocalServer
+from message_handler import MessageHandler
 
 logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
 
@@ -44,6 +45,7 @@ class Controller:
         self.resource_handler = ResourceHandler(
             self.cache, f"http://{HOME_HOST}:{HOME_PORT}", self.auth.get_token
         )
+        self.message_handler = MessageHandler(self.resource_handler)
         self.devices = {}
         self.routines = {}
         self.actions = {}
@@ -51,7 +53,7 @@ class Controller:
             handle_http_request=self.handle_http_request,
             handle_ws_message=self.handle_ws_server_msg,
         )
-        self.online = True  # Optimistic
+        self.online = False
         self.token = None
 
     def handle_routine_msg(self, routine, action, eval_data):
@@ -65,6 +67,9 @@ class Controller:
                 "body": eval_data.get("body"),
             }
             outMsgStr = json.dumps(outMsg)
+
+            # Handle message
+            asyncio.create_task(self.message_handler.handle(outMsgStr))
 
             # Send to django server
             asyncio.create_task(self.websocket_client.send(outMsgStr))
@@ -86,6 +91,9 @@ class Controller:
         logging.info("Handle WebSocket server message: %s", message)
 
         try:
+            # Handle message
+            asyncio.create_task(self.message_handler.handle(message))
+
             # Trigger any related routines; no need to transform this msg
             asyncio.create_task(self.routine_manager.handle_message(message))
 
@@ -109,6 +117,9 @@ class Controller:
         logging.info("Handle WebSocket client message: %s", message)
 
         try:
+            # Handle message
+            asyncio.create_task(self.message_handler.handle(message))
+
             # Trigger any related routines; no need to transform this msg
             asyncio.create_task(self.routine_manager.handle_message(message))
 
@@ -133,6 +144,7 @@ class Controller:
         try:
 
             def handle_transformed_msg(msg):
+                asyncio.create_task(self.message_handler.handle(message))
                 asyncio.create_task(self.websocket_client.send(msg))
                 asyncio.create_task(self.local_server.broadcast_ws(msg))
                 asyncio.create_task(self.routine_manager.handle_message(msg))
@@ -160,17 +172,6 @@ class Controller:
 
         return web.json_response(response_data)
 
-    def setup_routes(self, app):
-        app.router.add_route("*", "/api/{tail:.*}", self.handle_http_request)
-
-    async def do_if_online(self, online_func, offline_func=None):
-        try:
-            return await online_func()
-        except Exception:
-            self.online = False
-            if offline_func:
-                return offline_func()
-
     async def initialize_resources(self):
         devices = await self.resource_handler.fetch("devices", online=self.online)
         routines = await self.resource_handler.fetch("routines", online=self.online)
@@ -183,35 +184,80 @@ class Controller:
         await self.routine_manager.register_routines(self.routines, self.actions)
 
     async def check_server_availability(self):
+        logging.info("Checking remote server availability")
+
+        try:
+            async with ClientSession() as session:
+                async with session.get(HEALTH_CHECK_URL) as resp:
+                    self.online = resp.status == 200
+                    logging.info(f"Server online status: {self.online}")
+        except Exception as e:
+            logging.error(f"Server check failed: {e}")
+            self.online = False
+
+    async def continuously_check_server_availability(self):
         """Background task to check if the Django server is reachable."""
         while True:
-            logging.info("Checking remote server availability")
+            prev_online_status = self.online
+            await self.check_server_availability()
 
-            try:
-                async with ClientSession() as session:
-                    async with session.get(HEALTH_CHECK_URL) as resp:
-                        self.online = resp.status == 200
-                        logging.info(f"Server online status: {self.online}")
-            except Exception as e:
-                logging.error(f"Server check failed: {e}")
-                self.online = False
+            # offline -> online
+            if not prev_online_status and self.online:
+                try:
+                    await self.handle_back_online()
+                except Exception as e:
+                    logging.error(f"Error when handling reconnection: {e}")
+
+            # online -> offline
+            if prev_online_status and not self.online:
+                try:
+                    await self.handle_back_offline()
+                except Exception as e:
+                    logging.error(f"Error when handling disconnection: {e}")
 
             # Wait for the next check interval
             await asyncio.sleep(
                 HEALTH_CHECK_INTERVAL_S
             )  # Check every HEALTH_CHECK_INTERVAL_S seconds
 
-    async def start(self):
+    async def handle_back_online(self):
+        logging.info("Back online!")
         self.token = await self.auth.get_token()
-
         await self.initialize_resources()
 
-        # Start all tasks concurrently
+    async def handle_online_startup(self):
+        logging.info("Handling online startup")
+        # For now, same logic as back online
+        self.handle_back_online()
+
+    async def handle_back_offline(self):
+        logging.info("Back offline!")
+        # Nothing to do here for now
+
+    async def handle_offline_startup(self):
+        logging.info("Handling offline startup")
+        # Nothing to do here for now
+
+    async def start(self):
+        # Perform a one-time initial check for server availability to set self.online
+        await self.check_server_availability()
+
+        # Attempt to authenticate only if online
+        if self.online:
+            try:
+                await self.handle_online_startup()
+            except Exception as e:
+                logging.error(f"Error during online initialization: {e}")
+                await self.handle_offline_startup()
+        else:
+            await self.handle_offline_startup()
+
+        # Start tasks, some of which depend on the server
         await asyncio.gather(
             self.local_server.start(),
             self.mqtt_client.subscribe("#"),
             self.websocket_client.connect(),
-            self.check_server_availability(),  # Start server availability check
+            self.continuously_check_server_availability(),  # Start ongoing availability check
         )
 
 

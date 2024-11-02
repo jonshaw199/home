@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "mptt",
     # Internal
-    "clients",
     "controllers",
     "core",
     "devices",

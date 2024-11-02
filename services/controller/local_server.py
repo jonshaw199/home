@@ -28,11 +28,14 @@ class LocalServer:
         app.router.add_get("/status/", self.status_handler)
 
         # WebSocket route
-        app.router.add_get("/ws/clients", self.websocket_handler)
+        app.router.add_get("/ws/controllers", self.websocket_handler)
 
     async def status_handler(self, request):
-        """Simple health check handler for the /api/ endpoint"""
-        return web.Response(status=200, text="API is reachable")
+        """Simple handler for the /status/ endpoint"""
+        return web.Response(
+            status=200,
+            text='{"status": "ok", "message": "Controller is up and running"}',
+        )
 
     async def websocket_handler(self, request):
         ws = web.WebSocketResponse()
@@ -44,7 +47,7 @@ class LocalServer:
         try:
             async for message in ws:
                 if message.type == web.WSMsgType.TEXT:
-                    await self.handle_ws_message(message.data)
+                    self.handle_ws_message(message.data)
                     await self.broadcast_ws(message.data)
                 elif message.type == web.WSMsgType.ERROR:
                     logging.error(

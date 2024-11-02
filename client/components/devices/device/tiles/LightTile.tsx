@@ -6,6 +6,7 @@ import { Octicons } from "@expo/vector-icons";
 import { lightSliceActions } from "@/store/slices/lightSlice";
 
 const ACTION_LIGHT_SET = "light__set";
+const MSG_SRC = process.env.EXPO_PUBLIC_MSG_SRC;
 
 const maxBrightness = 255;
 
@@ -24,6 +25,8 @@ export default function LightTile({ device }: LightTileProps) {
   const handleLongPress = () => {
     if (light) {
       const message = {
+        src: MSG_SRC,
+        dest: `lights/${device.id}/command`,
         action: ACTION_LIGHT_SET,
         body: {
           device_id: device.id,

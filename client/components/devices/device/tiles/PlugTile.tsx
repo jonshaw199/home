@@ -6,6 +6,7 @@ import { plugSliceActions } from "@/store/slices/plugSlice";
 import { Octicons } from "@expo/vector-icons";
 
 const HANDLER_SHELLY_PLUG = "plug__set";
+const MSG_SRC = process.env.EXPO_PUBLIC_MSG_SRC;
 
 export type PlugTileProps = BaseTileProps;
 
@@ -22,6 +23,8 @@ export default function PlugTile({ device }: PlugTileProps) {
   const handleLongPress = () => {
     if (plug) {
       const message = {
+        src: MSG_SRC,
+        dest: `plugs/${device.id}/command`,
         action: HANDLER_SHELLY_PLUG,
         body: {
           device_id: device.id,
