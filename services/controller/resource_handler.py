@@ -14,6 +14,13 @@ class ResourceHandler:
         self.get_token = token_getter
         self.message_queue = message_queue  # Stub for future message broker
 
+    async def get_common_headers(self):
+        token = await self.get_token()
+        return {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
     async def fetch_online(self, resource_type, resource_id=None):
         logging.info(f"GET {resource_type}: {resource_id or 'All'}")
 
@@ -21,14 +28,10 @@ class ResourceHandler:
         url = f"{self.server_url}{API_PREFIX}/{resource_type}"
         if resource_id:
             url += f"/{resource_id}"
-        token = await self.get_token()
-        headers = {
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json",
-        }
+        common_headers = await self.get_common_headers()
 
         async with ClientSession() as session:
-            async with session.get(url, headers=headers) as response:
+            async with session.get(url, headers=common_headers) as response:
                 if response.status == 200:
                     data = await response.json()
                     logging.info(f"Response data: {data}")
@@ -59,14 +62,10 @@ class ResourceHandler:
 
         # Proxy POST request to the Django server
         url = f"{self.server_url}{API_PREFIX}/{resource_type}"
-        token = await self.get_token()
-        headers = {
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json",
-        }
+        common_headers = await self.get_common_headers()
 
         async with ClientSession() as session:
-            async with session.post(url, headers=headers, json=data) as response:
+            async with session.post(url, headers=common_headers, json=data) as response:
                 if response.status == 201:
                     created_resource = await response.json()
                     self.cache.add(resource_type, created_resource)
@@ -94,14 +93,10 @@ class ResourceHandler:
 
         # Proxy PUT request to the Django server
         url = f"{self.server_url}{API_PREFIX}/{resource_type}/{resource_id}"
-        token = await self.get_token()
-        headers = {
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json",
-        }
+        common_headers = await self.get_common_headers()
 
         async with ClientSession() as session:
-            async with session.put(url, headers=headers, json=data) as response:
+            async with session.put(url, headers=common_headers, json=data) as response:
                 if response.status == 200:
                     updated_resource = await response.json()
                     self.cache.update(resource_type, resource_id, updated_resource)
@@ -131,14 +126,10 @@ class ResourceHandler:
 
         # Proxy DELETE request to the Django server
         url = f"{self.server_url}{API_PREFIX}/{resource_type}/{resource_id}"
-        token = await self.get_token()
-        headers = {
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json",
-        }
+        common_headers = await self.get_common_headers()
 
         async with ClientSession() as session:
-            async with session.delete(url, headers=headers) as response:
+            async with session.delete(url, headers=common_headers) as response:
                 if response.status == 204:
                     self.cache.delete(resource_type, resource_id)
                 else:
