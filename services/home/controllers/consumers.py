@@ -3,6 +3,7 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
+from core.models import Profile
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
@@ -85,11 +86,7 @@ class ControllerConsumer(JsonWebsocketConsumer):
 
     def broadcast_to_location_group(self, content):
         src = content.get("src")
-        src_type = content.get("src_type")
-
-        if not src or not src_type:
-            logging.warning("Missing 'src' or 'src_type'; unable to broadcast.")
-            return
+        src_type = content.get("src_type", "device")
 
         group_names = set()
 
