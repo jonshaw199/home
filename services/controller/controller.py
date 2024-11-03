@@ -22,6 +22,7 @@ logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
 load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
+DEVICE_ID = os.getenv("DEVICE_ID")
 
 HEALTH_CHECK_URL = f"http://{HOME_HOST}:{HOME_PORT}/api/"
 HEALTH_CHECK_INTERVAL_S = 60
@@ -61,7 +62,8 @@ class Controller:
 
         try:
             outMsg = {
-                "src": routine.get("name"),
+                "src": DEVICE_ID,
+                "src_type": "device",
                 "dest": eval_data.get("dest"),
                 "action": action,
                 "body": eval_data.get("body"),
@@ -228,7 +230,7 @@ class Controller:
     async def handle_online_startup(self):
         logging.info("Handling online startup")
         # For now, same logic as back online
-        self.handle_back_online()
+        await self.handle_back_online()
 
     async def handle_back_offline(self):
         logging.info("Back offline!")
