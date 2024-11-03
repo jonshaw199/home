@@ -17,7 +17,7 @@ class ResourceHandler:
     async def get_common_headers(self):
         token = await self.get_token()
         return {
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"Token {token}",
             "Content-Type": "application/json",
         }
 
