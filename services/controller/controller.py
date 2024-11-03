@@ -24,7 +24,7 @@ HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 DEVICE_ID = os.getenv("DEVICE_ID")
 
-HEALTH_CHECK_URL = f"http://{HOME_HOST}:{HOME_PORT}/api/"
+HEALTH_CHECK_URL = f"http://{HOME_HOST}:{HOME_PORT}/status/"
 HEALTH_CHECK_INTERVAL_S = 60
 
 # TODO: When status message (for example) received via websocket, send PUT request to update
