@@ -57,43 +57,46 @@ class RoutineManager:
             routine["run_count"] += 1
 
     async def schedule_routine(self, routine, trigger_time):
-        """Schedules the routine at the specified trigger_time, respecting the repeat_interval if provided."""
+        """Schedules the routine at the specified trigger_time, respecting repeat_interval if provided."""
         while True:
             now = datetime.datetime.now()
-            delay = (trigger_time - now).total_seconds()
-            logging.info(f"Delay: {delay}")
-            if delay > 0:
-                logging.info(
-                    f"Scheduling routine '{routine['name']}' in {delay} seconds."
-                )
-                await asyncio.sleep(delay)
-            else:
+            if trigger_time <= now:
                 logging.info(f"Executing routine '{routine['name']} immediately")
+                await self.handle_action(routine)
 
-            await self.handle_action(routine)
+                # Calculate next trigger time based on repeat interval
+                repeat_interval = routine.get("repeat_interval")
+                if repeat_interval:
+                    try:
+                        interval_parts = list(map(int, repeat_interval.split(":")))
+                        interval_delta = datetime.timedelta(
+                            hours=interval_parts[0],
+                            minutes=interval_parts[1],
+                            seconds=interval_parts[2],
+                        )
+                        trigger_time += interval_delta
 
-            # Handle repeat_interval
-            repeat_interval = routine.get("repeat_interval")
-            if repeat_interval:
-                try:
-                    interval_parts = list(map(int, repeat_interval.split(":")))
-                    interval_delta = datetime.timedelta(
-                        hours=interval_parts[0],
-                        minutes=interval_parts[1],
-                        seconds=interval_parts[2],
-                    )
-                    trigger_time += interval_delta
-                    logging.info(
-                        f"Routine '{routine['name']}' will repeat after {interval_delta}"
-                    )
-                except Exception as e:
-                    logging.error(f"Invalid repeat interval: {repeat_interval}, {e}")
-                    break  # Stop repeating if the interval is invalid
-            else:
-                logging.info(
-                    f"Routine '{routine['name']}' has no repeat interval; routine complete."
-                )
-                break  # Exit loop if no repeat interval
+                        # Skip missed intervals if the system was offline for a long time
+                        while trigger_time < now:
+                            trigger_time += interval_delta
+
+                        logging.info(
+                            f"Next trigger for '{routine['name']}' at {trigger_time}"
+                        )
+                    except Exception as e:
+                        logging.error(
+                            f"Invalid repeat interval: {repeat_interval}, {e}"
+                        )
+                        break
+                else:
+                    break  # Exit loop if no repeat interval
+
+            # Calculate delay for next execution
+            delay = (trigger_time - now).total_seconds()
+            logging.info(
+                f"Scheduling next execution of '{routine['name']}' in {delay} seconds"
+            )
+            await asyncio.sleep(delay)
 
     async def register_routines(self, routines, actions):
         logging.info("Registering routines")
