@@ -62,7 +62,12 @@ class LocalServer:
 
     async def broadcast_ws(self, message):
         for client in self.clients:
-            await client.send_str(message)
+            try:
+                await client.send_str(message)
+            except Exception as e:
+                logging.error(
+                    f"Error sending message to client; message: {message}; client: {client}; error: {e}"
+                )
 
     async def start(self):
         app = web.Application()

@@ -42,15 +42,18 @@ class RoutineManager:
                 if action_id in self.actions:
                     action = self.actions[action_id]
                     action_type = action["type"]
-                    params = eval(
-                        action.get("eval_params") or "{}"
-                    )  # Handle None and empty string
+                    try:
+                        params = eval(
+                            action.get("eval_params") or "{}"
+                        )  # Handle None and empty string
 
-                    logging.info(
-                        f"Sending routine message for action {action_type} with params: {params}"
-                    )
+                        logging.info(
+                            f"Sending routine message for action {action_type} with params: {params}"
+                        )
 
-                    self.routine_msg_handler(routine, action_type, params)
+                        self.routine_msg_handler(routine, action_type, params)
+                    except Exception as e:
+                        logging.error(f"Error handling action: {e}")
                 else:
                     logging.error(f"Action UUID not found: {action_id}")
 

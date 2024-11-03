@@ -8,8 +8,11 @@ from aiohttp import web, ClientSession
 from dotenv import load_dotenv
 from websocket_client import WebsocketClient
 from mqtt_client import AsyncMqttClient
-from websocket_transformer import WebsocketTransformerRegistry
-from mqtt_transformer import MqttTransformerRegistry
+from websocket_transformer import (
+    WebsocketTransformerRegistry,
+    register_websocket_transformers,
+)
+from mqtt_transformer import MqttTransformerRegistry, register_mqtt_transformers
 from auth import Auth
 from routine_manager import RoutineManager
 from cache import Cache
@@ -17,7 +20,7 @@ from resource_handler import ResourceHandler
 from local_server import LocalServer
 from message_handler import MessageHandler
 
-logging.basicConfig(level=logging.DEBUG)  # Ensure this is set at the beginning
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
@@ -27,8 +30,6 @@ DEVICE_ID = os.getenv("DEVICE_ID")
 HEALTH_CHECK_URL = f"http://{HOME_HOST}:{HOME_PORT}/status/"
 HEALTH_CHECK_INTERVAL_S = 60
 
-# TODO: When status message (for example) received via websocket, send PUT request to update
-
 
 def transform_index_response(items):
     return {item["uuid"]: item for item in items}
@@ -36,6 +37,9 @@ def transform_index_response(items):
 
 class Controller:
     def __init__(self):
+        self.online = False
+        self.token = None
+
         self.auth = Auth()
         self.websocket_client = WebsocketClient(
             self.handle_ws_client_msg, self.auth.get_token
@@ -51,11 +55,31 @@ class Controller:
         self.routines = {}
         self.actions = {}
         self.local_server = LocalServer(
-            handle_http_request=self.handle_http_request,
+            handle_http_request=self.handle_local_server_http_request,
             handle_ws_message=self.handle_ws_server_msg,
         )
-        self.online = False
-        self.token = None
+
+        self.websocket_transformer = WebsocketTransformerRegistry(self.resource_handler)
+        register_websocket_transformers(self.websocket_transformer)
+        self.mqtt_transformer = MqttTransformerRegistry(self.resource_handler)
+        register_mqtt_transformers(self.mqtt_transformer)
+
+    async def handle_local_server_http_request(self, request):
+        logging.info("Handling local server HTTP request")
+
+        try:
+            path = request.path
+            method = request.method
+            data = await request.json() if method in ["POST", "PUT", "PATCH"] else None
+
+            logging.info(f"Request path: {path}; method: {method}; data: {data}")
+
+            response = await self.resource_handler.handle_request(
+                method, path, data, self.online
+            )
+            return web.json_response(response)
+        except Exception as e:
+            logging.error(f"Error handling local server HTTP request: {e}")
 
     def handle_routine_msg(self, routine, action, eval_data):
         logging.info("Handle routine message")
@@ -83,8 +107,8 @@ class Controller:
                 asyncio.create_task(self.mqtt_client.publish(topic, msg))
 
             # Transform and send to mqtt broker
-            WebsocketTransformerRegistry.transform(
-                outMsgStr, handle_transformed_msg, devices=self.devices
+            asyncio.create_task(
+                self.websocket_transformer.transform(outMsgStr, handle_transformed_msg)
             )
         except Exception as e:
             logging.error(f"Error handling routine message: {e}")
@@ -109,8 +133,8 @@ class Controller:
                 asyncio.create_task(self.mqtt_client.publish(topic, msg))
 
             # Transform and send to mqtt broker
-            WebsocketTransformerRegistry.transform(
-                message, handle_transformed_msg, devices=self.devices
+            asyncio.create_task(
+                self.websocket_transformer.transform(message, handle_transformed_msg)
             )
         except Exception as e:
             logging.error(f"Error handling websocket message: {e}")
@@ -134,8 +158,8 @@ class Controller:
                 asyncio.create_task(self.mqtt_client.publish(topic, msg))
 
             # Transform and send to mqtt broker
-            WebsocketTransformerRegistry.transform(
-                message, handle_transformed_msg, devices=self.devices
+            asyncio.create_task(
+                self.websocket_transformer.transform(message, handle_transformed_msg)
             )
         except Exception as e:
             logging.error(f"Error handling websocket message: {e}")
@@ -152,38 +176,23 @@ class Controller:
                 asyncio.create_task(self.routine_manager.handle_message(msg))
 
             # Transform and send to websocket server, websocket clients,and routine manager for triggering related routines, if any
-            MqttTransformerRegistry.transform(
-                message, topic, handle_transformed_msg, devices=self.devices
+            asyncio.create_task(
+                self.mqtt_transformer.transform(message, topic, handle_transformed_msg)
             )
         except Exception as e:
             logging.error(f"Error handling MQTT message: {e}")
 
-    async def handle_http_request(self, request):
-        path = request.path
-        method = request.method
-        data = await request.json() if method in ["POST", "PUT", "PATCH"] else None
-
-        logging.info(
-            f"Handling HTTP request; path: {path}; method: {method}; data: {data}"
-        )
-
-        # Proxy or cache the request through the request handler
-        response_data = await self.resource_handler.handle_request(
-            method, path, data, self.online
-        )
-
-        return web.json_response(response_data)
-
-    async def initialize_resources(self):
-        devices = await self.resource_handler.fetch("devices", online=self.online)
-        routines = await self.resource_handler.fetch("routines", online=self.online)
-        actions = await self.resource_handler.fetch("actions", online=self.online)
-
-        self.devices = transform_index_response(devices)
-        self.routines = transform_index_response(routines)
-        self.actions = transform_index_response(actions)
-
-        await self.routine_manager.register_routines(self.routines, self.actions)
+    async def initialize_routines(self):
+        try:
+            routines = await self.resource_handler.fetch("routines", online=self.online)
+            transformed_routines = transform_index_response(routines)
+            actions = await self.resource_handler.fetch("actions", online=self.online)
+            transformed_actions = transform_index_response(actions)
+            await self.routine_manager.register_routines(
+                transformed_routines, transformed_actions
+            )
+        except Exception as e:
+            logging.error(f"Error initializing routines: {e}")
 
     async def check_server_availability(self):
         logging.info("Checking remote server availability")
@@ -196,6 +205,7 @@ class Controller:
         except Exception as e:
             logging.error(f"Server check failed: {e}")
             self.online = False
+        return self.online
 
     async def continuously_check_server_availability(self):
         """Background task to check if the Django server is reachable."""
@@ -224,8 +234,11 @@ class Controller:
 
     async def handle_back_online(self):
         logging.info("Back online!")
-        self.token = await self.auth.get_token()
-        await self.initialize_resources()
+        try:
+            self.token = await self.auth.get_token()
+            await self.initialize_routines()
+        except Exception as e:
+            logging.error(f"Error handling back online: {e}")
 
     async def handle_online_startup(self):
         logging.info("Handling online startup")

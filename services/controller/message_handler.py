@@ -71,6 +71,15 @@ class MessageHandler:
             logging.error(f"An error occurred while handling the message: {e}")
 
 
+async def get_device_resource(resource_handler, device_id):
+    """Fetches the full device resource, returning a dictionary with relevant UUIDs."""
+    response = await resource_handler.handle_request("GET", f"devices/{device_id}")
+    if response and isinstance(response, dict):
+        return response
+    logging.error(f"Failed to retrieve device resource for {device_id}")
+    return {}
+
+
 """
 body: {
     "device_id": string, // UUID
@@ -87,18 +96,27 @@ async def handle_light_set(self, message):
     body = message.get("body")
     device_id = body.get("device_id")
 
-    # Prepare the data for the PUT request, excluding None values
-    light_data = filter_none_values(
-        {
-            "brightness": body.get("brightness"),
-            "is_on": body.get("is_on"),
-            "color": body.get("color"),
-        }
-    )
+    # Fetch the full device resource to get the associated UUID
+    device = await get_device_resource(self.resource_handler, device_id)
+    light_id = device.get("light")
 
-    # Make a PUT request to update light settings
-    await self.resource_handler.handle_request("PUT", f"lights/{device_id}", light_data)
-    logging.info(f"Set light settings for device {device_id}")
+    if light_id:
+        # Prepare the data for the PUT request, excluding None values
+        light_data = filter_none_values(
+            {
+                "brightness": body.get("brightness"),
+                "is_on": body.get("is_on"),
+                "color": body.get("color"),
+            }
+        )
+
+        # Make a PUT request to update light settings
+        await self.resource_handler.handle_request(
+            "PUT", f"lights/{light_id}", light_data
+        )
+        logging.info(f"Set light settings for device {device_id}")
+    else:
+        logging.error(f"No light found for device {device_id}")
 
 
 """
@@ -115,12 +133,19 @@ async def handle_plug_set(self, message):
     body = message.get("body")
     device_id = body.get("device_id")
 
-    # Prepare data for the PUT request
-    plug_data = filter_none_values({"is_on": body.get("is_on")})
+    # Fetch the full device resource to get the associated UUID
+    device = await get_device_resource(self.resource_handler, device_id)
+    plug_id = device.get("plug")
 
-    # Make a PUT request to update plug settings
-    await self.resource_handler.handle_request("PUT", f"plugs/{device_id}", plug_data)
-    logging.info(f"Set plug status for device {device_id}")
+    if plug_id:
+        # Prepare data for the PUT request
+        plug_data = filter_none_values({"is_on": body.get("is_on")})
+
+        # Make a PUT request to update plug settings
+        await self.resource_handler.handle_request("PUT", f"plugs/{plug_id}", plug_data)
+        logging.info(f"Set plug status for device {device_id}")
+    else:
+        logging.error(f"Plug not found for device {device_id}")
 
 
 @register_handler(HANDLER_ENVIRONMENTAL_STATUS)
@@ -128,17 +153,25 @@ async def handle_environmental_status(self, message):
     """Handles updating the environmental sensor status."""
     body = message.get("body")
     src = body.get("src")
-    environmental_data = filter_none_values(
-        {
-            "temperature_c": body["body"].get("temperature_c"),
-            "humidity": body["body"].get("humidity"),
-        }
-    )
-    # Make a PUT request to update environmental sensor settings
-    await self.resource_handler.handle_request(
-        "PUT", f"environmentals/{src}/", environmental_data
-    )
-    logging.info(f"Updated environmental sensor for device {src}")
+
+    # Fetch the full device resource to get the associated UUID
+    device = await get_device_resource(self.resource_handler, src)
+    environmental_id = device.get("environmental")
+
+    if environmental_id:
+        environmental_data = filter_none_values(
+            {
+                "temperature_c": body["body"].get("temperature_c"),
+                "humidity": body["body"].get("humidity"),
+            }
+        )
+        # Make a PUT request to update environmental sensor settings
+        await self.resource_handler.handle_request(
+            "PUT", f"environmentals/{environmental_id}", environmental_data
+        )
+        logging.info(f"Updated environmental sensor for device {src}")
+    else:
+        logging.error(f"No environmental found for device {src}")
 
 
 @register_handler(HANDLER_DIAL_STATUS)
@@ -147,12 +180,20 @@ async def handle_dial_status(self, message):
     body = message.get("body")
     src = body.get("src")
 
-    # If future data updates are needed, add to this dictionary
-    dial_data = {}
+    # Fetch the full device resource to get the associated UUID
+    device = await get_device_resource(self.resource_handler, src)
+    dial_id = device.get("dial")
 
-    # Make a PUT request to update dial device status (currently a placeholder)
-    await self.resource_handler.handle_request("PUT", f"devices/{src}/", dial_data)
-    logging.info(f"Updated dial status for device {src}")
+    if dial_id:
+        # If future data updates are needed, add to this dictionary
+        dial_data = {}
+        # Make a PUT request to update dial device status (currently a placeholder)
+        await self.resource_handler.handle_request(
+            "PUT", f"devices/{dial_id}", dial_data
+        )
+        logging.info(f"Updated dial status for device {src}")
+    else:
+        logging.error(f"No dial found for device {src}")
 
 
 @register_handler(HANDLER_SYSTEM_STATUS)
@@ -160,19 +201,29 @@ async def handle_system_status(self, message):
     """Handles updating the system status."""
     body = message.get("body")
     src = body.get("src")
-    system_data = filter_none_values(
-        {
-            "cpu_usage": body["body"].get("cpu_usage"),
-            "cpu_temp": body["body"].get("cpu_temperature"),
-            "mem_usage": body["body"].get("memory_usage"),
-            "disk_usage": body["body"].get("disk_usage"),
-            "network_sent": body["body"].get("network_sent"),
-            "network_received": body["body"].get("network_received"),
-        }
-    )
-    # Make a PUT request to update system metrics
-    await self.resource_handler.handle_request("PUT", f"systems/{src}/", system_data)
-    logging.info(f"Updated system metrics for device {src}")
+
+    # Fetch the full device resource to get the associated UUID
+    device = await get_device_resource(self.resource_handler, src)
+    system_id = device.get("system")
+
+    if system_id:
+        system_data = filter_none_values(
+            {
+                "cpu_usage": body["body"].get("cpu_usage"),
+                "cpu_temp": body["body"].get("cpu_temperature"),
+                "mem_usage": body["body"].get("memory_usage"),
+                "disk_usage": body["body"].get("disk_usage"),
+                "network_sent": body["body"].get("network_sent"),
+                "network_received": body["body"].get("network_received"),
+            }
+        )
+        # Make a PUT request to update system metrics
+        await self.resource_handler.handle_request(
+            "PUT", f"systems/{system_id}", system_data
+        )
+        logging.info(f"Updated system metrics for device {src}")
+    else:
+        logging.error(f"No system found for device {src}")
 
 
 @register_handler(HANDLER_PLUG_STATUS)
@@ -180,8 +231,15 @@ async def handle_plug_status(self, message):
     """Handles updating the plug's on/off status."""
     body = message.get("body")
     src = body.get("src")
-    plug_data = filter_none_values({"is_on": body["body"].get("is_on")})
 
-    # Make a PUT request to update plug status
-    await self.resource_handler.handle_request("PUT", f"plugs/{src}/", plug_data)
-    logging.info(f"Updated plug status for device {src}")
+    # Fetch the full device resource to get the associated UUID
+    device = await get_device_resource(self.resource_handler, src)
+    plug_id = device.get("plug")
+
+    if plug_id:
+        plug_data = filter_none_values({"is_on": body["body"].get("is_on")})
+        # Make a PUT request to update plug status
+        await self.resource_handler.handle_request("PUT", f"plugs/{plug_id}", plug_data)
+        logging.info(f"Updated plug status for device {src}")
+    else:
+        logging.error(f"No plug found for device {src}")

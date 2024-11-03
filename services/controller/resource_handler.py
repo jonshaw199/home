@@ -151,7 +151,11 @@ class ResourceHandler:
             return await self.delete_online(resource_type, resource_id)
         return await self.delete_offline(resource_type, resource_id)
 
-    async def handle_request(self, method, path, data=None, online=True):
+    async def _handle_request(self, method, path, data=None, online=True):
+        logging.info(
+            f"Handling HTTP request; path: {path}; method: {method}; data: {data}"
+        )
+
         # Determine resource type and ID from the path (basic parsing, adjust as needed)
         path_parts = path.removeprefix(API_PREFIX).strip("/").split("/")
         resource_type = path_parts[0]
@@ -167,3 +171,9 @@ class ResourceHandler:
             return await self.delete(resource_type, resource_id, online)
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
+
+    async def handle_request(self, method, path, data=None, online=True):
+        try:
+            return await self._handle_request(method, path, data, online)
+        except Exception as e:
+            logging.error(f"Error handling request: {e}")
