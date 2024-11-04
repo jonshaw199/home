@@ -7,25 +7,24 @@ const deviceSlice = createModelSlice<Device>(
   "devices",
   (builder) => {
     builder.addCase(websocketMsgReceivedAction, (state, { payload }) => {
-      // If this is a `system__status` message, update state
-      try {
-        const json = JSON.parse(payload || "");
-        if ("src" in json && json.src in state.data) {
-          console.info("Updating state for device ID:", json.src);
-          return {
-            ...state,
-            data: {
-              ...state.data,
-              [json.src]: {
-                ...state.data[json.src],
-                lastStatusUpdate: Date(),
-              },
-            },
-          };
-        }
-      } catch (e) {
-        console.error(`Error handling websocket message: ${e}`);
-      }
+      // try {
+      //   const json = JSON.parse(payload || "");
+      //   if ("src" in json && json.src in state.data) {
+      //     console.info("Updating state for device ID:", json.src);
+      //     return {
+      //       ...state,
+      //       data: {
+      //         ...state.data,
+      //         [json.src]: {
+      //           ...state.data[json.src],
+      //           lastStatusUpdate: Date(),
+      //         },
+      //       },
+      //     };
+      //   }
+      // } catch (e) {
+      //   console.error(`Error handling websocket message: ${e}`);
+      // }
 
       return state;
     });

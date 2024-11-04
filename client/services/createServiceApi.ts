@@ -19,7 +19,7 @@ export type ServiceApi<T extends Identifiable> = {
     data,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     data: Partial<T>;
   }) => Promise<T>;
   createMany: ({
@@ -28,7 +28,7 @@ export type ServiceApi<T extends Identifiable> = {
     data,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     data: Partial<T>[];
   }) => Promise<{ [key: ID]: T }>;
   readOne: ({
@@ -46,7 +46,7 @@ export type ServiceApi<T extends Identifiable> = {
     queryParams,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     queryParams?: QueryParams;
   }) => Promise<{ [key: ID]: T }>;
   updateOne: ({
@@ -56,7 +56,7 @@ export type ServiceApi<T extends Identifiable> = {
     data,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     id: ID;
     data: Partial<T>;
   }) => Promise<T>;
@@ -66,7 +66,7 @@ export type ServiceApi<T extends Identifiable> = {
     data,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     data: { id: ID; payload: Partial<T> }[];
   }) => Promise<{ [key: ID]: T }>;
   deleteOne: ({
@@ -75,7 +75,7 @@ export type ServiceApi<T extends Identifiable> = {
     id,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     id: ID;
   }) => Promise<ID>;
   deleteMany: ({
@@ -84,7 +84,7 @@ export type ServiceApi<T extends Identifiable> = {
     ids,
   }: {
     baseUrl: string;
-    token: string | null;
+    token?: string | null;
     ids: ID[];
   }) => Promise<void>;
 };

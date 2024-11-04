@@ -4,15 +4,16 @@ import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { plugSliceActions } from "@/store/slices/plugSlice";
 import { Octicons } from "@expo/vector-icons";
+import { selectSession } from "@/store/slices/sessionSlice";
 
 const HANDLER_SHELLY_PLUG = "plug__set";
-const MSG_SRC = process.env.EXPO_PUBLIC_MSG_SRC;
 
 export type PlugTileProps = BaseTileProps;
 
 export default function PlugTile({ device }: PlugTileProps) {
   const dispatch = useAppDispatch();
   const plugs = useAppSelector((state) => state.plugs.data);
+  const { profile } = useAppSelector(selectSession);
 
   const plug = useMemo(() => {
     if (device.plug && device.plug in plugs) {
@@ -23,7 +24,8 @@ export default function PlugTile({ device }: PlugTileProps) {
   const handleLongPress = () => {
     if (plug) {
       const message = {
-        src: MSG_SRC,
+        src: profile,
+        src_type: "profile",
         dest: `plugs/${device.id}/command`,
         action: HANDLER_SHELLY_PLUG,
         body: {

@@ -19,21 +19,24 @@ interface SignInProps {
 }
 
 export interface SessionState {
-  session: string | null;
+  data: {
+    token?: string | null;
+    profile?: string | null;
+  };
   isLoading: boolean;
   error: string | null;
 }
 
 // Initial state for the slice
 const initialState: SessionState = {
-  session: null,
+  data: {},
   isLoading: false,
   error: null,
 };
 
 // Thunks
 export const signIn = createAsyncThunk<
-  string,
+  SessionState["data"],
   SignInProps,
   { state: RootState }
 >(
@@ -43,10 +46,10 @@ export const signIn = createAsyncThunk<
     if (!url) throw new Error("Base URL not set");
 
     try {
-      const token = await getToken({ username, password, url });
-      await setStorageItemAsync(storageKey, token);
-      dispatch(setSession(token)); // Update session in the Redux state
-      return token;
+      const data = await getToken({ username, password, url });
+      await setStorageItemAsync(storageKey, JSON.stringify(data));
+      dispatch(setSession(data)); // Update session in the Redux state
+      return data;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -66,17 +69,20 @@ export const loadFromStorage = createAsyncThunk<
   void,
   { state: RootState }
 >("session/loadFromStorage", async (_, { dispatch }) => {
-  const token = await getStorageItemAsync(storageKey);
-  if (token) {
-    const valid = await validateToken(token);
-    if (valid) {
-      dispatch(setSession(token));
-      return token;
-    } else {
-      await setStorageItemAsync(storageKey, null);
+  const data = await getStorageItemAsync(storageKey);
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      const valid = await validateToken(parsed?.token);
+      if (valid) {
+        dispatch(setSession(parsed));
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Error loading auth token from storage:", e);
     }
   }
-  return null;
+  return {};
 });
 
 // Redux slice
@@ -84,11 +90,11 @@ const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
-    setSession: (state, action: PayloadAction<string | null>) => {
-      state.session = action.payload;
+    setSession: (state, action: PayloadAction<SessionState["data"]>) => {
+      state.data = action.payload;
     },
     clearSession: (state) => {
-      state.session = null;
+      state.data = {};
     },
   },
   extraReducers: (builder) => {
@@ -99,20 +105,21 @@ const sessionSlice = createSlice({
       })
       .addCase(signIn.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.session = action.payload;
+        state.data = action.payload;
       })
       .addCase(signIn.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
       .addCase(signOut.fulfilled, (state) => {
-        state.session = null;
+        state.data = {};
         state.isLoading = false;
+        setStorageItemAsync(storageKey, null);
       })
       // Experimental: log out on error
       .addCase(WS_ERROR, (state) => {
         console.warn("Logging out due to websocket error");
-        state.session = null;
+        state.data = {};
         state.isLoading = false;
         setStorageItemAsync(storageKey, null);
       });
@@ -123,7 +130,7 @@ const sessionSlice = createSlice({
 export const { setSession, clearSession } = sessionSlice.actions;
 
 // Selectors
-export const selectSession = (state: RootState) => state.session.session;
+export const selectSession = (state: RootState) => state.session.data;
 export const selectIsLoading = (state: RootState) => state.session.isLoading;
 export const selectError = (state: RootState) => state.session.error;
 

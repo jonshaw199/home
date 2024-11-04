@@ -68,6 +68,7 @@ export enum ActionType {
   STATUS_ENVIRONMENTAL = "environmental__status",
   STATUS_PLUG = "plug__status",
   STATUS_LIGHT = "light__status",
+  SET_PLUG = "plug__set",
 }
 
 export interface Routine extends Identifiable {

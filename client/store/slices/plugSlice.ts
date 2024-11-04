@@ -4,25 +4,47 @@ import { websocketMsgReceivedAction } from "@/ws/websocketActions";
 
 const plugSlice = createModelSlice<Plug>("plugs", "plugs", (builder) => {
   builder.addCase(websocketMsgReceivedAction, (state, { payload }) => {
-    // If this is a `plug__status` message, update state
     try {
       const json = JSON.parse(payload || "");
-      if (json.action === ActionType.STATUS_PLUG) {
-        const plug = Object.values(state.data).find(
-          ({ device }) => device === json.src
-        );
-        if (plug) {
-          console.info("Updating state for plug ID:", plug.id);
-          return {
-            ...state,
-            data: {
-              ...state.data,
-              [plug.id]: {
-                ...state.data[plug.id],
-                isOn: json.body.is_on,
+
+      switch (json.action) {
+        case ActionType.STATUS_PLUG: {
+          const plug = Object.values(state.data).find(
+            ({ device }) => device === json.src
+          );
+          if (plug) {
+            console.info("Updating state for plug ID:", plug.id);
+            return {
+              ...state,
+              data: {
+                ...state.data,
+                [plug.id]: {
+                  ...state.data[plug.id],
+                  isOn: json.body.is_on,
+                },
               },
-            },
-          };
+            };
+          }
+          break;
+        }
+        case ActionType.SET_PLUG: {
+          const plug = Object.values(state.data).find(
+            ({ device }) => device === json.body.device_id
+          );
+          if (plug) {
+            console.info("Updating state for plug:", plug.id);
+            return {
+              ...state,
+              data: {
+                ...state.data,
+                [plug.id]: {
+                  ...state.data[plug.id],
+                  isOn: json.body.is_on,
+                },
+              },
+            };
+          }
+          break;
         }
       }
     } catch (e) {

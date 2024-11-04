@@ -4,9 +4,9 @@ import { useMemo } from "react";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { Octicons } from "@expo/vector-icons";
 import { lightSliceActions } from "@/store/slices/lightSlice";
+import { selectSession } from "@/store/slices/sessionSlice";
 
 const ACTION_LIGHT_SET = "light__set";
-const MSG_SRC = process.env.EXPO_PUBLIC_MSG_SRC;
 
 const maxBrightness = 255;
 
@@ -15,6 +15,7 @@ export type LightTileProps = BaseTileProps;
 export default function LightTile({ device }: LightTileProps) {
   const dispatch = useAppDispatch();
   const lights = useAppSelector((state) => state.lights.data); // TODO
+  const { profile } = useAppSelector(selectSession);
 
   const light = useMemo(() => {
     if (device.light && device.light in lights) {
@@ -25,7 +26,8 @@ export default function LightTile({ device }: LightTileProps) {
   const handleLongPress = () => {
     if (light) {
       const message = {
-        src: MSG_SRC,
+        src: profile,
+        src_type: "profile",
         dest: `lights/${device.id}/command`,
         action: ACTION_LIGHT_SET,
         body: {

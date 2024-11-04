@@ -2,12 +2,11 @@ import ColorPicker from "@/components/lib/ColorPicker";
 import { Device, Light } from "@/models";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { lightSliceActions } from "@/store/slices/lightSlice";
+import { selectSession } from "@/store/slices/sessionSlice";
 import { WS_SEND_MESSAGE } from "@/ws/websocketActionTypes";
 import { Button, Slider, Switch, Text } from "@rneui/themed";
 import { useMemo, useState } from "react";
 import { Linking, View } from "react-native";
-
-const MSG_SRC = process.env.EXPO_PUBLIC_MSG_SRC;
 
 const ACTION_LIGHT_SET = "light__set";
 
@@ -17,13 +16,15 @@ function _LightDetails({ device, light }: { device: Device; light: Light }) {
   const [brightness, setBrightness] = useState(light.brightness || 0);
 
   const dispatch = useAppDispatch();
+  const { profile } = useAppSelector(selectSession);
 
   const sendIsOnMsg = (isOn: boolean) => {
     if (!device.light)
       return console.error("Unable to send is_on message; light undefined");
 
     const message = {
-      src: MSG_SRC,
+      src: profile,
+      src_type: "profile",
       dest: `lights/${device.id}/command`,
       action: ACTION_LIGHT_SET,
       body: {
@@ -57,7 +58,8 @@ function _LightDetails({ device, light }: { device: Device; light: Light }) {
       return console.error("Unable to send color message; light undefined");
 
     const message = {
-      src: MSG_SRC,
+      src: profile,
+      src_type: "profile",
       dest: `lights/${device.id}/command`,
       action: ACTION_LIGHT_SET,
       body: {
@@ -93,7 +95,8 @@ function _LightDetails({ device, light }: { device: Device; light: Light }) {
       );
 
     const message = {
-      src: MSG_SRC,
+      src: profile,
+      src_type: "profile",
       dest: `lights/${device.id}/command`,
       action: ACTION_LIGHT_SET,
       body: {

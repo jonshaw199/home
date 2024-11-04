@@ -53,7 +53,7 @@ export function createModelSlice<T extends Identifiable>(
     const api = extra.serviceApis[apiKey];
     return api.readAll({
       baseUrl: url,
-      token: session.session,
+      token: session.data.token,
       queryParams,
     });
   });
@@ -91,7 +91,7 @@ export function createModelSlice<T extends Identifiable>(
     const api = extra.serviceApis[apiKey];
     return api.createOne({
       baseUrl: url,
-      token: session.session,
+      token: session.data.token,
       data,
     });
   });
@@ -112,7 +112,7 @@ export function createModelSlice<T extends Identifiable>(
     const api = extra.serviceApis[apiKey];
     return api.updateOne({
       baseUrl: url,
-      token: session.session,
+      token: session.data.token,
       id,
       data,
     });
@@ -131,7 +131,7 @@ export function createModelSlice<T extends Identifiable>(
     const url = selectApiUrl(getState());
     if (!url) throw "URL not defined; unable to make request";
     const api = extra.serviceApis[apiKey];
-    return api.deleteOne({ baseUrl: url, token: session.session, id });
+    return api.deleteOne({ baseUrl: url, token: session.data.token, id });
   });
 
   // Create the slice
