@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
@@ -172,10 +173,20 @@ class RoutineManager:
                         f"Registered routine '{routine['name']}' for action type '{action_type}'"
                     )
 
-    async def handle_message(self, action_type):
+    async def handle_message(self, message):
         """Handles incoming messages by looking up routines registered for the given action type."""
-        if action_type in self.action_type_map:
-            for routine in self.action_type_map[action_type]:
-                await self.handle_action(routine)
-        else:
-            logging.info(f"No routines registered for action type '{action_type}'")
+        try:
+            # Parse JSON data and extract action
+            data = json.loads(message)
+            action_type = data.get("action")
+            if action_type in self.action_type_map:
+                routines = self.action_type_map[action_type]
+                logging.info(
+                    f"Handling {len(routines)} routines for action {action_type}"
+                )
+                for routine in routines:
+                    await self.handle_action(routine)
+            else:
+                logging.info(f"No routines registered for action type '{action_type}'")
+        except Exception as e:
+            logging.error(f"Error handling message: {e}")
