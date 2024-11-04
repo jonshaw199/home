@@ -2,6 +2,9 @@ from django.contrib.auth.models import User, Group
 from core.models import Location, Profile
 from rest_framework import permissions, viewsets
 from django.http import JsonResponse
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 
 from core.serializers import (
     UserSerializer,
@@ -48,3 +51,11 @@ class LocationViewSet(BaseUUIDViewSet):
 
 def status_view(request):
     return JsonResponse({"status": "ok", "message": "Server is up and running"})
+
+
+class TokenAuthWithProfile(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data["token"])
+        profile = Profile.objects.get(user=token.user)
+        return Response({"token": token.key, "profile": profile.uuid})

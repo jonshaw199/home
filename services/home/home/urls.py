@@ -18,7 +18,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
-from rest_framework.authtoken import views
 
 from core.views import (
     UserViewSet,
@@ -26,6 +25,7 @@ from core.views import (
     LocationViewSet,
     ProfileViewSet,
     status_view,
+    TokenAuthWithProfile,
 )
 from devices.views import (
     DeviceViewSet,
@@ -54,7 +54,7 @@ router.register(r"actions", ActionViewSet)
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest-framework")),
-    path("api-token-auth/", views.obtain_auth_token),
+    path("api-token-auth/", TokenAuthWithProfile.as_view(), name="api-token-auth"),
     path("admin/", admin.site.urls),
     path("status/", status_view, name="status"),
 ]

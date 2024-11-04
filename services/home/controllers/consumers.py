@@ -99,16 +99,18 @@ class ControllerConsumer(JsonWebsocketConsumer):
                 else:
                     logging.warning(f"Location ID not found for device ID: {src}")
 
-            elif src_type == "user":
-                # Retrieve all locations for the user's profile
-                user_profile = Profile.objects.filter(user__uuid=src).prefetch_related(
-                    "locations"
+            elif src_type == "profile":
+                # Retrieve the profile based on the UUID
+                profile = (
+                    Profile.objects.filter(uuid=src)
+                    .prefetch_related("locations")
+                    .first()
                 )
-                if user_profile.exists():
-                    for location in user_profile.first().locations.all():
+                if profile:
+                    for location in profile.locations.all():
                         group_names.add(f"location_{location.id}_group")
                 else:
-                    logging.warning(f"No locations found for user ID: {src}")
+                    logging.warning(f"No profile found for ID: {src}")
 
         except Exception as e:
             logging.error(f"Error querying for src {src} of type {src_type}: {e}")
