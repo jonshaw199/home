@@ -8,11 +8,16 @@ API_PREFIX = os.getenv("API_PREFIX", "")
 
 
 class ResourceHandler:
-    def __init__(self, cache, server_url, token_getter=None, message_queue=None):
+    def __init__(
+        self, cache, server_url, is_online_getter, token_getter, message_queue=None
+    ):
         self.cache = cache
         self.server_url = server_url
+        self.get_is_online = is_online_getter
         self.get_token = token_getter
-        self.message_queue = message_queue  # Stub for future message broker
+        self.message_queue = (
+            message_queue  # Stub for future message broker; TODO: probably remove this
+        )
 
     async def get_common_headers(self):
         token = await self.get_token()
@@ -52,8 +57,8 @@ class ResourceHandler:
 
         return self.cache.get(resource_type, resource_id)
 
-    async def fetch(self, resource_type, resource_id=None, online=True):
-        if online:
+    async def fetch(self, resource_type, resource_id=None):
+        if self.get_is_online():
             return await self.fetch_online(resource_type, resource_id)
         return await self.fetch_offline(resource_type, resource_id)
 
@@ -83,8 +88,8 @@ class ResourceHandler:
         if self.message_queue:
             self.message_queue.add_to_queue("POST", resource_type, data)
 
-    async def post(self, resource_type, data, online=True):
-        if online:
+    async def post(self, resource_type, data):
+        if self.get_is_online():
             return await self.post_online(resource_type, data)
         return await self.post_offline(resource_type, data)
 
@@ -116,8 +121,8 @@ class ResourceHandler:
         if self.message_queue:
             self.message_queue.add_to_queue("PUT", resource_type, resource_id, data)
 
-    async def put(self, resource_type, resource_id, data, online=True):
-        if online:
+    async def put(self, resource_type, resource_id, data):
+        if self.get_is_online():
             return await self.put_online(resource_type, resource_id, data)
         return await self.put_offline(resource_type, resource_id, data)
 
@@ -151,7 +156,7 @@ class ResourceHandler:
             return await self.delete_online(resource_type, resource_id)
         return await self.delete_offline(resource_type, resource_id)
 
-    async def _handle_request(self, method, path, data=None, online=True):
+    async def _handle_request(self, method, path, data=None):
         logging.info(
             f"Handling HTTP request; path: {path}; method: {method}; data: {data}"
         )
@@ -162,18 +167,18 @@ class ResourceHandler:
         resource_id = path_parts[1] if len(path_parts) > 1 else None
 
         if method == "GET":
-            return await self.fetch(resource_type, resource_id, online)
+            return await self.fetch(resource_type, resource_id)
         elif method == "POST":
-            return await self.post(resource_type, data, online)
+            return await self.post(resource_type, data)
         elif method == "PUT":
-            return await self.put(resource_type, resource_id, data, online)
+            return await self.put(resource_type, resource_id, data)
         elif method == "DELETE":
-            return await self.delete(resource_type, resource_id, online)
+            return await self.delete(resource_type, resource_id)
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
 
-    async def handle_request(self, method, path, data=None, online=True):
+    async def handle_request(self, method, path, data=None):
         try:
-            return await self._handle_request(method, path, data, online)
+            return await self._handle_request(method, path, data)
         except Exception as e:
             logging.error(f"Error handling request: {e}")

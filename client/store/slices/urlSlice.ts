@@ -35,9 +35,11 @@ export const initializeBaseUrl = createAsyncThunk<void, void>(
     // Find the first reachable URL
     for (const url of urls) {
       const healthCheckUrl = `${url}${healthCheckPath}`;
+      console.info(`Trying URL: ${healthCheckUrl}`);
       try {
         const response = await fetch(healthCheckUrl);
         if (response.ok) {
+          console.info(`URL reachable: ${healthCheckUrl}`);
           dispatch(urlSliceActions.setBaseUrl(url));
           return;
         }
@@ -115,6 +117,8 @@ const urlSlice = createSlice({
 
 export const urlSliceActions = urlSlice.actions;
 export const urlSliceReducer = urlSlice.reducer;
+
+export const selectBaseUrl = (state: RootState) => state.url.baseUrl;
 
 export const selectApiUrl = (state: RootState) => {
   const baseUrl = state.url.baseUrl;

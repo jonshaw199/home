@@ -11,24 +11,28 @@ LOCAL_SERVER_PORT = os.getenv("LOCAL_SERVER_PORT")
 
 
 class LocalServer:
-    def __init__(self, handle_http_request, handle_ws_message):
-        self.handle_http_request = handle_http_request
+    def __init__(self, handle_api_request, handle_ws_message, handle_auth_request):
+        self.handle_api_request = handle_api_request
         self.handle_ws_message = handle_ws_message
+        self.handle_auth_request = handle_auth_request
         self.clients = set()  # Keep track of WebSocket clients
 
     # HTTP and WebSocket setup and route handling
     def setup_routes(self, app):
         # Define specific HTTP methods for /api route to avoid CORS conflict
-        app.router.add_route("GET", "/api/{tail:.*}", self.handle_http_request)
-        app.router.add_route("POST", "/api/{tail:.*}", self.handle_http_request)
-        app.router.add_route("PUT", "/api/{tail:.*}", self.handle_http_request)
-        app.router.add_route("DELETE", "/api/{tail:.*}", self.handle_http_request)
+        app.router.add_route("GET", "/api/{tail:.*}", self.handle_api_request)
+        app.router.add_route("POST", "/api/{tail:.*}", self.handle_api_request)
+        app.router.add_route("PUT", "/api/{tail:.*}", self.handle_api_request)
+        app.router.add_route("DELETE", "/api/{tail:.*}", self.handle_api_request)
 
         # Status
         app.router.add_get("/status/", self.status_handler)
 
         # WebSocket route
         app.router.add_get("/ws/controllers", self.websocket_handler)
+
+        # Auth
+        app.router.add_post("/api-token-auth/", self.handle_auth_request)
 
     async def status_handler(self, request):
         """Simple handler for the /status/ endpoint"""
@@ -81,6 +85,13 @@ class LocalServer:
                     allow_credentials=True,
                     expose_headers="*",
                     allow_headers="*",
+                    allow_methods=[
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "OPTIONS",
+                    ],  # Specify allowed methods
                 )
             },
         )

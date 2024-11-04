@@ -7,6 +7,7 @@ import {
   setStorageItemAsync,
 } from "@/hooks/useStorageState";
 import { WS_ERROR } from "@/ws/websocketActionTypes";
+import { selectBaseUrl } from "./urlSlice";
 
 const storageKey = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
 if (!storageKey) throw "EXPO_PUBLIC_SESSION_STORAGE_KEY must be defined";
@@ -37,9 +38,12 @@ export const signIn = createAsyncThunk<
   { state: RootState }
 >(
   "session/signIn",
-  async ({ username, password }, { rejectWithValue, dispatch }) => {
+  async ({ username, password }, { rejectWithValue, dispatch, getState }) => {
+    const url = selectBaseUrl(getState());
+    if (!url) throw new Error("Base URL not set");
+
     try {
-      const token = await getToken({ username, password });
+      const token = await getToken({ username, password, url });
       await setStorageItemAsync(storageKey, token);
       dispatch(setSession(token)); // Update session in the Redux state
       return token;

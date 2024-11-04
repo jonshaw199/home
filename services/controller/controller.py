@@ -48,15 +48,16 @@ class Controller:
         self.routine_manager = RoutineManager(self.handle_routine_msg)
         self.cache = Cache()
         self.resource_handler = ResourceHandler(
-            self.cache, f"http://{HOME_HOST}:{HOME_PORT}", self.auth.get_token
+            self.cache,
+            f"http://{HOME_HOST}:{HOME_PORT}",
+            self.get_is_online,
+            self.auth.get_token,
         )
         self.message_handler = MessageHandler(self.resource_handler)
-        self.devices = {}
-        self.routines = {}
-        self.actions = {}
         self.local_server = LocalServer(
-            handle_http_request=self.handle_local_server_http_request,
-            handle_ws_message=self.handle_ws_server_msg,
+            self.handle_local_server_api_request,
+            self.handle_ws_server_msg,
+            self.handle_local_server_auth_request,
         )
 
         self.websocket_transformer = WebsocketTransformerRegistry(self.resource_handler)
@@ -64,8 +65,39 @@ class Controller:
         self.mqtt_transformer = MqttTransformerRegistry(self.resource_handler)
         register_mqtt_transformers(self.mqtt_transformer)
 
-    async def handle_local_server_http_request(self, request):
-        logging.info("Handling local server HTTP request")
+    def get_is_online(self):
+        return self.online
+
+    async def handle_local_server_auth_request(self, request):
+        logging.info("Handling local server auth request")
+
+        if self.online:
+            try:
+                url = f"http://{HOME_HOST}:{HOME_PORT}{request.path}"
+                data = await request.json()
+
+                # Forward the request to the Django server
+                async with ClientSession() as session:
+                    async with session.post(url, json=data) as response:
+                        # Forward the response back to the client
+                        return web.Response(
+                            status=response.status,
+                            body=await response.read(),
+                            headers={
+                                key: value for key, value in response.headers.items()
+                            },
+                        )
+            except Exception as e:
+                logging.error(f"Error proxying request to Django server: {e}")
+                return web.Response(status=500, text="Internal Server Error")
+        else:
+            return web.Response(
+                status=200,
+                text='{"status": "ok", "message": "Controller is up and running"}',
+            )
+
+    async def handle_local_server_api_request(self, request):
+        logging.info("Handling local server api request")
 
         try:
             path = request.path
@@ -74,12 +106,10 @@ class Controller:
 
             logging.info(f"Request path: {path}; method: {method}; data: {data}")
 
-            response = await self.resource_handler.handle_request(
-                method, path, data, self.online
-            )
+            response = await self.resource_handler.handle_request(method, path, data)
             return web.json_response(response)
         except Exception as e:
-            logging.error(f"Error handling local server HTTP request: {e}")
+            logging.error(f"Error handling local server api request: {e}")
 
     def handle_routine_msg(self, routine, action, eval_data):
         logging.info("Handle routine message")
@@ -184,9 +214,9 @@ class Controller:
 
     async def initialize_routines(self):
         try:
-            routines = await self.resource_handler.fetch("routines", online=self.online)
+            routines = await self.resource_handler.fetch("routines")
             transformed_routines = transform_index_response(routines)
-            actions = await self.resource_handler.fetch("actions", online=self.online)
+            actions = await self.resource_handler.fetch("actions")
             transformed_actions = transform_index_response(actions)
             await self.routine_manager.register_routines(
                 transformed_routines, transformed_actions
