@@ -25,6 +25,6 @@ class Auth:
                 return parsed["token"]
 
     async def get_token(self):
-        if self.token:
-            return self.token
-        return await self._get_token()
+        if not self.token:
+            self.token = await self._get_token()
+        return self.token
