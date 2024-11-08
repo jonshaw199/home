@@ -57,8 +57,13 @@ class MessageHandler:
         try:
             # Parse JSON data and extract action
             data = json.loads(message)
-            action = data.get("action")
 
+            # Check if data is a dictionary with an "action" key
+            if not isinstance(data, dict) or "action" not in data:
+                logging.warning("Received a message without an 'action'; ignoring.")
+                return
+
+            action = data.get("action")
             if action in self.handlers:
                 # Dispatch to the appropriate handler
                 handler = self.handlers[action]

@@ -178,6 +178,12 @@ class RoutineManager:
         try:
             # Parse JSON data and extract action
             data = json.loads(message)
+
+            # Check if data is a dictionary with an "action" key
+            if not isinstance(data, dict) or "action" not in data:
+                logging.warning("Received a message without an 'action'; ignoring.")
+                return
+
             action_type = data.get("action")
             if action_type in self.action_type_map:
                 routines = self.action_type_map[action_type]
@@ -188,5 +194,7 @@ class RoutineManager:
                     await self.handle_action(routine)
             else:
                 logging.info(f"No routines registered for action type '{action_type}'")
+        except json.JSONDecodeError:
+            logging.warning("Received an invalid JSON message; ignoring.")
         except Exception as e:
             logging.error(f"Error handling message: {e}")
