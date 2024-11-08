@@ -91,6 +91,8 @@ class Controller:
                 logging.error(f"Error proxying request to Django server: {e}")
                 return web.Response(status=500, text="Internal Server Error")
         else:
+            # TODO: get Profile uuid for given username/password; this needs to have been cached somewhere during online period
+            # Then, return a json response with `{token: '', profile: profile_uuid}`
             return web.Response(
                 status=200,
                 text='{"status": "ok", "message": "Controller is up and running"}',
