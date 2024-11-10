@@ -24,7 +24,6 @@ import websocketMiddleware from "@/ws/websocketMiddleware";
 import { environmentalService } from "@/services/environmentalService";
 import { environmentalSliceReducer } from "./slices/environmentalSlice";
 import { SessionState, sessionSliceReducer } from "./slices/sessionSlice";
-import { getStorageItemAsync } from "@/hooks/useStorageState";
 import { systemService } from "@/services/systemService";
 import { systemSliceReducer } from "./slices/systemSlice";
 import { lightService } from "@/services/lightService";
@@ -33,9 +32,7 @@ import { routineService } from "@/services/routineService";
 import { routineActionService } from "@/services/routineActionService";
 import { routineSliceReducer } from "./slices/routineSlice";
 import { routineActionSliceReducer } from "./slices/routineActionSlice";
-
-const storageKey = process.env.EXPO_PUBLIC_SESSION_STORAGE_KEY;
-if (!storageKey) throw "EXPO_PUBLIC_SESSION_STORAGE_KEY must be defined";
+import { urlSliceReducer, UrlState } from "./slices/urlSlice";
 
 /*
   Add new services to `ServiceApis` type and `serviceApis` object
@@ -73,6 +70,7 @@ type RootReducer = {
   systems: Reducer<ModelState<System>>;
   lights: Reducer<ModelState<Light>>;
   session: Reducer<SessionState>;
+  url: Reducer<UrlState>;
   routines: Reducer<ModelState<Routine>>;
   routineActions: Reducer<ModelState<RoutineAction>>;
 };
@@ -85,18 +83,17 @@ const rootReducer: RootReducer = {
   systems: systemSliceReducer,
   lights: lightSliceReducer,
   session: sessionSliceReducer,
+  url: urlSliceReducer,
   routines: routineSliceReducer,
   routineActions: routineActionSliceReducer,
 };
 
 export type ThunkExtraArgument = {
   serviceApis: ServiceApis;
-  getSession: () => Promise<string | null>;
 };
 
 const extraArgument: ThunkExtraArgument = {
   serviceApis,
-  getSession: () => getStorageItemAsync(storageKey),
 };
 
 export const configureStore = () =>

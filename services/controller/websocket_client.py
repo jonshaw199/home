@@ -12,14 +12,15 @@ logging.basicConfig(level=logging.INFO)
 
 
 class WebsocketClient:
-    def __init__(self, on_message):
-        self.token = ""
+    def __init__(self, on_message, token_getter):
+        self.get_token = token_getter
         self.on_message = on_message
         self.websocket = None
 
-    async def connect(self, token=""):
+    async def connect(self):
         while 1:
             try:
+                token = await self.get_token()
                 await self._connect(token)
             except Exception as e:
                 logging.error(f"Websocket connect error: {e}")
@@ -27,9 +28,7 @@ class WebsocketClient:
                 logging.warn("Attempting to reconnect to WebSocket server...")
 
     async def _connect(self, token):
-        if token:
-            self.token = token
-        uri = f"ws://{HOME_HOST}:{HOME_PORT}/ws/controllers?token={self.token}"
+        uri = f"ws://{HOME_HOST}:{HOME_PORT}/ws/controllers?token={token}"
         headers = {
             "Origin": f"http://{HOME_HOST}:{HOME_PORT}",
         }

@@ -12,6 +12,7 @@ class BaseModel(models.Model):
 
 
 class Location(MPTTModel):
+    # Explicitly add uuid here since it doesnt extend from BaseModel
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     parent = TreeForeignKey(

@@ -79,4 +79,4 @@ class Light(BaseModel):
     color = models.CharField(null=True, blank=True)  # Hex
 
     def __str__(self):
-        return f"{self.device.name}: Environmental"
+        return f"{self.device.name}: Light"

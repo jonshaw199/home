@@ -20,6 +20,7 @@ import { systemSliceActions } from "@/store/slices/systemSlice";
 import { lightSliceActions } from "@/store/slices/lightSlice";
 import { routineSliceActions } from "@/store/slices/routineSlice";
 import { routineActionSliceActions } from "@/store/slices/routineActionSlice";
+import { selectApiUrl, selectWebsocketUrl } from "@/store/slices/urlSlice";
 
 // Custom drawer item component
 const CustomDrawerItem: React.FC<{
@@ -96,20 +97,22 @@ export default function Drawer() {
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectSession);
   const { segments } = useRouteInfo();
+  const apiUrl = useAppSelector(selectApiUrl);
+  const websocketUrl = useAppSelector(selectWebsocketUrl);
 
-  const connectWebSocket = useCallback(
-    (token: string) => {
-      // Initialize WebSocket connection
-      const url = process.env.EXPO_PUBLIC_HOME_WS_URL;
-      if (!url) throw "WebSocket URL not found; cannot connect";
-      dispatch({ type: WS_CONNECT, payload: { url: `${url}?token=${token}` } });
-    },
-    [dispatch]
-  );
+  console.log(`API URL : ${apiUrl}`);
 
-  // Initial load
   useEffect(() => {
-    if (session) {
+    if (websocketUrl && session) {
+      dispatch({
+        type: WS_CONNECT,
+        payload: { url: `${websocketUrl}?token=${session}` },
+      });
+    }
+  }, [websocketUrl, session, dispatch]);
+
+  useEffect(() => {
+    if (session && apiUrl) {
       dispatch(deviceTypeSliceActions.fetchAll());
       dispatch(deviceSliceActions.fetchAll());
       dispatch(plugSliceActions.fetchAll());
@@ -118,11 +121,8 @@ export default function Drawer() {
       dispatch(lightSliceActions.fetchAll());
       dispatch(routineSliceActions.fetchAll());
       dispatch(routineActionSliceActions.fetchAll());
-      connectWebSocket(session);
-    } else {
-      console.error("Session is null; unable to load");
     }
-  }, [session, connectWebSocket, dispatch]);
+  }, [session, apiUrl, dispatch]);
 
   // This is the app layout
   return (

@@ -40,12 +40,12 @@ services:
     depends_on:
       - db
       - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://home:8000/api/"]
-      interval: 5s
-      timeout: 2s
-      retries: 40
-      start_period: 10s
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://home:8000/status/"]
+    #   interval: 5s
+    #   timeout: 2s
+    #   retries: 40
+    #   start_period: 10s
     deploy:
       resources:
         limits:
@@ -70,11 +70,13 @@ services:
 
   controller:
     build: ./services/controller
+    ports:
+      - "8080:8080"
     volumes:
       - ./services/controller:/code
     depends_on:
-      home:
-        condition: service_healthy
+      # home:
+      #   condition: service_healthy
       mqtt-broker:
         condition: service_started
     deploy:

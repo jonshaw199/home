@@ -8,33 +8,34 @@ from .serializers import (
     EnvironmentalSerializer,
     LightSerializer,
 )
+from core.views import BaseUUIDViewSet
 
 
-class DeviceViewSet(viewsets.ModelViewSet):
+class DeviceViewSet(BaseUUIDViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
 
 
-class DeviceTypeViewSet(viewsets.ModelViewSet):
+class DeviceTypeViewSet(BaseUUIDViewSet):
     queryset = DeviceType.objects.all()
     serializer_class = DeviceTypeSerializer
 
 
-class SystemViewSet(viewsets.ModelViewSet):
+class SystemViewSet(BaseUUIDViewSet):
     queryset = System.objects.all()
     serializer_class = SystemSerializer
 
 
-class PlugViewSet(viewsets.ModelViewSet):
+class PlugViewSet(BaseUUIDViewSet):
     queryset = Plug.objects.all()
     serializer_class = PlugSerializer
 
 
-class EnvironmentalViewSet(viewsets.ModelViewSet):
+class EnvironmentalViewSet(BaseUUIDViewSet):
     queryset = Environmental.objects.all()
     serializer_class = EnvironmentalSerializer
 
 
-class LightViewSet(viewsets.ModelViewSet):
+class LightViewSet(BaseUUIDViewSet):
     queryset = Light.objects.all()
     serializer_class = LightSerializer

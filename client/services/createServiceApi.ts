@@ -14,48 +14,77 @@ export type PaginatedResponse<T extends Identifiable> = {
 
 export type ServiceApi<T extends Identifiable> = {
   createOne: ({
+    baseUrl,
     token,
     data,
   }: {
-    token: string | null;
+    baseUrl: string;
+    token?: string | null;
     data: Partial<T>;
   }) => Promise<T>;
   createMany: ({
+    baseUrl,
     token,
     data,
   }: {
-    token: string | null;
+    baseUrl: string;
+    token?: string | null;
     data: Partial<T>[];
   }) => Promise<{ [key: ID]: T }>;
-  readOne: ({ token, id }: { token: string | null; id: ID }) => Promise<T>;
+  readOne: ({
+    baseUrl,
+    token,
+    id,
+  }: {
+    baseUrl: string;
+    token: string | null;
+    id: ID;
+  }) => Promise<T>;
   readAll: ({
+    baseUrl,
     token,
     queryParams,
   }: {
-    token: string | null;
+    baseUrl: string;
+    token?: string | null;
     queryParams?: QueryParams;
   }) => Promise<{ [key: ID]: T }>;
   updateOne: ({
+    baseUrl,
     token,
+    id,
     data,
   }: {
-    token: string | null;
+    baseUrl: string;
+    token?: string | null;
     id: ID;
     data: Partial<T>;
   }) => Promise<T>;
   updateMany: ({
+    baseUrl,
     token,
     data,
   }: {
-    token: string | null;
+    baseUrl: string;
+    token?: string | null;
     data: { id: ID; payload: Partial<T> }[];
   }) => Promise<{ [key: ID]: T }>;
-  deleteOne: ({ token, id }: { token: string | null; id: ID }) => Promise<ID>;
+  deleteOne: ({
+    baseUrl,
+    token,
+    id,
+  }: {
+    baseUrl: string;
+    token?: string | null;
+    id: ID;
+  }) => Promise<ID>;
   deleteMany: ({
+    baseUrl,
     token,
     ids,
   }: {
-    token: string | null;
+    baseUrl: string;
+    token?: string | null;
     ids: ID[];
   }) => Promise<void>;
 };
@@ -101,16 +130,16 @@ async function fetchAndTransform<T>({
 }
 
 export function createServiceApi<T extends Identifiable>({
-  baseUrl,
+  resourceName,
   transformer: customTransformer = (obj) => obj,
 }: {
-  baseUrl: string;
+  resourceName: string;
   transformer?: (obj: T) => T;
 }): ServiceApi<T> {
   return {
-    async createOne({ token, data }) {
+    async createOne({ baseUrl, token, data }) {
       return fetchAndTransform<T>({
-        url: baseUrl,
+        url: `${baseUrl}/${resourceName}`,
         options: {
           method: "POST",
           headers: {
@@ -123,9 +152,9 @@ export function createServiceApi<T extends Identifiable>({
       });
     },
 
-    async createMany({ token, data }) {
+    async createMany({ baseUrl, token, data }) {
       const results = await fetchAndTransform<T[]>({
-        url: baseUrl,
+        url: `${baseUrl}/${resourceName}`,
         options: {
           method: "POST",
           headers: {
@@ -139,9 +168,9 @@ export function createServiceApi<T extends Identifiable>({
       return keyById<T>(results);
     },
 
-    async readOne({ token, id }) {
+    async readOne({ baseUrl, token, id }) {
       return fetchAndTransform<T>({
-        url: `${baseUrl}/${id}`,
+        url: `${baseUrl}/${resourceName}/${id}`,
         options: {
           method: "GET",
           headers: {
@@ -152,10 +181,10 @@ export function createServiceApi<T extends Identifiable>({
       });
     },
 
-    async readAll({ token, queryParams }) {
+    async readAll({ baseUrl, token, queryParams }) {
       const queryString = buildQueryString(queryParams);
       const results = await fetchAndTransform<T[]>({
-        url: `${baseUrl}${queryString}`,
+        url: `${baseUrl}/${resourceName}${queryString}`,
         options: {
           method: "GET",
           headers: {
@@ -167,9 +196,9 @@ export function createServiceApi<T extends Identifiable>({
       return keyById<T>(results);
     },
 
-    async updateOne({ token, id, data }) {
+    async updateOne({ baseUrl, token, id, data }) {
       return fetchAndTransform<T>({
-        url: `${baseUrl}/${id}`,
+        url: `${baseUrl}/${resourceName}/${id}`,
         options: {
           method: "PUT",
           headers: {
@@ -182,10 +211,10 @@ export function createServiceApi<T extends Identifiable>({
       });
     },
 
-    async updateMany({ token, data }) {
+    async updateMany({ baseUrl, token, data }) {
       const promises = data.map(({ id, payload }) =>
         fetchAndTransform<T>({
-          url: `${baseUrl}/${id}`,
+          url: `${baseUrl}/${resourceName}/${id}`,
           options: {
             method: "PUT",
             headers: {
@@ -201,8 +230,8 @@ export function createServiceApi<T extends Identifiable>({
       return keyById<T>(results);
     },
 
-    async deleteOne({ token, id }) {
-      const response = await fetch(`${baseUrl}/${id}`, {
+    async deleteOne({ baseUrl, token, id }) {
+      const response = await fetch(`${baseUrl}/${resourceName}/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -214,9 +243,9 @@ export function createServiceApi<T extends Identifiable>({
       return id;
     },
 
-    async deleteMany({ token, ids }) {
+    async deleteMany({ baseUrl, token, ids }) {
       const promises = ids.map((id) =>
-        fetch(`${baseUrl}/${id}`, {
+        fetch(`${baseUrl}/${resourceName}/${id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,

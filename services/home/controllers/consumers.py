@@ -3,143 +3,7 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import logging
 import json
 from devices.models import Device
-from datetime import datetime
-from django.db import transaction
-
-"""
-Expected message shape:
-
-{
-    "src": string, // This is typically the ID of the source device
-    "dest": string, // For WS<->MQTT, this is the topic
-    "action": string, // i.e. "get-status", "set", etc.
-    "body": {
-        ... // Optional data to include with the action
-    }
-}
-"""
-
-HANDLER_SYSTEM_STATUS = "system__status"
-HANDLER_ENVIRONMENTAL_STATUS = "environmental__status"
-HANDLER_DIAL_STATUS = "dial__status"
-HANDLER_PLUG_STATUS = "plug__status"
-
-
-class BaseMessageHandler:
-    handlers = {}
-
-    @classmethod
-    def register(cls, message_type):
-        def decorator(handler_cls):
-            cls.handlers[message_type] = handler_cls()
-            return handler_cls
-
-        return decorator
-
-    def handle(self, content, consumer):
-        raise NotImplementedError("Handle method not implemented.")
-
-
-@BaseMessageHandler.register(HANDLER_ENVIRONMENTAL_STATUS)
-class EnvironmentalStatusMessageHandler(BaseMessageHandler):
-    @staticmethod
-    def update_environmental(data):
-        try:
-            # Update fields with data from JSON object
-            src = data.get("src")
-            body = data.get("body")
-            device = Device.objects.get(uuid=src)
-            device.last_status_update = datetime.now()
-            device.environmental.temperature_c = body.get("temperature_c")
-            device.environmental.humidity = body.get("humidity")
-            with transaction.atomic():
-                device.save()
-                device.environmental.save()
-        except Exception as e:
-            logging.error(
-                f"An error occurred when processing environmental status message: {e}"
-            )
-
-    def handle(self, content, consumer):
-        logging.info(f"Handling environmental status message: {content}")
-        EnvironmentalStatusMessageHandler.update_environmental(content)
-        consumer.broadcast_to_location_group(content)
-
-
-@BaseMessageHandler.register(HANDLER_DIAL_STATUS)
-class DialStatusMessageHandler(BaseMessageHandler):
-    @staticmethod
-    def update_device(data):
-        try:
-            # Update fields with data from JSON object
-            src = data.get("src")
-            # body = data.get("body") # No body
-            device = Device.objects.get(uuid=src)
-            device.last_status_update = datetime.now()
-            device.save()
-        except Exception as e:
-            logging.error(f"An error occurred when processing dial status message: {e}")
-
-    def handle(self, content, consumer):
-        logging.info(f"Handling environmental status message: {content}")
-        DialStatusMessageHandler.update_device(content)
-        consumer.broadcast_to_location_group(content)
-
-
-@BaseMessageHandler.register(HANDLER_SYSTEM_STATUS)
-class SystemStatusMessageHandler(BaseMessageHandler):
-    @staticmethod
-    def update_system(data):
-        try:
-            # Update fields with data from JSON object
-            src = data.get("src")
-            body = data.get("body")
-            device = Device.objects.get(uuid=src)
-            device.last_status_update = datetime.now()
-            device.system.cpu_usage = body.get("cpu_usage", device.system.cpu_usage)
-            device.system.cpu_temp = body.get("cpu_temperature", device.system.cpu_temp)
-            device.system.mem_usage = body.get("memory_usage", device.system.mem_usage)
-            device.system.disk_usage = body.get("disk_usage", device.system.disk_usage)
-            device.system.network_sent = body.get(
-                "network_sent", device.system.network_sent
-            )
-            device.system.network_received = body.get(
-                "network_received", device.system.network_received
-            )
-            with transaction.atomic():
-                device.save()
-                device.system.save()
-        except Exception as e:
-            logging.error(
-                f"An error occurred when processing system status message: {e}"
-            )
-
-    def handle(self, content, consumer):
-        logging.info(f"Handling system status message: {content}")
-        SystemStatusMessageHandler.update_system(content)
-        consumer.broadcast_to_location_group(content)
-
-
-@BaseMessageHandler.register(HANDLER_PLUG_STATUS)
-class PlugStatusMessageHandler(BaseMessageHandler):
-    @staticmethod
-    def update_plug(data):
-        try:
-            src = data.get("src")
-            body = data.get("body")
-            device = Device.objects.get(uuid=src)
-            device.last_status_update = datetime.now()
-            device.plug.is_on = body.get("is_on")
-            with transaction.atomic():
-                device.save()
-                device.plug.save()
-        except Exception as e:
-            logging.error(f"An error occurred when processing plug status message: {e}")
-
-    def handle(self, content, consumer):
-        logging.info(f"Handling plug status message: {content}")
-        PlugStatusMessageHandler.update_plug(content)
-        consumer.broadcast_to_location_group(content)
+from core.models import Profile
 
 
 class ControllerConsumer(JsonWebsocketConsumer):
@@ -187,8 +51,9 @@ class ControllerConsumer(JsonWebsocketConsumer):
 
     def receive_json(self, content):
         logging.info(f"Received JSON message: {content}")
-        self.handle_json(content)
-        # self.broadcast_to_location_group(content)
+        # Nothing to do here; business logic moved to contoller
+        # self.handle_json(content)
+        self.broadcast_to_location_group(content)
 
     def group_message(self, event):
         message = event["message"]
@@ -219,37 +84,45 @@ class ControllerConsumer(JsonWebsocketConsumer):
         # If the user has no profile or locations, return an empty set
         return set()
 
-    def handle_json(self, content):
-        handler_id = self.get_handler_id(content)
-        handler = BaseMessageHandler.handlers.get(handler_id)
-        if handler:
-            handler.handle(content, self)
-        else:
-            logging.warning(f"No handler found for ID: {handler_id}")
-
-    def get_handler_id(self, content):
-        return content.get("action")
-
     def broadcast_to_location_group(self, content):
         src = content.get("src")
-        if src:
-            try:
-                device = Device.objects.filter(uuid=src).values("location__id").first()
-            except:
-                logging.error(f"Error querying for Device UUID {src}")
-                return
+        src_type = content.get("src_type", "device")
 
-            if device and "location__id" in device:
-                group_name = f"location_{device['location__id']}_group"
-                if group_name in self.group_names:
-                    logging.info(
-                        f"Broadcasting message to group; message: {content}; group: {group_name}"
-                    )
-                    content["sender"] = self.channel_name
-                    async_to_sync(self.channel_layer.group_send)(
-                        group_name, {"type": "group_message", "message": content}
-                    )
-            else:
-                logging.warn(f"Location ID not found for device ID: {src}")
-        else:
-            logging.warn("Key 'src' does not exist; unable to broadcast")
+        group_names = set()
+
+        try:
+            if src_type == "device":
+                # Retrieve the device's location
+                device = Device.objects.filter(uuid=src).values("location__id").first()
+                if device and "location__id" in device:
+                    group_names.add(f"location_{device['location__id']}_group")
+                else:
+                    logging.warning(f"Location ID not found for device ID: {src}")
+
+            elif src_type == "profile":
+                # Retrieve the profile based on the UUID
+                profile = (
+                    Profile.objects.filter(uuid=src)
+                    .prefetch_related("locations")
+                    .first()
+                )
+                if profile:
+                    for location in profile.locations.all():
+                        group_names.add(f"location_{location.id}_group")
+                else:
+                    logging.warning(f"No profile found for ID: {src}")
+
+        except Exception as e:
+            logging.error(f"Error querying for src {src} of type {src_type}: {e}")
+            return
+
+        # Broadcast to each determined location group
+        for group_name in group_names:
+            if group_name in self.group_names:
+                logging.info(
+                    f"Broadcasting message to group; message: {content}; group: {group_name}"
+                )
+                content["sender"] = self.channel_name
+                async_to_sync(self.channel_layer.group_send)(
+                    group_name, {"type": "group_message", "message": content}
+                )

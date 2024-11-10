@@ -8,6 +8,8 @@ import { ID, Identifiable } from "@/models";
 import { QueryParams } from "@/services/createServiceApi";
 import { ServiceApis, ThunkExtraArgument } from "@/store/config";
 import { Draft } from "immer";
+import { RootState } from "@/store/index";
+import { selectApiUrl } from "./urlSlice";
 
 // Define the common slice state for each model
 export interface ModelState<T extends Identifiable> {
@@ -40,13 +42,20 @@ export function createModelSlice<T extends Identifiable>(
     { [key: ID]: T },
     QueryParams | undefined,
     {
+      state: RootState;
       extra: ThunkExtraArgument;
     }
     // @ts-ignore
-  >(`${name}/fetchAll`, async (queryParams, { extra }) => {
-    const token = await extra.getSession(); // Retrieve the session token from extraArgument
+  >(`${name}/fetchAll`, async (queryParams, { getState, extra }) => {
+    const { session } = getState();
+    const url = selectApiUrl(getState());
+    if (!url) throw "URL not defined; unable to make request";
     const api = extra.serviceApis[apiKey];
-    return api.readAll({ token, queryParams });
+    return api.readAll({
+      baseUrl: url,
+      token: session.data.token,
+      queryParams,
+    });
   });
 
   // Fetch one resource by ID (GET /model/:id)
@@ -54,13 +63,16 @@ export function createModelSlice<T extends Identifiable>(
     T,
     ID,
     {
+      state: RootState;
       extra: ThunkExtraArgument;
     }
     // @ts-ignore
-  >(`${name}/fetchOne`, async (id, { extra }) => {
-    const token = await extra.getSession();
+  >(`${name}/fetchOne`, async (id, { getState, extra }) => {
+    const { session } = getState();
+    const url = selectApiUrl(getState());
+    if (!url) throw "URL not defined; unable to make request";
     const api = extra.serviceApis[apiKey];
-    return api.readOne({ token, id });
+    return api.readOne({ baseUrl: url, token: session.session, id });
   });
 
   // Create a new resource (POST /model)
@@ -68,13 +80,20 @@ export function createModelSlice<T extends Identifiable>(
     T,
     Partial<T>,
     {
+      state: RootState;
       extra: ThunkExtraArgument;
     }
     // @ts-ignore
-  >(`${name}/createOne`, async (data, { extra }) => {
-    const token = await extra.getSession();
+  >(`${name}/createOne`, async (data, { getState, extra }) => {
+    const { session } = getState();
+    const url = selectApiUrl(getState());
+    if (!url) throw "URL not defined; unable to make request";
     const api = extra.serviceApis[apiKey];
-    return api.createOne({ token, data });
+    return api.createOne({
+      baseUrl: url,
+      token: session.data.token,
+      data,
+    });
   });
 
   // Update a resource (PUT /model/:id)
@@ -82,13 +101,21 @@ export function createModelSlice<T extends Identifiable>(
     T,
     { id: ID; data: Partial<T> },
     {
+      state: RootState;
       extra: ThunkExtraArgument;
     }
     // @ts-ignore
-  >(`${name}/updateOne`, async ({ id, data }, { extra }) => {
-    const token = await extra.getSession();
+  >(`${name}/updateOne`, async ({ id, data }, { getState, extra }) => {
+    const { session } = getState();
+    const url = selectApiUrl(getState());
+    if (!url) throw "URL not defined; unable to make request";
     const api = extra.serviceApis[apiKey];
-    return api.updateOne({ token, id, data });
+    return api.updateOne({
+      baseUrl: url,
+      token: session.data.token,
+      id,
+      data,
+    });
   });
 
   // Delete a resource (DELETE /model/:id)
@@ -96,13 +123,15 @@ export function createModelSlice<T extends Identifiable>(
     ID,
     ID,
     {
+      state: RootState;
       extra: ThunkExtraArgument;
     }
-    // @ts-ignore
-  >(`${name}/deleteOne`, async (id, { extra }) => {
-    const token = await extra.getSession();
+  >(`${name}/deleteOne`, async (id, { getState, extra }) => {
+    const { session } = getState();
+    const url = selectApiUrl(getState());
+    if (!url) throw "URL not defined; unable to make request";
     const api = extra.serviceApis[apiKey];
-    return api.deleteOne({ token, id });
+    return api.deleteOne({ baseUrl: url, token: session.data.token, id });
   });
 
   // Create the slice
@@ -158,8 +187,6 @@ export function createModelSlice<T extends Identifiable>(
         return { ...state, loading: true, error: null };
       });
       builder.addCase(fetchOne.fulfilled, (state, { payload }) => {
-        // Explicitly cast the payload as a Draft<T>
-        // TODO: why is this necessary?
         const data = { ...state.data, [payload.id]: payload as Draft<T> };
         return { ...state, data, loading: false };
       });
@@ -176,7 +203,6 @@ export function createModelSlice<T extends Identifiable>(
         return { ...state, loading: true, error: null };
       });
       builder.addCase(createOne.fulfilled, (state, { payload }) => {
-        // Explicitly cast the payload as a Draft<T>
         const data = { ...state.data, [payload.id]: payload as Draft<T> };
         return { ...state, data, loading: false };
       });
@@ -193,7 +219,6 @@ export function createModelSlice<T extends Identifiable>(
         return { ...state, loading: true, error: null };
       });
       builder.addCase(updateOne.fulfilled, (state, { payload }) => {
-        // Explicitly cast the payload as a Draft<T>
         const data = { ...state.data, [payload.id]: payload as Draft<T> };
         return { ...state, data, loading: false };
       });
