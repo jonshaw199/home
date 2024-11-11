@@ -10,9 +10,11 @@ class ActionInline(admin.TabularInline):
 @admin.register(Routine)
 class RoutineAdmin(admin.ModelAdmin):
     list_display = ("name", "triggers", "repeat_interval")
+    readonly_fields = ("uuid",)
     inlines = [ActionInline]  # Allows you to add Actions within the Routine form
 
 
 @admin.register(Action)
 class ActionAdmin(admin.ModelAdmin):
     list_display = ("routine", "type", "eval_params")
+    readonly_fields = ("uuid",)
