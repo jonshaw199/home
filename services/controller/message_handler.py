@@ -157,7 +157,7 @@ async def handle_plug_set(self, message):
 async def handle_environmental_status(self, message):
     """Handles updating the environmental sensor status."""
     body = message.get("body")
-    src = body.get("src")
+    src = message.get("src")
 
     # Fetch the full device resource to get the associated UUID
     device = await get_device_resource(self.resource_handler, src)
@@ -182,8 +182,7 @@ async def handle_environmental_status(self, message):
 @register_handler(HANDLER_DIAL_STATUS)
 async def handle_dial_status(self, message):
     """Handles updating the dial device status."""
-    body = message.get("body")
-    src = body.get("src")
+    src = message.get("src")
 
     # Fetch the full device resource to get the associated UUID
     device = await get_device_resource(self.resource_handler, src)
@@ -205,7 +204,7 @@ async def handle_dial_status(self, message):
 async def handle_system_status(self, message):
     """Handles updating the system status."""
     body = message.get("body")
-    src = body.get("src")
+    src = message.get("src")
 
     # Fetch the full device resource to get the associated UUID
     device = await get_device_resource(self.resource_handler, src)
@@ -235,7 +234,7 @@ async def handle_system_status(self, message):
 async def handle_plug_status(self, message):
     """Handles updating the plug's on/off status."""
     body = message.get("body")
-    src = body.get("src")
+    src = message.get("src")
 
     # Fetch the full device resource to get the associated UUID
     device = await get_device_resource(self.resource_handler, src)
