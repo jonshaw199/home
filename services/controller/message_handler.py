@@ -137,6 +137,7 @@ async def handle_plug_set(self, message):
     """Handles setting the on/off state for plugs."""
     body = message.get("body")
     device_id = body.get("device_id")
+    is_on = body.get("is_on")
 
     # Fetch the full device resource to get the associated UUID
     device = await get_device_resource(self.resource_handler, device_id)
@@ -144,7 +145,7 @@ async def handle_plug_set(self, message):
 
     if plug_id:
         # Prepare data for the PUT request
-        plug_data = filter_none_values({"is_on": body.get("is_on")})
+        plug_data = filter_none_values({"is_on": is_on})
 
         # Make a PUT request to update plug settings
         await self.resource_handler.handle_request("PUT", f"plugs/{plug_id}", plug_data)
@@ -155,6 +156,7 @@ async def handle_plug_set(self, message):
 
 @register_handler(HANDLER_ENVIRONMENTAL_STATUS)
 async def handle_environmental_status(self, message):
+    logging.info("Handling environmental status message")
     """Handles updating the environmental sensor status."""
     body = message.get("body")
     src = message.get("src")
@@ -166,8 +168,8 @@ async def handle_environmental_status(self, message):
     if environmental_id:
         environmental_data = filter_none_values(
             {
-                "temperature_c": body["body"].get("temperature_c"),
-                "humidity": body["body"].get("humidity"),
+                "temperature_c": body.get("temperature_c"),
+                "humidity": body.get("humidity"),
             }
         )
         # Make a PUT request to update environmental sensor settings
@@ -181,6 +183,7 @@ async def handle_environmental_status(self, message):
 
 @register_handler(HANDLER_DIAL_STATUS)
 async def handle_dial_status(self, message):
+    logging.info("Handling dial status message")
     """Handles updating the dial device status."""
     src = message.get("src")
 
@@ -202,6 +205,7 @@ async def handle_dial_status(self, message):
 
 @register_handler(HANDLER_SYSTEM_STATUS)
 async def handle_system_status(self, message):
+    logging.info(f"Handling system status message: {message}")
     """Handles updating the system status."""
     body = message.get("body")
     src = message.get("src")
@@ -213,12 +217,12 @@ async def handle_system_status(self, message):
     if system_id:
         system_data = filter_none_values(
             {
-                "cpu_usage": body["body"].get("cpu_usage"),
-                "cpu_temp": body["body"].get("cpu_temperature"),
-                "mem_usage": body["body"].get("memory_usage"),
-                "disk_usage": body["body"].get("disk_usage"),
-                "network_sent": body["body"].get("network_sent"),
-                "network_received": body["body"].get("network_received"),
+                "cpu_usage": body.get("cpu_usage"),
+                "cpu_temp": body.get("cpu_temperature"),
+                "mem_usage": body.get("memory_usage"),
+                "disk_usage": body.get("disk_usage"),
+                "network_sent": body.get("network_sent"),
+                "network_received": body.get("network_received"),
             }
         )
         # Make a PUT request to update system metrics
@@ -232,6 +236,7 @@ async def handle_system_status(self, message):
 
 @register_handler(HANDLER_PLUG_STATUS)
 async def handle_plug_status(self, message):
+    logging.info("Handling plug status message")
     """Handles updating the plug's on/off status."""
     body = message.get("body")
     src = message.get("src")
@@ -241,7 +246,7 @@ async def handle_plug_status(self, message):
     plug_id = device.get("plug")
 
     if plug_id:
-        plug_data = filter_none_values({"is_on": body["body"].get("is_on")})
+        plug_data = filter_none_values({"is_on": body.get("is_on")})
         # Make a PUT request to update plug status
         await self.resource_handler.handle_request("PUT", f"plugs/{plug_id}", plug_data)
         logging.info(f"Updated plug status for device {src}")
