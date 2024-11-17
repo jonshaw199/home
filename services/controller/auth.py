@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-from dotenv import load_dotenv
 import aiohttp
 
-load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 HOME_USERNAME = os.getenv("HOME_USERNAME")

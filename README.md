@@ -3,6 +3,15 @@
 First steps:
 
 - Rename `.env.template` in root directory to `.env`
+- Generate self-signed certs for controller:
+
+```
+mkdir ./services/controller/certs
+
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout ./services/controller/certs/key.pem \
+  -out ./services/controller/certs/cert.pem
+```
 
 ### Web server, controller, MQTT broker, and system reporter
 

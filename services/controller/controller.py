@@ -5,7 +5,6 @@ import asyncio
 import json
 import os
 from aiohttp import web, ClientSession
-from dotenv import load_dotenv
 from websocket_client import WebsocketClient
 from mqtt_client import AsyncMqttClient
 from websocket_transformer import (
@@ -22,7 +21,6 @@ from message_handler import MessageHandler
 
 logging.basicConfig(level=logging.INFO)
 
-load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 DEVICE_ID = os.getenv("DEVICE_ID")

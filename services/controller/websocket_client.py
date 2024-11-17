@@ -1,10 +1,8 @@
 import os
-from dotenv import load_dotenv
 import logging
 import asyncio
 import websockets
 
-load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 
@@ -35,7 +33,7 @@ class WebsocketClient:
 
         logging.info(f"Connecting to uri: {uri}")
 
-        self.websocket = await websockets.connect(uri, extra_headers=headers)
+        self.websocket = await websockets.connect(uri, additional_headers=headers)
         logging.info(f"Connected to WebSocket server: {uri}")
         await self.receive_messages()  # Start receiving messages
 

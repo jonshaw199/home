@@ -11,3 +11,5 @@ htmlcov
 .env.dev
 
 cache_data.json
+
+certs/

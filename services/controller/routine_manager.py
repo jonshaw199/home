@@ -2,10 +2,8 @@ import asyncio
 import datetime
 import logging
 import os
-from dotenv import load_dotenv
 import json
 
-load_dotenv()
 HOME_HOST = os.getenv("HOME_HOST")
 HOME_PORT = os.getenv("HOME_PORT")
 

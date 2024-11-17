@@ -72,8 +72,12 @@ services:
     build: ./services/controller
     ports:
       - "8080:8080"
+      - "8443:8443"
     volumes:
       - ./services/controller:/code
+    env_file:
+      - ./services/controller/.env
+      - ./services/controller/.env.${HOME_ENV:-production}
     depends_on:
       # home:
       #   condition: service_healthy

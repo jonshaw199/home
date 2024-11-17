@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-python-dotenv = "==1.0.1"
 websockets = "*"
 aiohttp = {extras = ["speedups"], version = "*"}
 aiomqtt = "*"

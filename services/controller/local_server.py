@@ -4,10 +4,10 @@ import logging
 from aiohttp import web, WSCloseCode
 from aiohttp_cors import setup, ResourceOptions
 import os
-from dotenv import load_dotenv
+import ssl
 
-load_dotenv()
 LOCAL_SERVER_PORT = os.getenv("LOCAL_SERVER_PORT")
+SSL_ENABLED = os.getenv("SSL_ENABLED")
 
 
 class LocalServer:
@@ -102,6 +102,15 @@ class LocalServer:
 
         runner = web.AppRunner(app)
         await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", LOCAL_SERVER_PORT)
+
+        ssl_context = None
+        if SSL_ENABLED:
+            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ssl_context.load_cert_chain(
+                certfile="certs/cert.pem", keyfile="certs/key.pem"
+            )
+        site = web.TCPSite(
+            runner, "0.0.0.0", LOCAL_SERVER_PORT, ssl_context=ssl_context
+        )
         await site.start()
         logging.info(f"LocalServer running on port {LOCAL_SERVER_PORT}")
