@@ -25,7 +25,7 @@ Updated steps; need a private CA now:
 
 ### Web server, controller, MQTT broker, and system reporter
 
-`docker compose --optional system-reporter up -d`
+`docker compose --profile optional up -d`
 
 ### Web/mobile clients
 
