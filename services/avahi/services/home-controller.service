@@ -1,0 +1,11 @@
+<service-group>
+  <name replace-wildcards="yes">Home Controller</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>8080</port>
+  </service>
+  <service>
+    <type>_https._tcp</type>
+    <port>8443</port>
+  </service>
+</service-group>

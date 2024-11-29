@@ -2,8 +2,10 @@
 
 First steps:
 
+- `sudo apt install avahi-daemon` (for mDNS)
 - Rename `.env.template` in root directory to `.env`
-- Generate self-signed certs for controller:
+- Rename `services/home/.dev_pgpass.template` to `.dev_pgpass`
+- Generate certs for controller:
 
 ```
 mkdir ./services/controller/certs
@@ -12,6 +14,14 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout ./services/controller/certs/key.pem \
   -out ./services/controller/certs/cert.pem
 ```
+
+Updated steps; need a private CA now:
+
+1. Generate a private CA certificate (`ca.crt` and `ca.key`)
+2. Generate private key (`server.key`)
+3. Create CSR (`server.csr`)
+4. Use the private CA (`ca.crt` and `ca.key`) to sign the CSR (`server.csr`), creating `server.crt` for each domain
+5. Include `subjectAltName` for the domain in the certificate (important for modern browsers)
 
 ### Web server, controller, MQTT broker, and system reporter
 
@@ -51,11 +61,10 @@ cd esp/environmental
 idf.py build flash monitor
 ```
 
-### Misc Notes
+### Testing prod locally
 
-- For convenience, add a record to DNS server for home.com that points to MQTT broker; all devices can then point to home.com and the underlying IP can be changed easily
-
-- Generating fixtures:
-  - To export multiple apps or models at once, list them in the command like this: `python manage.py dumpdata app1.ModelName1 app2.ModelName2 --indent 2 > fixtures.json`
-  - For all models in an app: `python manage.py dumpdata app_name --indent 2 > app_fixtures.json`
-  - To dump all models in all apps, you can run: `python manage.py dumpdata --indent 2 > all_fixtures.json`
+- Change `HOME_ENV` to `production` in root `.env` file
+- Disable avahi if running on host (conflicts with avahi container and breaks `.local` resolution)
+  1. `sudo systemctl stop avahi-daemon`
+  2. `sudo systemctl disable avahi-daemon`
+- Point `jonshaw199.com` and `www.jonshaw199.com` to localhost in `/etc/hosts`

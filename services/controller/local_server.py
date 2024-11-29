@@ -107,7 +107,7 @@ class LocalServer:
         if SSL_ENABLED:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ssl_context.load_cert_chain(
-                certfile="certs/cert.pem", keyfile="certs/key.pem"
+                certfile="certs/server.crt", keyfile="certs/server.key"
             )
         site = web.TCPSite(
             runner, "0.0.0.0", LOCAL_SERVER_PORT, ssl_context=ssl_context

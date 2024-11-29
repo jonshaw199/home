@@ -27,14 +27,12 @@ SECRET_KEY = "django-insecure-h=3960u#(1&b)na1u#k92p1$xk2thq=kkaj4gul6&%9ep$6jq^
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "home",
     "localhost",
     "127.0.0.1",
     "0.0.0.0",
-    "10.199.1.4",
-    "10.199.1.15",
-    "home.com",
     "jonshaw199.com",
+    "home-api",  # Docker container
+    "home.local",  # mDNS
 ]
 
 
@@ -191,7 +189,7 @@ LOGGING = {
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",  # Allow localhost on any port
-    r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
+    # r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
 ]
 
 CORS_ALLOWED_ORIGINS = [

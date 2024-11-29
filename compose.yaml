@@ -1,6 +1,7 @@
 services:
   db:
     image: "postgres"
+    hostname: home-db
     ports:
       - "5432:5432"
     env_file:
@@ -18,6 +19,7 @@ services:
 
   redis:
     image: "redis:7"
+    hostname: home-redis
     ports:
       - "6379:6379"
     deploy:
@@ -29,8 +31,9 @@ services:
       - home_network
     restart: unless-stopped
 
-  home:
+  api:
     build: ./services/home
+    hostname: home-api
     volumes:
       - ./services/home:/code
     ports:
@@ -40,12 +43,6 @@ services:
     depends_on:
       - db
       - redis
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://home:8000/status/"]
-    #   interval: 5s
-    #   timeout: 2s
-    #   retries: 40
-    #   start_period: 10s
     deploy:
       resources:
         limits:
@@ -56,6 +53,7 @@ services:
     restart: unless-stopped
 
   mqtt-broker:
+    hostname: home-mqtt-broker
     build: ./services/mqtt-broker
     ports:
       - "1883:1883"
@@ -69,6 +67,7 @@ services:
     restart: unless-stopped
 
   controller:
+    hostname: home-controller
     build: ./services/controller
     ports:
       - "8080:8080"
@@ -79,8 +78,6 @@ services:
       - ./services/controller/.env
       - ./services/controller/.env.${HOME_ENV:-production}
     depends_on:
-      # home:
-      #   condition: service_healthy
       mqtt-broker:
         condition: service_started
     deploy:
@@ -111,12 +108,20 @@ services:
     profiles:
       - optional
 
-  home-client:
+  client:
+    hostname: home-client
     image: home-client
     container_name: home-client
     build:
       context: ./client
       dockerfile: Dockerfile.${HOME_ENV:-production}
+    volumes:
+      - ./client:/app
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "2"
     networks:
       - home_network
     ports:
@@ -124,6 +129,19 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+
+  avahi:
+    build: ./services/avahi
+    network_mode: host # Required for Avahi to broadcast over the LAN
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+    cpuset: "3"
 
 networks:
   home_network:

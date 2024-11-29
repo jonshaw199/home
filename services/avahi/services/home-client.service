@@ -1,0 +1,7 @@
+<service-group>
+  <name replace-wildcards="yes">Home Client</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>3002</port>
+  </service>
+</service-group>

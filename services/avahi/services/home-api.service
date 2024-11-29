@@ -1,0 +1,7 @@
+<service-group>
+  <name replace-wildcards="yes">Home API Service</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>8000</port>
+  </service>
+</service-group>
