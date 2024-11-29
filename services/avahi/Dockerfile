@@ -1,19 +1,12 @@
-FROM debian:bookworm
+FROM alpine
 
-# Install required packages
-RUN apt-get update && \
-    apt-get install -y avahi-daemon avahi-utils dbus && \
-    apt-get clean
+RUN apk add --no-cache avahi avahi-tools
 
-# Ensure required directories exist
-RUN mkdir -p /var/run/dbus
-
-# Copy custom service files (if any) into the container
+# Copy custom service files into the container
 COPY ./services/ /etc/avahi/services/
 COPY ./avahi-daemon.conf /etc/avahi/
 COPY ./start.sh /usr/local/bin/start-avahi.sh
+# Make executable
 RUN chmod +x /usr/local/bin/start-avahi.sh
 
-# Start dbus and avahi-daemon when the container starts
-# CMD ["bash", "-c", "dbus-daemon --system && avahi-daemon --no-drop-root --debug"]
-ENTRYPOINT ["/usr/local/bin/start-avahi.sh"]
+ENTRYPOINT avahi-daemon --no-drop-root --no-rlimits --debug

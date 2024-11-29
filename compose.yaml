@@ -110,8 +110,6 @@ services:
 
   client:
     hostname: home-client
-    image: home-client
-    container_name: home-client
     build:
       context: ./client
       dockerfile: Dockerfile.${HOME_ENV:-production}

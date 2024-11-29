@@ -64,7 +64,8 @@ idf.py build flash monitor
 ### Testing prod locally
 
 - Change `HOME_ENV` to `production` in root `.env` file
-- Disable avahi if running on host (conflicts with avahi container and breaks `.local` resolution)
-  1. `sudo systemctl stop avahi-daemon`
-  2. `sudo systemctl disable avahi-daemon`
+- Disable publishing in Avahi config
+  1. Edit `/etc/avahi/avahi-daemon.conf`
+  2. Set `disable-publishing=yes`
+  3. Restart service with `sudo systemctl restart avahi-daemon`
 - Point `jonshaw199.com` and `www.jonshaw199.com` to localhost in `/etc/hosts`
