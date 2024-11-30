@@ -12,6 +12,10 @@ export type PaginatedResponse<T extends Identifiable> = {
 };
 */
 
+const getAuthHeaders = ({ token }: { token?: string | null }) => ({
+  Authorization: `Token ${token}`,
+});
+
 export type ServiceApi<T extends Identifiable> = {
   createOne: ({
     baseUrl,
@@ -144,7 +148,7 @@ export function createServiceApi<T extends Identifiable>({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...getAuthHeaders({ token }),
           },
           body: JSON.stringify(data),
         },
@@ -159,7 +163,7 @@ export function createServiceApi<T extends Identifiable>({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...getAuthHeaders({ token }),
           },
           body: JSON.stringify(data),
         },
@@ -173,9 +177,7 @@ export function createServiceApi<T extends Identifiable>({
         url: `${baseUrl}/${resourceName}/${id}`,
         options: {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders({ token }),
         },
         customTransformer,
       });
@@ -187,9 +189,7 @@ export function createServiceApi<T extends Identifiable>({
         url: `${baseUrl}/${resourceName}${queryString}`,
         options: {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders({ token }),
         },
         customTransformer,
       });
@@ -203,7 +203,7 @@ export function createServiceApi<T extends Identifiable>({
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...getAuthHeaders({ token }),
           },
           body: JSON.stringify(data),
         },
@@ -219,7 +219,7 @@ export function createServiceApi<T extends Identifiable>({
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              ...getAuthHeaders({ token }),
             },
             body: JSON.stringify(payload),
           },
@@ -233,9 +233,7 @@ export function createServiceApi<T extends Identifiable>({
     async deleteOne({ baseUrl, token, id }) {
       const response = await fetch(`${baseUrl}/${resourceName}/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getAuthHeaders({ token }),
       });
       if (!response.ok) {
         throw new Error(`Failed to delete resource: ${response.statusText}`);
@@ -247,9 +245,7 @@ export function createServiceApi<T extends Identifiable>({
       const promises = ids.map((id) =>
         fetch(`${baseUrl}/${resourceName}/${id}`, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders({ token }),
         }).then((response) => {
           if (!response.ok) {
             throw new Error(

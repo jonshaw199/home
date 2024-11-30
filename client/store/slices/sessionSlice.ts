@@ -133,6 +133,8 @@ export const { setSession, clearSession } = sessionSlice.actions;
 export const selectSession = (state: RootState) => state.session.data;
 export const selectIsLoading = (state: RootState) => state.session.isLoading;
 export const selectError = (state: RootState) => state.session.error;
+export const selectIsSignedIn = (state: RootState) =>
+  !!state.session.data.profile;
 
 // Reducer
 export const sessionSliceReducer = sessionSlice.reducer;

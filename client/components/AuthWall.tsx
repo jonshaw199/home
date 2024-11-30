@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import {
   loadFromStorage,
   selectIsLoading,
-  selectSession,
+  selectIsSignedIn,
 } from "@/store/slices/sessionSlice";
 
 type AuthWallProps = {
@@ -16,7 +16,7 @@ type AuthWallProps = {
 export default function AuthWall({ redirect, children }: AuthWallProps) {
   const dispatch = useAppDispatch();
 
-  const session = useAppSelector(selectSession);
+  const isSignedIn = useAppSelector(selectIsSignedIn);
   const isSigningIn = useAppSelector(selectIsLoading);
 
   const [isLoadingSessionFromStorage, setIsLoadingSessionFromStorage] =
@@ -33,7 +33,7 @@ export default function AuthWall({ redirect, children }: AuthWallProps) {
     return <Text>Loading...</Text>;
   }
 
-  if (!session) {
+  if (!isSignedIn) {
     return <Redirect href={redirect} />;
   }
 

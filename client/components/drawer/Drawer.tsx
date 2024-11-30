@@ -103,16 +103,16 @@ export default function Drawer() {
   console.log(`API URL : ${apiUrl}`);
 
   useEffect(() => {
-    if (websocketUrl && session) {
+    if (websocketUrl) {
       dispatch({
         type: WS_CONNECT,
-        payload: { url: `${websocketUrl}?token=${session}` },
+        payload: { url: `${websocketUrl}?token=${session.token}` },
       });
     }
   }, [websocketUrl, session, dispatch]);
 
   useEffect(() => {
-    if (session && apiUrl) {
+    if (apiUrl) {
       dispatch(deviceTypeSliceActions.fetchAll());
       dispatch(deviceSliceActions.fetchAll());
       dispatch(plugSliceActions.fetchAll());
@@ -122,7 +122,7 @@ export default function Drawer() {
       dispatch(routineSliceActions.fetchAll());
       dispatch(routineActionSliceActions.fetchAll());
     }
-  }, [session, apiUrl, dispatch]);
+  }, [apiUrl, dispatch]);
 
   // This is the app layout
   return (
