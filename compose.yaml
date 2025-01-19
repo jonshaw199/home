@@ -8,11 +8,6 @@ services:
       - ./services/db/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data # Mount volume for DB data persistence
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "0"
     networks:
       - home_network
     restart: unless-stopped
@@ -22,11 +17,6 @@ services:
     hostname: home-redis
     ports:
       - "6379:6379"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "1"
     networks:
       - home_network
     restart: unless-stopped
@@ -40,14 +30,10 @@ services:
       - "8000:8000"
     env_file:
       - ./services/home/.env
+      - ./.env
     depends_on:
       - db
       - redis
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-    cpuset: "2"
     networks:
       - home_network
     restart: unless-stopped
@@ -57,11 +43,6 @@ services:
     build: ./services/mqtt-broker
     ports:
       - "1883:1883"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "3"
     networks:
       - home_network
     restart: unless-stopped
@@ -80,11 +61,6 @@ services:
     depends_on:
       mqtt-broker:
         condition: service_started
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "0"
     networks:
       - home_network
     restart: unless-stopped
@@ -93,15 +69,12 @@ services:
     build:
       context: ./services/system-reporter
       dockerfile: Dockerfile.${HOME_ENV:-production}
+      args:
+        HOME_HOSTNAME: ${HOME_HOSTNAME}
     volumes:
       - ./services/system-reporter:/app
     env_file:
       - ./services/system-reporter/.env.${HOME_ENV:-production}
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "1"
     networks:
       - home_network
     restart: unless-stopped
@@ -113,13 +86,10 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.${HOME_ENV:-production}
+      args:
+        HOME_HOSTNAME: ${HOME_HOSTNAME}
     volumes:
       - ./client:/app
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "2"
     networks:
       - home_network
     ports:
@@ -135,11 +105,8 @@ services:
       - NET_ADMIN
       - NET_BROADCAST
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-    cpuset: "3"
+    env_file:
+      - ./.env
 
 networks:
   home_network:

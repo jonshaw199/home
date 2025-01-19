@@ -1,6 +1,12 @@
 # Use the official Node.js image as the base image
 FROM node:18 AS build
 
+# Define build argument for hostname
+ARG HOME_HOSTNAME
+
+ENV EXPO_PUBLIC_HOME_BASE_URL=http://${HOME_HOSTNAME}:8000
+ENV EXPO_PUBLIC_LOCAL_BASE_URL=http://${HOME_HOSTNAME}:8080
+
 WORKDIR /app
 
 COPY package*.json ./

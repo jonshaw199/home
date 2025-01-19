@@ -6,4 +6,9 @@ RUN apk add --no-cache avahi avahi-tools
 COPY ./services/ /etc/avahi/services/
 COPY ./avahi-daemon.conf /etc/avahi/
 
-ENTRYPOINT avahi-daemon --no-drop-root --no-rlimits --debug
+# Add a script to set the hostname dynamically
+COPY ./set-hostname.sh /usr/local/bin/set-hostname.sh
+RUN chmod +x /usr/local/bin/set-hostname.sh
+
+# Use the script as the entrypoint
+ENTRYPOINT ["/usr/local/bin/set-hostname.sh"]

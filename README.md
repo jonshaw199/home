@@ -5,6 +5,11 @@ First steps:
 - `sudo apt install avahi-daemon` (for mDNS)
 - Rename `.env.template` in root directory to `.env`
 - Rename `services/home/.dev_pgpass.template` to `.dev_pgpass`
+  - TODO: password
+- Disable publishing in Avahi config
+  1. Edit `/etc/avahi/avahi-daemon.conf`
+  2. Set `disable-publishing=yes`
+  3. Restart service with `sudo systemctl restart avahi-daemon`
 - Generate certs for controller:
 
 ```
@@ -64,8 +69,4 @@ idf.py build flash monitor
 ### Testing prod locally
 
 - Change `HOME_ENV` to `production` in root `.env` file
-- Disable publishing in Avahi config
-  1. Edit `/etc/avahi/avahi-daemon.conf`
-  2. Set `disable-publishing=yes`
-  3. Restart service with `sudo systemctl restart avahi-daemon`
 - Point `jonshaw199.com` and `www.jonshaw199.com` to localhost in `/etc/hosts`

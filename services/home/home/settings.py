@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+HOME_HOSTNAME = os.getenv("HOME_HOSTNAME")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,9 +34,11 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "jonshaw199.com",
     "home-api",  # Docker container
-    "home.local",  # mDNS
 ]
 
+# Add the HOME_HOSTNAME if it's defined
+if HOME_HOSTNAME:
+    ALLOWED_HOSTS.append(HOME_HOSTNAME)
 
 # Application definition
 
@@ -188,14 +192,21 @@ LOGGING = {
 
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",  # Allow localhost on any port
-    r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
-    r"^http://home\.local:\d+$",  # Allow home.local on any port
+    #     r"^http://localhost:\d+$",  # Allow localhost on any port
+    #     r"^http://10\.199\.1\.\d+:\d+$",  # Allow IPs starting with 10.199.1 on any port
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "https://jonshaw199.com",
     "https://www.jonshaw199.com",
 ]
+
+# Add HOME_HOSTNAME dynamically
+if HOME_HOSTNAME:
+    # Add regex for dynamic hostname
+    CORS_ALLOWED_ORIGIN_REGEXES.append(rf"^http://{HOME_HOSTNAME}:\d+$")
+
+    # Add static entry to allowed origins (non-regex version)
+    CORS_ALLOWED_ORIGINS.append(f"http://{HOME_HOSTNAME}")
 
 APPEND_SLASH = False
