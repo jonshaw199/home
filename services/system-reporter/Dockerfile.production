@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Define build argument for hostname
 ARG HOME_HOSTNAME
 
-ENV MQTT_BROKER_HOST=${HOME_HOSTNAME}
+# ENV MQTT_BROKER_HOST=${HOME_HOSTNAME}
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
