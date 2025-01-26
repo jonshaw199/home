@@ -28,6 +28,11 @@ Updated steps; need a private CA now:
 4. Use the private CA (`ca.crt` and `ca.key`) to sign the CSR (`server.csr`), creating `server.crt` for each domain
 5. Include `subjectAltName` for the domain in the certificate (important for modern browsers)
 
+6. openssl genrsa -out ca.key 2048
+7. openssl req -x509 -new -nodes -key ca.key -sha256 -days 365 -out ca.crt -subj "/C=US/ST=State/L=City/O=YourOrg/OU=YourUnit/CN=YourCA"
+8. openssl genrsa -out server.key 2048
+9. openssl req -new -key server.key -out server.csr -subj "/C=US/ST=State/L=City/O=YourOrg/OU=Controller/CN=home.local"
+
 ### Web server, controller, MQTT broker, and system reporter
 
 `docker compose --profile optional up -d`
