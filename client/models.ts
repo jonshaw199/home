@@ -61,6 +61,7 @@ export interface Light extends Identifiable {
   isOn: Nullable<boolean>;
   brightness: Nullable<number>;
   color: Nullable<string>;
+  device: ID;
 }
 
 export enum ActionType {
@@ -68,6 +69,7 @@ export enum ActionType {
   STATUS_ENVIRONMENTAL = "environmental__status",
   STATUS_PLUG = "plug__status",
   STATUS_LIGHT = "light__status",
+  SET_LIGHT = "light__set",
   SET_PLUG = "plug__set",
 }
 
