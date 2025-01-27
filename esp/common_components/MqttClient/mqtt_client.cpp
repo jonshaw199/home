@@ -11,7 +11,10 @@ MqttClient::MqttClient(const std::string &broker_url, std::function<void()> onCo
     : onConnectCallback(onConnectCallback)
 {
     esp_mqtt_client_config_t mqtt_cfg = {};
-    mqtt_cfg.broker.address.uri = broker_url.c_str();
+    std::string uri = "mqtt://";
+    uri.append(broker_url);
+    ESP_LOGI(TAG, "Connecting to MQTT broker: %s", uri.c_str());
+    mqtt_cfg.broker.address.uri = uri.c_str();
     mqtt_cfg.session.protocol_ver = MQTT_PROTOCOL_V_5;
 
     // Initialize MQTT client

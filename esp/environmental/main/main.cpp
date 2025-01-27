@@ -13,6 +13,7 @@
 #include "nvs_manager.h"
 #include "config_utils.h"
 #include "KY015.hpp"
+#include "mdns_resolver.h"
 
 #define KY015_GPIO_PIN GPIO_NUM_8 // Use the appropriate GPIO pin connected to the KY-015 data pin
 
@@ -96,7 +97,9 @@ void mqtt_task(void *pvParameter)
     {
         ESP_LOGI(TAG, "Connected to Wi-Fi. Initializing MQTT...");
 
-        std::string broker_host = config.mqtt_broker;
+        MdnsResolver mdns;
+        mdns.init();
+        std::string broker_host = mdns.resolve_hostname(config.mqtt_broker);
 
         auto handle_command = [](const std::string &data)
         {
